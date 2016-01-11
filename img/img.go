@@ -1,61 +1,67 @@
 package img
+
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 	"net/url"
 )
 
+//Reads image from a given source
 type ImgReader interface {
+	//Reads image from the url.
+	//Returns byte array of the image or
+	//error.
 	Read(url string) ([]byte, error)
 }
 
+//Processes image applying different transformation.
 type ImgProcessor interface {
-	Resize(data []byte, width int, height int) ([]byte, error)
+	//Resize given image.
+	//Form of the the size string is
+	//width'x'height. Any dimension could be skipped.
+	//For example:
+	//* 300x200
+	//* 300 - only width
+	//* x200 - only height
+	Resize(data []byte, size string) ([]byte, error)
 }
 
 type Service struct {
-	Reader ImgReader
+	Reader    ImgReader
 	Processor ImgProcessor
 }
 
 //Transforms image that passed in url param and
 //returns the result.
 //Query params:
-// * url - url of the original image
-// * width - width to transform to
-// * height - height to transform to
+// * url - url of the original image. Required.
+// * size - new size of the image. Should be in the width'x'height format.
+//   Accepts only width, e.g. 300 or height e.g. x200
 //
 //Examples:
-// */transform?url=www.site.com/img.png&width=200&height=300
+// */transform?url=www.site.com/img.png&size=300x200
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
+	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
-		http.Error(resp, "url param is required", 400)
+		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
 	}
-
-	width, err := strconv.Atoi(req.URL.Query()["width"][0])
-	if err != nil {
-		http.Error(resp, err.Error(), 500)
-		return
-	}
-
-	height, err := strconv.Atoi(req.URL.Query()["height"][0])
-	if err != nil {
-		http.Error(resp, err.Error(), 500)
+	if len(size) == 0 {
+		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
 	}
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	result, err := r.Processor.Resize(input, width, height)
+	result, err := r.Processor.Resize(input, size)
 
 	if err != nil {
-		http.Error(resp, err.Error(), 500)
+		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -68,10 +74,3 @@ func getQueryParam(url *url.URL, name string) string {
 	}
 	return ""
 }
-
-//func getQueryParamInt(url *url.URL, name string) (int, err) {
-//	if len(url.Query()[name]) == 1 {
-//		return url.Query()[name][0]
-//	}
-//	return ""
-//}
