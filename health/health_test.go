@@ -1,9 +1,9 @@
-package service_test
+package health_test
 import (
 	"testing"
 	"net/http"
 	"net/http/httptest"
-	"github.com/dooman87/transformimgs/service"
+	"github.com/dooman87/transformimgs/health"
 )
 
 func TestHealth(t *testing.T) {
@@ -12,7 +12,7 @@ func TestHealth(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
-	service.Health(w, req)
+	health.Health(w, req)
 
 	expected := "OK"
 	if w.Body.String() != expected {
