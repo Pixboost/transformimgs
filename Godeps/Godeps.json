@@ -1,0 +1,13 @@
+{
+	"ImportPath": "github.com/dooman87/transformimgs",
+	"GoVersion": "go1.5",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "fca8c8854093a154ff1eb580aae10276ad6b1b5f"
+		}
+	]
+}

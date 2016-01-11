@@ -2,6 +2,7 @@ package img
 
 import (
 	"fmt"
+	"github.com/golang/glog"
 	"net/http"
 	"net/url"
 )
@@ -51,6 +52,8 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
 	}
+
+	glog.Infof("Resizing image %s to %s", imgUrl, size)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
