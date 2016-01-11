@@ -1,6 +1,12 @@
 package main
-import "fmt"
+import (
+	"net/http"
+	"github.com/dooman87/transformimgs/service"
+	"log"
+)
 
 func main() {
-	fmt.Println("Starting here")
+	http.HandleFunc("/health", service.Health)
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
