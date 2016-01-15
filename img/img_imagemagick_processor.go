@@ -2,6 +2,7 @@ package img
 
 import (
 	"bytes"
+	"flag"
 	"github.com/golang/glog"
 	"log"
 	"os/exec"
@@ -11,15 +12,19 @@ type ImageMagickProcessor struct {
 	convertCmd string
 }
 
-var ImagemagickConvertCmd string
+var imagemagickConvertCmd string
+
+func init() {
+	flag.StringVar(&imagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
+}
 
 func CheckImagemagick() {
-	if len(ImagemagickConvertCmd) == 0 {
+	if len(imagemagickConvertCmd) == 0 {
 		log.Fatal("Command convert should be set by -imConvert flag")
 		return
 	}
 
-	_, err := exec.LookPath(ImagemagickConvertCmd)
+	_, err := exec.LookPath(imagemagickConvertCmd)
 	if err != nil {
 		log.Fatalf("Imagemagick is not available '%s'", err.Error())
 	}
@@ -29,7 +34,7 @@ func CheckImagemagick() {
 //image to specific size.
 func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
-	cmd := exec.Command(ImagemagickConvertCmd, "-", "-resize", size, "-")
+	cmd := exec.Command(imagemagickConvertCmd, "-", "-resize", size, "-")
 	cmd.Stdin = bytes.NewReader(data)
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr

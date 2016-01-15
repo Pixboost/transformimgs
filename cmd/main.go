@@ -9,13 +9,11 @@ import (
 )
 
 func main() {
-	flag.StringVar(&img.ImagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
 	flag.Parse()
-
-	img.CheckImagemagick()
 
 	http.HandleFunc("/health", health.Health)
 
+	img.CheckImagemagick()
 	img := img.Service{
 		Processor: &img.ImageMagickProcessor{},
 		Reader:    &img.ImgUrlReader{},
