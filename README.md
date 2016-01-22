@@ -16,6 +16,20 @@ $ godep restore
 $ go run cmd/main.go
 ```
 
+## Docker local - when sources checked out ##
+
+To run server in local environment (using local copy of sources):
+
+```
+$ cd docker/local
+$ docker build -t transformimgs-local .
+$ docker run -it --rm -p 8080:8080 -v //c/Users/dimka//Projects/go/src/github.com/dooman87/transformimgs/://usr/local/go/src/github.com/dooman87/transformimgs/ --name transformimgs-local transformimgs-local
+```
+
+## Docker remote - without sources ##
+
+TODO:
+
 # Logging
 
 Service is using [glog](https://github.com/golang/glog) project for logging. It's providing next options that could
