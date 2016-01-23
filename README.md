@@ -1,12 +1,23 @@
 # TransformImgs
 Image transformations service.
 
+The first iteration goal:
+
+* Provide REST access to predefined operations implemented by imagemagick
+
 # Requirements
 
 go 1.5+
 
 # Running
 
+To test that application was launched successfully:
+
+`http://localhost:8080/health`
+
+You should get 'OK' string in the response.
+
+## Running from sources ##
 ```
 $ export GO15VENDOREXPERIMENT=1
 $ go get github.com/tools/godep
@@ -28,7 +39,13 @@ $ docker run -it --rm -p 8080:8080 -v //c/Users/dimka//Projects/go/src/github.co
 
 ## Docker remote - without sources ##
 
-TODO:
+This option is checking out latest sources from the master branch and running the application using it:
+
+```
+$ cd docker/remote
+$ docker build -t transformimgs-remote .
+$ docker run -p 8080:8080 -it --rm transformimgs-remote
+```
 
 # Logging
 
