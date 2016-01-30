@@ -7,7 +7,8 @@ The first iteration goal:
 
 # Requirements
 
-go 1.5+
+* Go 1.5+
+* Installed imagemagick
 
 # Running
 
@@ -24,7 +25,7 @@ $ go get github.com/tools/godep
 $ go get github.com/dooman87/transformimgs
 $ cd $GOPATH/src/github.com/dooman87/transformimgs
 $ godep restore
-$ go run cmd/main.go
+$ go run cmd/main.go -logtostderr=true -imConvert=/usr/bin/convert
 ```
 
 ## Docker local - when sources checked out ##

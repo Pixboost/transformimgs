@@ -13,6 +13,23 @@ type ImageMagickProcessor struct {
 }
 
 var imagemagickConvertCmd string
+var convertOpts = []string{
+	"-filter", "Triangle",
+	"-define", "filter:support=2",
+	"-unsharp", "0.25x0.08+8.3+0.045",
+	"-dither", "None",
+	"-posterize", "136",
+	"-quality", "82",
+	"-define", "jpeg:fancy-upsampling=off",
+	"-define", "png:compression-filter=5",
+	"-define", "png:compression-level=9",
+	"-define", "png:compression-strategy=1",
+	"-define", "png:exclude-chunk=all",
+	"-interlace", "none",
+	"-colorspace", "sRGB",
+}
+
+//To place in center: -gravity center -extent WxH
 
 func init() {
 	flag.StringVar(&imagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
@@ -34,7 +51,13 @@ func CheckImagemagick() {
 //image to specific size.
 func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
-	cmd := exec.Command(imagemagickConvertCmd, "-", "-resize", size, "-")
+	cmd := exec.Command(imagemagickConvertCmd)
+
+	cmd.Args = append(cmd.Args, "-") //Input
+	cmd.Args = append(cmd.Args, "-resize", size)
+	cmd.Args = append(cmd.Args, convertOpts...)
+	cmd.Args = append(cmd.Args, "-") //Output
+
 	cmd.Stdin = bytes.NewReader(data)
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
