@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/dooman87/transformimgs/health"
+	"github.com/dooman87/kolibri/health"
 	"github.com/dooman87/transformimgs/img"
 	"github.com/golang/glog"
 	"log"
