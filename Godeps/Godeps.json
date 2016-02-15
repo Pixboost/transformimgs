@@ -7,7 +7,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/dooman87/kolibri/health",
-			"Rev": "d2c252af07ae53ceeef07198bba64f568551ec4b"
+			"Rev": "931db3c9b37bd7cc23d07f05d12c643920d41dd2"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
