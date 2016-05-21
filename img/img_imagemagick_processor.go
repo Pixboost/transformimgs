@@ -35,6 +35,8 @@ func init() {
 	flag.StringVar(&imagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
 }
 
+//Checks that image magick is available.
+// If it's not then terminating application with fatal logging.
 func CheckImagemagick() {
 	if len(imagemagickConvertCmd) == 0 {
 		log.Fatal("Command convert should be set by -imConvert flag")
