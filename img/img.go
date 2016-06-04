@@ -68,6 +68,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	resp.Header().Add("Cache-Control", "max-age=86400")
 	resp.Write(result)
 }
 
