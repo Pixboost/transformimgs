@@ -37,7 +37,7 @@ func TestResize(t *testing.T) {
 	testCases := []test.TestCase{
 		{"http://localhost/img?url=http://site.com/img.png&size=300x200", http.StatusOK, "Success",
 			func(w *httptest.ResponseRecorder, t *testing.T) {
-				if w.Header().Get("Cache-Control") != "max-age=86400" {
+				if w.Header().Get("Cache-Control") != "public, max-age=86400" {
 					t.Errorf("Expected to get Cache-Control header")
 				}
 				if w.Header().Get("Content-Length") != "3" {

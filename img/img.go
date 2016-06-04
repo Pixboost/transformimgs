@@ -70,7 +70,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
-	resp.Header().Add("Cache-Control", "max-age=86400")
+	resp.Header().Add("Cache-Control", "public, max-age=86400")
 	resp.Write(result)
 }
 
