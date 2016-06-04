@@ -40,6 +40,9 @@ func TestResize(t *testing.T) {
 				if w.Header().Get("Cache-Control") != "max-age=86400" {
 					t.Errorf("Expected to get Cache-Control header")
 				}
+				if w.Header().Get("Content-Length") != "3" {
+					t.Errorf("Expected to get Content-Length header equal to 3 but got [%s]", w.Header().Get("Content-Length"))
+				}
 			}},
 		{"http://localhost/img?size=300x200", http.StatusBadRequest, "Param url is required", nil},
 		{"http://localhost/img?url=http://site.com/img.png", http.StatusBadRequest, "Param size is required", nil},

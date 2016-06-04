@@ -5,6 +5,7 @@ import (
 	"github.com/golang/glog"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 //Reads image from a given source
@@ -68,6 +69,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
 	resp.Header().Add("Cache-Control", "max-age=86400")
 	resp.Write(result)
 }
