@@ -35,7 +35,8 @@ To run server in local environment (using local copy of sources):
 ```
 $ cd docker/local
 $ docker build -t transformimgs-local .
-$ docker run -it --rm -p 8080:8080 -v //c/Users/dimka//Projects/go/src/github.com/dooman87/transformimgs/://usr/local/go/src/github.com/dooman87/transformimgs/ --name transformimgs-local transformimgs-local
+$ cd ../../
+$ docker run -it --rm -p 8080:8080 -v `pwd`:/usr/local/go/src/github.com/dooman87/transformimgs/ transformimgs-local
 ```
 
 ## Docker remote - without sources ##
