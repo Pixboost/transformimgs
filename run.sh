@@ -7,5 +7,9 @@
 
 godep restore
 
+echo 'Running Tests'
+go test ./...
+
 cd cmd/
+echo 'Running Application'
 go run main.go -logtostderr=true -imConvert=/usr/bin/convert
