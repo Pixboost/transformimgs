@@ -12,14 +12,15 @@ import (
 func main() {
 	flag.Parse()
 
-	http.HandleFunc("/health", health.Health)
-
 	img.CheckImagemagick()
-	img := img.Service{
+
+	imgService := img.Service{
 		Processor: &img.ImageMagickProcessor{},
 		Reader:    &img.ImgUrlReader{},
 	}
-	http.HandleFunc("/img/resize", http.HandlerFunc(img.ResizeUrl))
+
+	http.HandleFunc("/health", health.Health)
+	http.Handle("/", imgService.GetRouter())
 
 	glog.Info("Running the applicaiton on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))

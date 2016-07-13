@@ -29,7 +29,9 @@ var convertOpts = []string{
 	"-colorspace", "sRGB",
 }
 
-//To place in center: -gravity center -extent WxH
+var cutToFitOpts = []string{
+	"-gravity", "center",
+}
 
 func init() {
 	flag.StringVar(&imagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
@@ -49,18 +51,38 @@ func CheckImagemagick() {
 	}
 }
 
-//Using convert util from imagemagick package to resize
-//image to specific size.
+// Resize image to the given size preserving aspect ratio. No cropping applying.
 func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) {
+	args := make([]string, 0)
+	args = append(args, "-") //Input
+	args = append(args, "-resize", size)
+	args = append(args, convertOpts...)
+	args = append(args, "-") //Output
+
+	return execImagemagick(bytes.NewReader(data), args)
+}
+
+// Resize input image to exact size with cropping everything that out of the bounds.
+// Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
+func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, error) {
+	args := make([]string, 0)
+	args = append(args, "-") //Input
+	args = append(args, "-resize", size + "^")
+	args = append(args, convertOpts...)
+	args = append(args, cutToFitOpts...)
+	args = append(args, "-extent", size)
+	args = append(args, "-") //Output
+
+	return execImagemagick(bytes.NewReader(data), args)
+}
+
+func execImagemagick(in *bytes.Reader, args []string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(imagemagickConvertCmd)
 
-	cmd.Args = append(cmd.Args, "-") //Input
-	cmd.Args = append(cmd.Args, "-resize", size)
-	cmd.Args = append(cmd.Args, convertOpts...)
-	cmd.Args = append(cmd.Args, "-") //Output
+	cmd.Args = append(cmd.Args, args...)
 
-	cmd.Stdin = bytes.NewReader(data)
+	cmd.Stdin = in
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
 
