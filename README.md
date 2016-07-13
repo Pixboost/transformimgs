@@ -1,4 +1,7 @@
 # TransformImgs
+
+[![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
+
 Image transformations service.
 
 The first iteration goal:
