@@ -8,7 +8,9 @@ The first iteration goal:
 # Requirements
 
 * Go 1.5+
-* Installed imagemagick
+* [kolibri](https://github.com/dooman87/kolibri)
+* [glog](https://github.com/golang/glog)
+* Installed [imagemagick](http://imagemagick.org)
 
 # Running
 
