@@ -1,4 +1,7 @@
 # TransformImgs
+
+[![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
+
 Image transformations service.
 
 The first iteration goal:
@@ -8,7 +11,9 @@ The first iteration goal:
 # Requirements
 
 * Go 1.5+
-* Installed imagemagick
+* [kolibri](https://github.com/dooman87/kolibri)
+* [glog](https://github.com/golang/glog)
+* Installed [imagemagick](http://imagemagick.org)
 
 # Running
 
