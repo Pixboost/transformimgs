@@ -18,7 +18,13 @@ To test that application was launched successfully:
 
 You should get 'OK' string in the response.
 
-## Running from sources ##
+## Running the application ##
+
+```
+$ docker-compose up
+```
+
+## Running locally ##
 ```
 $ export GO15VENDOREXPERIMENT=1
 $ go get github.com/tools/godep
@@ -28,18 +34,7 @@ $ godep restore
 $ go run cmd/main.go -logtostderr=true -imConvert=/usr/bin/convert
 ```
 
-## Docker local - when sources checked out ##
-
-To run server in local environment (using local copy of sources):
-
-```
-$ cd docker/local
-$ docker build -t transformimgs-local .
-$ cd ../../
-$ docker run -it --rm -p 8080:8080 -v `pwd`:/usr/local/go/src/github.com/dooman87/transformimgs/ transformimgs-local
-```
-
-## Docker remote - without sources ##
+## Running without sources ##
 
 This option is checking out latest sources from the master branch and running the application using it:
 

@@ -11,3 +11,8 @@ func (p *DummyProcessor) Resize(data []byte, size string) ([]byte, error) {
 func (p *DummyProcessor) FitToSize(data []byte, size string) ([]byte, error) {
 	return data, nil
 }
+
+//Returns original data
+func (p *DummyProcessor) Optimise(data []byte) ([]byte, error) {
+	return data, nil
+}

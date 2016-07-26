@@ -1,0 +1,8 @@
+version: '2'
+services:
+  transformimgs:
+    build: ./docker/local/
+    volumes:
+      - ./:/usr/local/go/src/github.com/dooman87/transformimgs
+    ports:
+      - "8080:8080"
