@@ -3,11 +3,11 @@ package img
 import (
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
-	"strconv"
-	"github.com/gorilla/mux"
 	"regexp"
+	"strconv"
 )
 
 //Reads image from a given source
@@ -32,6 +32,9 @@ type ImgProcessor interface {
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
 	FitToSize(data []byte, size string) ([]byte, error)
+
+	//Optimises given image to reduce size.
+	Optimise(data []byte) ([]byte, error)
 }
 
 type Service struct {
@@ -43,8 +46,39 @@ func (r *Service) GetRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/img/resize", http.HandlerFunc(r.ResizeUrl))
 	router.HandleFunc("/img/fit", http.HandlerFunc(r.FitToSizeUrl))
+	router.HandleFunc("/img", http.HandlerFunc(r.OptimiseUrl))
 
 	return router
+}
+
+//Optimises image that passed in url query param and returns the result.
+//Query params:
+// * url - url of the original image. Required.
+func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
+	imgUrl := getQueryParam(req.URL, "url")
+	if len(imgUrl) == 0 {
+		http.Error(resp, "url param is required", http.StatusBadRequest)
+		return
+	}
+
+	glog.Infof("Optimising image %s", imgUrl)
+
+	input, err := r.Reader.Read(imgUrl)
+	if err != nil {
+		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	result, err := r.Processor.Optimise(input)
+
+	if err != nil {
+		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
+	resp.Header().Add("Cache-Control", "public, max-age=86400")
+	resp.Write(result)
 }
 
 //Transforms image that passed in url param and

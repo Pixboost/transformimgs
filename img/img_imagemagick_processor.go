@@ -25,8 +25,10 @@ var convertOpts = []string{
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=1",
 	"-define", "png:exclude-chunk=all",
-	"-interlace", "none",
+	"-interlace", "Plane",
 	"-colorspace", "sRGB",
+	"-sampling-factor", "4:2:0",
+	"-strip",
 }
 
 var cutToFitOpts = []string{
@@ -67,10 +69,19 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) 
 func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, error) {
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	args = append(args, "-resize", size + "^")
+	args = append(args, "-resize", size+"^")
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
+	args = append(args, "-") //Output
+
+	return execImagemagick(bytes.NewReader(data), args)
+}
+
+func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
+	args := make([]string, 0)
+	args = append(args, "-") //Input
+	args = append(args, convertOpts...)
 	args = append(args, "-") //Output
 
 	return execImagemagick(bytes.NewReader(data), args)
