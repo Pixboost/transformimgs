@@ -18,7 +18,7 @@ type ImgReader interface {
 	Read(url string) ([]byte, error)
 }
 
-//Processes image applying different transformation.
+//Processes images applying different transformations.
 type ImgProcessor interface {
 	//Resize given image.
 	//Form of the the size string is
@@ -31,6 +31,7 @@ type ImgProcessor interface {
 
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
+	//For example, 300x400
 	FitToSize(data []byte, size string) ([]byte, error)
 
 	//Optimises given image to reduce size.
@@ -40,6 +41,15 @@ type ImgProcessor interface {
 type Service struct {
 	Reader    ImgReader
 	Processor ImgProcessor
+	cache int
+}
+
+func NewService(r ImgReader, p ImgProcessor, cacheSec int) (*Service, error) {
+	return &Service{
+		Reader: r,
+		Processor: p,
+		cache: cacheSec,
+	}, nil
 }
 
 func (r *Service) GetRouter() *mux.Router {
@@ -76,8 +86,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
-	resp.Header().Add("Cache-Control", "public, max-age=86400")
+	r.addHeaders(resp, result)
 	resp.Write(result)
 }
 
@@ -117,8 +126,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
-	resp.Header().Add("Cache-Control", "public, max-age=86400")
+	r.addHeaders(resp, result)
 	resp.Write(result)
 }
 
@@ -164,9 +172,14 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resp.Header().Add("Content-Length", strconv.Itoa(len(result)))
-	resp.Header().Add("Cache-Control", "public, max-age=86400")
+	r.addHeaders(resp, result)
 	resp.Write(result)
+}
+
+//Adds Content-Length and Cache-Control headers
+func (r *Service) addHeaders(resp http.ResponseWriter, body []byte) {
+	resp.Header().Add("Content-Length", strconv.Itoa(len(body)))
+	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", r.cache))
 }
 
 func getQueryParam(url *url.URL, name string) string {

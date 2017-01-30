@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"github.com/dooman87/kolibri/test"
 )
 
 func TestReadImg(t *testing.T) {
@@ -15,17 +16,12 @@ func TestReadImg(t *testing.T) {
 
 	reader := &img.ImgUrlReader{}
 
-	img, err := reader.Read(server.URL)
+	r, err := reader.Read(server.URL)
 
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	expected := "123"
-	actual := string(img)
-	if expected != actual {
-		t.Fatalf("Expected %s but got %s", expected, actual)
-	}
+	test.Error(t,
+		test.Nil(err, "error"),
+		test.Equal("123", string(r), "resulted image"),
+	)
 }
 
 func TestReadImgErrorResponseStatus(t *testing.T) {
@@ -38,7 +34,7 @@ func TestReadImgErrorResponseStatus(t *testing.T) {
 
 	_, err := reader.Read(server.URL)
 
-	if err == nil {
-		t.Fatalf("Expected error")
-	}
+	test.Error(t,
+		test.NotNil(err, "error"),
+	)
 }

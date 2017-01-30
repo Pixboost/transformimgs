@@ -6,7 +6,7 @@ Image transformations service.
 
 The first iteration goal:
 
-* Provide REST access to predefined operations implemented by imagemagick
+* Provide HTTP endpoints to predefined operations implemented by imagemagick
 
 # Requirements
 
@@ -17,7 +17,7 @@ The first iteration goal:
 
 # Running
 
-To test that application was launched successfully:
+To test that application started successfully:
 
 `http://localhost:8080/health`
 

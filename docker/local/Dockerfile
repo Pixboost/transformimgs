@@ -9,4 +9,4 @@ RUN go get github.com/tools/godep
 
 VOLUME /usr/local/go/src/github.com/dooman87/transformimgs/
 WORKDIR /usr/local/go/src/github.com/dooman87/transformimgs/
-ENTRYPOINT ["/usr/local/go/src/github.com/dooman87/transformimgs/run.sh"]
+ENTRYPOINT ["sh", "/usr/local/go/src/github.com/dooman87/transformimgs/run.sh"]

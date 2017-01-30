@@ -8,11 +8,11 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/dooman87/kolibri/health",
-			"Rev": "22cf84686b1bd415cbf3471000372e5d3caba505"
+			"Rev": "c194ff118b679de1f8ace1a8104b243c14e9562b"
 		},
 		{
 			"ImportPath": "github.com/dooman87/kolibri/test",
-			"Rev": "22cf84686b1bd415cbf3471000372e5d3caba505"
+			"Rev": "c194ff118b679de1f8ace1a8104b243c14e9562b"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -25,6 +25,11 @@
 		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "26a6070f849969ba72b72256e9f14cf519751690"
+		},
+		{
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.7.1",
+			"Rev": "17b591df37844cde689f4d5813e5cea0927d8dd2"
 		}
 	]
 }

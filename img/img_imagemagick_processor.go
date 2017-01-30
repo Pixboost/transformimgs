@@ -2,17 +2,16 @@ package img
 
 import (
 	"bytes"
-	"flag"
 	"github.com/golang/glog"
 	"log"
 	"os/exec"
+	"github.com/pkg/errors"
 )
 
 type ImageMagickProcessor struct {
 	convertCmd string
 }
 
-var imagemagickConvertCmd string
 var convertOpts = []string{
 	"-filter", "Triangle",
 	"-define", "filter:support=2",
@@ -35,22 +34,22 @@ var cutToFitOpts = []string{
 	"-gravity", "center",
 }
 
-func init() {
-	flag.StringVar(&imagemagickConvertCmd, "imConvert", "", "Imagemagick convert command")
-}
-
-//Checks that image magick is available.
-// If it's not then terminating application with fatal logging.
-func CheckImagemagick() {
-	if len(imagemagickConvertCmd) == 0 {
+//Creates new imagemagick processor. im is a path to
+//ImageMagick executable that must be provided.
+func NewProcessor(im string) (*ImageMagickProcessor, error) {
+	if len(im) == 0 {
 		log.Fatal("Command convert should be set by -imConvert flag")
-		return
+		return nil, errors.New("Path to imagemagick executable must be provided")
 	}
 
-	_, err := exec.LookPath(imagemagickConvertCmd)
+	_, err := exec.LookPath(im)
 	if err != nil {
-		log.Fatalf("Imagemagick is not available '%s'", err.Error())
+		return nil, err
 	}
+
+	return &ImageMagickProcessor{
+		convertCmd: im,
+	}, nil
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
@@ -61,7 +60,7 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) 
 	args = append(args, convertOpts...)
 	args = append(args, "-") //Output
 
-	return execImagemagick(bytes.NewReader(data), args)
+	return p.execImagemagick(bytes.NewReader(data), args)
 }
 
 // Resize input image to exact size with cropping everything that out of the bounds.
@@ -75,7 +74,7 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, erro
 	args = append(args, "-extent", size)
 	args = append(args, "-") //Output
 
-	return execImagemagick(bytes.NewReader(data), args)
+	return p.execImagemagick(bytes.NewReader(data), args)
 }
 
 func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
@@ -84,12 +83,12 @@ func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
 	args = append(args, convertOpts...)
 	args = append(args, "-") //Output
 
-	return execImagemagick(bytes.NewReader(data), args)
+	return p.execImagemagick(bytes.NewReader(data), args)
 }
 
-func execImagemagick(in *bytes.Reader, args []string) ([]byte, error) {
+func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
-	cmd := exec.Command(imagemagickConvertCmd)
+	cmd := exec.Command(p.convertCmd)
 
 	cmd.Args = append(cmd.Args, args...)
 
