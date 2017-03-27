@@ -2,7 +2,6 @@ package img
 
 import (
 	"bytes"
-	"github.com/golang/glog"
 	"log"
 	"os/exec"
 	"github.com/pkg/errors"
@@ -96,11 +95,11 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string) 
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
 
-	glog.Infof("Running resize command, args '%v'", cmd.Args)
+	log.Printf("Running resize command, args '%v'\n", cmd.Args)
 	err := cmd.Run()
 	if err != nil {
-		glog.Errorf("Error executing convert command: %s", err.Error())
-		glog.Errorf("ERROR: %s", cmderr.String())
+		log.Printf("Error executing convert command: %s\n", err.Error())
+		log.Printf("ERROR: %s\n", cmderr.String())
 		return nil, err
 	}
 

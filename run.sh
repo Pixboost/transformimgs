@@ -12,4 +12,4 @@ go test ./...
 
 cd cmd/
 echo 'Running Application'
-go run main.go -logtostderr=true -imConvert=/usr/bin/convert
+go run main.go -imConvert=/usr/bin/convert

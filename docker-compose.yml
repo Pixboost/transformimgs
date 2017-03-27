@@ -1,7 +1,9 @@
 version: '2'
 services:
   transformimgs:
-    build: ./docker/local/
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.dev
     volumes:
       - ./:/usr/local/go/src/github.com/dooman87/transformimgs
     ports:

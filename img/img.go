@@ -2,12 +2,12 @@ package img
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
+	"log"
 )
 
 //Reads image from a given source
@@ -71,7 +71,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	glog.Infof("Optimising image %s", imgUrl)
+	log.Printf("Optimising image %s\n", imgUrl)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -111,7 +111,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	glog.Infof("Resizing image %s to %s", imgUrl, size)
+	log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -151,13 +151,13 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	}
 	if match, err := regexp.MatchString(`^\d*[x]\d*$`, size); !match || err != nil {
 		if err != nil {
-			glog.Errorf("Error while matching size: %s", err.Error())
+			log.Printf("Error while matching size: %s\n", err.Error())
 		}
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
 
-	glog.Infof("Fit image %s to size %s", imgUrl, size)
+	log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
