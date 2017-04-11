@@ -1,3 +1,8 @@
+// @APIVersion 1
+// @APITitle Transformimgs
+// @APIDescription Images transformation API
+// @BasePath transformimgs.pixboost.com/api/1/
+
 package main
 
 import (

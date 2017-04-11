@@ -61,6 +61,11 @@ func (r *Service) GetRouter() *mux.Router {
 	return router
 }
 
+// @Title optimizeImage
+// @Description optimises image provided in url
+// @Param	url	query	string	true	"Url of source image that will be fetched and optimised"
+// @Success	200	{array}	byte	"Optimised image"
+// @Router /img [get]
 //Optimises image that passed in url query param and returns the result.
 //Query params:
 // * url - url of the original image. Required.
