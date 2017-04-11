@@ -61,14 +61,23 @@ func (r *Service) GetRouter() *mux.Router {
 	return router
 }
 
-// @Title optimizeImage
-// @Description optimises image provided in url
-// @Param	url	query	string	true	"Url of source image that will be fetched and optimised"
-// @Success	200	{array}	byte	"Optimised image"
-// @Router /img [get]
-//Optimises image that passed in url query param and returns the result.
-//Query params:
-// * url - url of the original image. Required.
+// swagger:operation GET /img optimiseImage
+//
+// Optimises image that passed in url query param and returns the result.
+//
+// ---
+// produces:
+// - image/png
+// - image/jpeg
+// parameters:
+// - name: url
+//   required: true
+//   in: query
+//   type: string
+//   description: url of the original image
+// responses:
+//   '200':
+//     description: Optimised image
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
 	if len(imgUrl) == 0 {

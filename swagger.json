@@ -1,0 +1,35 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images for using in web, e.g. sites, apps.",
+    "title": "Images transformation API",
+    "version": "1"
+  },
+  "basePath": "/api/1/",
+  "paths": {
+    "/img": {
+      "get": {
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "summary": "Optimises image that passed in url query param and returns the result.",
+        "operationId": "optimiseImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Optimised image"
+          }
+        }
+      }
+    }
+  }
+}

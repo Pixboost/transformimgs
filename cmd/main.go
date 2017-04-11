@@ -1,8 +1,11 @@
-// @APIVersion 1
-// @APITitle Transformimgs
-// @APIDescription Images transformation API
-// @BasePath transformimgs.pixboost.com/api/1/
-
+// Images transformation API
+//
+// The purpose of this API is to provide a set of
+// endpoints that will transform images for using in web, e.g. sites, apps.
+//
+// Version: 1
+// BasePath: /api/1/
+// swagger:meta
 package main
 
 import (
