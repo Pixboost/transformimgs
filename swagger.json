@@ -1,11 +1,20 @@
 {
+  "schemes": [
+    "https"
+  ],
   "swagger": "2.0",
   "info": {
-    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images for using in web, e.g. sites, apps.",
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images (optimise, resize, etc) for using in web, e.g. sites, apps.",
     "title": "Images transformation API",
     "version": "1"
   },
+  "host": "pixboost.com",
   "basePath": "/api/1/",
+  "security": [
+    {
+      "auth": []
+    }
+  ],
   "paths": {
     "/img": {
       "get": {
@@ -30,6 +39,13 @@
           }
         }
       }
+    }
+  },
+  "securityDefinitions": {
+    "auth": {
+      "type": "apiKey",
+      "name": "auth",
+      "in": "query"
     }
   }
 }
