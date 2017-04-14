@@ -3,11 +3,11 @@ package img
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
-	"log"
 )
 
 //Reads image from a given source
@@ -41,14 +41,14 @@ type ImgProcessor interface {
 type Service struct {
 	Reader    ImgReader
 	Processor ImgProcessor
-	cache int
+	cache     int
 }
 
 func NewService(r ImgReader, p ImgProcessor, cacheSec int) (*Service, error) {
 	return &Service{
-		Reader: r,
+		Reader:    r,
 		Processor: p,
-		cache: cacheSec,
+		cache:     cacheSec,
 	}, nil
 }
 
@@ -66,6 +66,8 @@ func (r *Service) GetRouter() *mux.Router {
 // Optimises image that passed in url query param and returns the result.
 //
 // ---
+// tags:
+// - images
 // produces:
 // - image/png
 // - image/jpeg
