@@ -1,26 +1,24 @@
 {
   "schemes": [
-    "https"
+    "http"
   ],
   "swagger": "2.0",
   "info": {
-    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images (optimise, resize, etc) for using in web, e.g. sites, apps.",
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images for using in web, e.g. sites, apps.",
     "title": "Images transformation API",
     "version": "1"
   },
   "host": "pixboost.com",
   "basePath": "/api/1/",
-  "security": [
-    {
-      "auth": []
-    }
-  ],
   "paths": {
     "/img": {
       "get": {
         "produces": [
           "image/png",
           "image/jpeg"
+        ],
+        "tags": [
+          "images"
         ],
         "summary": "Optimises image that passed in url query param and returns the result.",
         "operationId": "optimiseImage",
@@ -42,10 +40,15 @@
     }
   },
   "securityDefinitions": {
-    "auth": {
+    "api_key": {
       "type": "apiKey",
       "name": "auth",
       "in": "query"
     }
-  }
+  },
+  "security": [
+    {
+      "api_key": []
+    }
+  ]
 }
