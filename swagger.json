@@ -4,7 +4,7 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "The purpose of this API is to provide a set of\nendpoints that will transform images for using in web, e.g. sites, apps.",
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it's become easy to use the API with \u003cimg\u003e tag.\nIt's can be accessed directly through HTTP interface as\nwell.",
     "title": "Images transformation API",
     "version": "1"
   },
@@ -34,6 +34,42 @@
         "responses": {
           "200": {
             "description": "Optimised image"
+          }
+        }
+      }
+    },
+    "/img/resize": {
+      "get": {
+        "description": "Will preserve aspect ratio of the original image. If you need\nthe exact size then use /fit operation.",
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Resize and optimize image that passed in the url query param.",
+        "operationId": "resizeImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          },
+          {
+            "pattern": "\\d{1,4}x\\d{1,4}",
+            "type": "string",
+            "description": "size of the image in the response. Should be in format 'width'x'height', e.g. 200x300\nOnly width or height could be passed, e.g 200, x300.\n",
+            "name": "size",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resized image"
           }
         }
       }
