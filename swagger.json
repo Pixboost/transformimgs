@@ -38,9 +38,9 @@
         }
       }
     },
-    "/img/resize": {
+    "/img/fit": {
       "get": {
-        "description": "Will preserve aspect ratio of the original image. If you need\nthe exact size then use /fit operation.",
+        "description": "Will resize image and crop it to the size.\nIf you need to resize image with preserved aspect ratio then use /img/resize endpoint.",
         "produces": [
           "image/png",
           "image/jpeg"
@@ -48,8 +48,8 @@
         "tags": [
           "images"
         ],
-        "summary": "Resize and optimize image that passed in the url query param.",
-        "operationId": "resizeImage",
+        "summary": "Resizes image to the exact size and optimizes it.",
+        "operationId": "fitImage",
         "parameters": [
           {
             "type": "string",
@@ -60,6 +60,41 @@
           },
           {
             "pattern": "\\d{1,4}x\\d{1,4}",
+            "type": "string",
+            "description": "size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300\n",
+            "name": "size",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resized image"
+          }
+        }
+      }
+    },
+    "/img/resize": {
+      "get": {
+        "description": "If you need the exact size then use /fit operation.",
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Resize image with preserving aspect ratio and optimizes it.",
+        "operationId": "resizeImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          },
+          {
             "type": "string",
             "description": "size of the image in the response. Should be in format 'width'x'height', e.g. 200x300\nOnly width or height could be passed, e.g 200, x300.\n",
             "name": "size",

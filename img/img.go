@@ -108,9 +108,8 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 
 // swagger:operation GET /img/resize resizeImage
 //
-// Resize and optimize image that passed in the url query param.
-// Will preserve aspect ratio of the original image. If you need
-// the exact size then use /fit operation.
+// Resize image with preserving aspect ratio and optimizes it.
+// If you need the exact size then use /fit operation.
 //
 // ---
 // tags:
@@ -128,7 +127,6 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   required: true
 //   in: query
 //   type: string
-//   pattern: \d{1,4}x\d{1,4}
 //   description: |
 //    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
 //    Only width or height could be passed, e.g 200, x300.
@@ -167,14 +165,35 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Write(result)
 }
 
-//Transforms image that passed in url param and
-//returns the result.
-//Query params:
-// * url - url of the original image. Required.
-// * size - new size of the image. Should be in the width'x'height format.
+// swagger:operation GET /img/fit fitImage
 //
-//Examples:
-// */fit?url=www.site.com/img.png&size=300x200
+// Resizes image to the exact size and optimizes it.
+// Will resize image and crop it to the size.
+// If you need to resize image with preserved aspect ratio then use /img/resize endpoint.
+//
+// ---
+// tags:
+// - images
+// produces:
+// - image/png
+// - image/jpeg
+// parameters:
+// - name: url
+//   required: true
+//   in: query
+//   type: string
+//   description: url of the original image
+// - name: size
+//   required: true
+//   in: query
+//   type: string
+//   pattern: \d{1,4}x\d{1,4}
+//   description: |
+//    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+//
+// responses:
+//   '200':
+//     description: Resized image
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
 	size := getQueryParam(req.URL, "size")
