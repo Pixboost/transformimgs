@@ -1,26 +1,31 @@
 # TransformImgs
 
 [![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
+[![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/dpokidov/transformimgs/)
 
 Image transformations service.
 
 The first iteration goal:
 
-* Provide HTTP endpoints to predefined operations implemented using [imagemagick](http://imagemagick.org) CLI.
+* Provide API to predefined operations implemented using [imagemagick](http://imagemagick.org) CLI.
 
-# Usage
+## Table of Contents
 
-You can explore [API docs](http://docs.pixboost.com/api/index.html). Authorize using 
-API key `MTg4MjMxMzM3MA__` and then you'll be able to use any images from pixabay.com.
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+- [Contribute](#contribute)
+- [License](#license)
 
-# Requirements
+## Install
 
-* Go 1.7+
-* [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
-* [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
-* Installed [imagemagick](http://imagemagick.org)
+Using docker:
 
-# Running
+```
+$ docker pull dpokidov/transformimgs
+```
+
+## Usage
 
 ```
 $ docker run -p 8080:8080 dpokidov/transformimgs
@@ -28,31 +33,58 @@ $ docker run -p 8080:8080 dpokidov/transformimgs
 
 To test that application started successfully:
 
-`http://localhost:8080/health`
+`$ curl http://localhost:8080/health`
 
 You should get 'OK' string in the response.
 
-## Running the application locally from sources##
+At the moment application provides 3 operations that accessible through HTTP:
+
+* /img - optimises image
+* /img/resize - resizes image
+* /img/fit - resize image to the exact size by resizing and cropping it
+
+Detailed API docs is here - http://docs.pixboost.com/api/index.html
+
+### Running the application locally from sources
 
 ```
 $ docker-compose up
 ```
 
-## Building and Running from sources ##
+### Building and Running from sources 
+
+Dependencies:
+
+* Go 1.7+
+* [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
+* [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
+* Installed [imagemagick](http://imagemagick.org)
+
 ```
 $ go get github.com/tools/godep
 $ go get github.com/dooman87/transformimgs
 $ cd $GOPATH/src/github.com/dooman87/transformimgs
 $ godep restore
-$ go run cmd/main.go -logtostderr=true -imConvert=/usr/bin/convert
+$ go run cmd/main.go -imConvert=/usr/bin/convert
 ```
 
-# Swagger docs generation #
+## API
 
-[Go-swagger](https://goswagger.io) is used to generate swagger.json file from comments. To generate:
+You can go through [API docs](http://docs.pixboost.com/api/index.html) and try it out there as well. Use 
+API key `MTg4MjMxMzM3MA__` to use with any images from pixabay.com.
+
+[Go-swagger](https://goswagger.io) is used to generate swagger.json file from sources. To generate:
 
 ```
 $ go get -u github.com/go-swagger/go-swagger/cmd/swagger
 $ cd cmd/
 $ swagger generate spec -o ../swagger.json
 ```
+
+## Contribute
+
+Shout out with any ideas. PRs are more than welcome.
+
+## License
+
+[MIT](./LICENSE)
