@@ -1,10 +1,8 @@
-// Images transformation API
+// Images transformations API
 //
 // The purpose of this API is to provide a set of
 // endpoints that will transform and optimise images.
-// Then it's become easy to use the API with <img> tag.
-// It's can be accessed directly through HTTP interface as
-// well.
+// Then it becomes easy to use the API with <img> and <picture> tags in web development.
 //
 // Version: 1
 // Schemes: http

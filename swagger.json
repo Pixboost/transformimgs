@@ -4,8 +4,8 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it's become easy to use the API with \u003cimg\u003e tag.\nIt's can be accessed directly through HTTP interface as\nwell.",
-    "title": "Images transformation API",
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it becomes easy to use the API with \u003cimg\u003e and \u003cpicture\u003e tags in web development.",
+    "title": "Images transformations API",
     "version": "1"
   },
   "host": "pixboost.com",
@@ -20,7 +20,7 @@
         "tags": [
           "images"
         ],
-        "summary": "Optimises image that passed in url query param and returns the result.",
+        "summary": "Optimises image from the given url.",
         "operationId": "optimiseImage",
         "parameters": [
           {
@@ -33,7 +33,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Optimised image"
+            "description": "Optimised image in the same format as original."
           }
         }
       }
@@ -48,7 +48,7 @@
         "tags": [
           "images"
         ],
-        "summary": "Resizes image to the exact size and optimizes it.",
+        "summary": "Resize image to the exact size and optimizes it.",
         "operationId": "fitImage",
         "parameters": [
           {
@@ -69,7 +69,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Resized image"
+            "description": "Resized image in the same format as original."
           }
         }
       }
@@ -104,7 +104,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Resized image"
+            "description": "Resized image in the same format as original."
           }
         }
       }

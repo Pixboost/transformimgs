@@ -63,7 +63,7 @@ func (r *Service) GetRouter() *mux.Router {
 
 // swagger:operation GET /img optimiseImage
 //
-// Optimises image that passed in url query param and returns the result.
+// Optimises image from the given url.
 //
 // ---
 // tags:
@@ -79,7 +79,7 @@ func (r *Service) GetRouter() *mux.Router {
 //   description: url of the original image
 // responses:
 //   '200':
-//     description: Optimised image
+//     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
 	if len(imgUrl) == 0 {
@@ -133,7 +133,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //
 // responses:
 //   '200':
-//     description: Resized image
+//     description: Resized image in the same format as original.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
 	size := getQueryParam(req.URL, "size")
@@ -167,7 +167,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 // swagger:operation GET /img/fit fitImage
 //
-// Resizes image to the exact size and optimizes it.
+// Resize image to the exact size and optimizes it.
 // Will resize image and crop it to the size.
 // If you need to resize image with preserved aspect ratio then use /img/resize endpoint.
 //
@@ -193,7 +193,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //
 // responses:
 //   '200':
-//     description: Resized image
+//     description: Resized image in the same format as original.
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getQueryParam(req.URL, "url")
 	size := getQueryParam(req.URL, "size")
