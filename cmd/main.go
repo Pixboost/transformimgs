@@ -1,3 +1,21 @@
+// Images transformations API
+//
+// The purpose of this API is to provide a set of
+// endpoints that will transform and optimise images.
+// Then it becomes easy to use the API with <img> and <picture> tags in web development.
+//
+// Version: 1
+// Schemes: http
+// Host: pixboost.com
+// BasePath: /api/1/
+// Security:
+// - api_key:
+// SecurityDefinitions:
+// - api_key:
+//   type: apiKey
+//   name: auth
+//   in: query
+// swagger:meta
 package main
 
 import (
@@ -10,7 +28,7 @@ import (
 
 func main() {
 	var (
-		im string
+		im    string
 		cache int
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")

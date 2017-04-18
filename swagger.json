@@ -1,0 +1,125 @@
+{
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it becomes easy to use the API with \u003cimg\u003e and \u003cpicture\u003e tags in web development.",
+    "title": "Images transformations API",
+    "version": "1"
+  },
+  "host": "pixboost.com",
+  "basePath": "/api/1/",
+  "paths": {
+    "/img": {
+      "get": {
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Optimises image from the given url.",
+        "operationId": "optimiseImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Optimised image in the same format as original."
+          }
+        }
+      }
+    },
+    "/img/fit": {
+      "get": {
+        "description": "Will resize image and crop it to the size.\nIf you need to resize image with preserved aspect ratio then use /img/resize endpoint.",
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Resize image to the exact size and optimizes it.",
+        "operationId": "fitImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          },
+          {
+            "pattern": "\\d{1,4}x\\d{1,4}",
+            "type": "string",
+            "description": "size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300\n",
+            "name": "size",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resized image in the same format as original."
+          }
+        }
+      }
+    },
+    "/img/resize": {
+      "get": {
+        "description": "If you need the exact size then use /fit operation.",
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Resize image with preserving aspect ratio and optimizes it.",
+        "operationId": "resizeImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "size of the image in the response. Should be in format 'width'x'height', e.g. 200x300\nOnly width or height could be passed, e.g 200, x300.\n",
+            "name": "size",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resized image in the same format as original."
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "auth",
+      "in": "query"
+    }
+  },
+  "security": [
+    {
+      "api_key": []
+    }
+  ]
+}
