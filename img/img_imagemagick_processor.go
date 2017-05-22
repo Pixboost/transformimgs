@@ -2,13 +2,21 @@ package img
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"os/exec"
-	"github.com/pkg/errors"
+	"strconv"
 )
 
 type ImageMagickProcessor struct {
-	convertCmd string
+	convertCmd  string
+	identifyCmd string
+}
+
+type imageInfo struct {
+	format  string
+	quality int
 }
 
 var convertOpts = []string{
@@ -17,16 +25,15 @@ var convertOpts = []string{
 	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
 	"-posterize", "136",
-	"-quality", "82",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",
 	"-define", "png:compression-level=9",
-	"-define", "png:compression-strategy=1",
-	"-define", "png:exclude-chunk=all",
-	"-interlace", "Plane",
+	"-define", "png:compression-strategy=0",
+	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
 	"-strip",
+	"+profile", "*",
 }
 
 var cutToFitOpts = []string{
@@ -34,20 +41,30 @@ var cutToFitOpts = []string{
 }
 
 //Creates new imagemagick processor. im is a path to
-//ImageMagick executable that must be provided.
-func NewProcessor(im string) (*ImageMagickProcessor, error) {
+//IM convert executable that must be provided.
+//idi is a path to IM identify command.
+func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 	if len(im) == 0 {
 		log.Fatal("Command convert should be set by -imConvert flag")
-		return nil, errors.New("Path to imagemagick executable must be provided")
+		return nil, errors.New("Path to imagemagick convert executable must be provided")
+	}
+	if len(idi) == 0 {
+		log.Fatal("Command identify should be set by -imIdentify flag")
+		return nil, errors.New("Path to imagemagick identify executable must be provided")
 	}
 
 	_, err := exec.LookPath(im)
 	if err != nil {
 		return nil, err
 	}
+	_, err = exec.LookPath(idi)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ImageMagickProcessor{
-		convertCmd: im,
+		convertCmd:  im,
+		identifyCmd: idi,
 	}, nil
 }
 
@@ -77,10 +94,24 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, erro
 }
 
 func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
+	imgInfo, err := p.loadImageInfo(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	output := "-"
+	if imgInfo.format == "PNG" {
+		output = "PNG8:-"
+	}
+	quality := 82
+	if imgInfo.quality > 0 && imgInfo.quality < quality {
+		quality = imgInfo.quality
+	}
+
 	args := make([]string, 0)
-	args = append(args, "-") //Input
+	args = append(args, "-")                               //Input
+	args = append(args, "-quality", strconv.Itoa(quality)) //Input
 	args = append(args, convertOpts...)
-	args = append(args, "-") //Output
+	args = append(args, output) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args)
 }
@@ -104,4 +135,27 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string) 
 	}
 
 	return out.Bytes(), nil
+}
+
+func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader) (*imageInfo, error) {
+	var out, cmderr bytes.Buffer
+	cmd := exec.Command(p.identifyCmd)
+	cmd.Args = append(cmd.Args, "-format", "%m %Q", "-")
+
+	cmd.Stdin = in
+	cmd.Stdout = &out
+	cmd.Stderr = &cmderr
+
+	log.Printf("Running identify command, args '%v'\n", cmd.Args)
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Error executing identify command: %s\n", err.Error())
+		log.Printf("ERROR: %s\n", cmderr.String())
+		return nil, err
+	}
+
+	imageInfo := &imageInfo{}
+	fmt.Sscanf(out.String(), "%s %d", &imageInfo.format, &imageInfo.quality)
+
+	return imageInfo, nil
 }
