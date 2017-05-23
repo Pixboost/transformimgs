@@ -8,8 +8,8 @@
 godep restore
 
 echo 'Running Tests'
-go test ./...
+go test ./... -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
 
 cd cmd/
 echo 'Running Application'
-go run main.go -imConvert=/usr/bin/convert
+go run main.go -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify

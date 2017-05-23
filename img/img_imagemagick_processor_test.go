@@ -1,10 +1,12 @@
 package img_test
 
 import (
+	"flag"
 	"fmt"
 	"github.com/dooman87/transformimgs/img"
 	"io/ioutil"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -25,19 +27,63 @@ type result struct {
 	optSize  int
 }
 
-func TestImageMagickProcessor_Optimise(t *testing.T) {
-	proc, err := img.NewProcessor("c:/Program Files/ImageMagick-7.0.5-Q16/convert", "c:/Program Files/ImageMagick-7.0.5-Q16/identify")
+type transform func(orig []byte) ([]byte, error)
 
+var (
+	proc *img.ImageMagickProcessor
+)
+
+func TestMain(m *testing.M) {
+	var (
+		err     error
+		im      string
+		imIdent string
+	)
+
+	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
+	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
+	flag.Parse()
+
+	proc, err = img.NewProcessor(im, imIdent)
 	if err != nil {
-		t.Errorf("Error while creating image processor: %+v", err)
+		log.Printf("Error while creating image processor: %+v", err)
+		os.Exit(1)
 	}
+	os.Exit(m.Run())
+}
 
+func TestImageMagickProcessor_Optimise(t *testing.T) {
+	imgOpT(t, func(orig []byte) ([]byte, error) {
+		return proc.Optimise(orig)
+	})
+}
+
+func TestImageMagickProcessor_Resize(t *testing.T) {
+	imgOpT(t, func(orig []byte) ([]byte, error) {
+		return proc.Resize(orig, "50")
+	})
+}
+
+func TestImageMagickProcessor_FitToSize(t *testing.T) {
+	imgOpT(t, func(orig []byte) ([]byte, error) {
+		return proc.FitToSize(orig, "50x50")
+	})
+}
+
+func imgOpT(t *testing.T, fn transform) {
 	results := make([]*result, 0)
 	for _, imgFile := range FILES {
 		f := fmt.Sprintf("%s/%s", "./test_files", imgFile)
-		optimisedImg, orig, err := opt(proc, f)
+
+		orig, err := ioutil.ReadFile(f)
 		if err != nil {
-			t.Errorf("Can't optimise file: %+v", err)
+			t.Errorf("Can't read file %s: %+v", f, err)
+		}
+
+		optimisedImg, err := fn(orig)
+
+		if err != nil {
+			t.Errorf("Can't transform file: %+v", err)
 		}
 
 		results = append(results, &result{
@@ -45,7 +91,6 @@ func TestImageMagickProcessor_Optimise(t *testing.T) {
 			origSize: len(orig),
 			optSize:  len(optimisedImg),
 		})
-		//log.Printf("Optimised size: %d, original: %d", len(optimisedImg), len(img))
 		//ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s", imgFile), optimisedImg, 0777)
 
 		if len(optimisedImg) > len(orig) {
@@ -58,13 +103,13 @@ func TestImageMagickProcessor_Optimise(t *testing.T) {
 	}
 }
 
-func opt(proc img.ImgProcessor, file string) ([]byte, []byte, error) {
+func imgOp(file string, f func([]byte) ([]byte, error)) ([]byte, []byte, error) {
 	orig, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, orig, err
 	}
 
-	optimisedImg, err := proc.Optimise(orig)
+	optimisedImg, err := f(orig)
 
 	return optimisedImg, orig, err
 }
