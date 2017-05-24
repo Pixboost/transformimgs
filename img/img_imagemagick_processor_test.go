@@ -58,6 +58,25 @@ func TestImageMagickProcessor_Optimise(t *testing.T) {
 	})
 }
 
+func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
+	f := fmt.Sprintf("%s/%s", "./test_files", "OW20170515_HPHB_B2B2.jpg")
+
+	orig, err := ioutil.ReadFile(f)
+	if err != nil {
+		b.Errorf("Can't read file %s: %+v", f, err)
+	}
+	img.Debug = false
+
+	for i := 0; i < b.N; i++ {
+		_, err = proc.Optimise(orig)
+		if err != nil {
+			b.Errorf("Can't transform file: %+v", err)
+		}
+	}
+
+	img.Debug = true
+}
+
 func TestImageMagickProcessor_Resize(t *testing.T) {
 	imgOpT(t, func(orig []byte) ([]byte, error) {
 		return proc.Resize(orig, "50")
@@ -101,15 +120,4 @@ func imgOpT(t *testing.T, fn transform) {
 	for _, r := range results {
 		log.Printf("%60s | %10d | %10d | %.2f", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
 	}
-}
-
-func imgOp(file string, f func([]byte) ([]byte, error)) ([]byte, []byte, error) {
-	orig, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, orig, err
-	}
-
-	optimisedImg, err := f(orig)
-
-	return optimisedImg, orig, err
 }

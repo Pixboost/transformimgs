@@ -40,6 +40,9 @@ var cutToFitOpts = []string{
 	"-gravity", "center",
 }
 
+//If set then will print all commands to stdout.
+var Debug bool = true
+
 //Creates new imagemagick processor. im is a path to
 //IM convert executable that must be provided.
 //idi is a path to IM identify command.
@@ -136,7 +139,9 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string) 
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
 
-	log.Printf("Running resize command, args '%v'\n", cmd.Args)
+	if Debug {
+		log.Printf("Running resize command, args '%v'\n", cmd.Args)
+	}
 	err := cmd.Run()
 	if err != nil {
 		log.Printf("Error executing convert command: %s\n", err.Error())
@@ -156,7 +161,9 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader) (*imageInfo, erro
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
 
-	log.Printf("Running identify command, args '%v'\n", cmd.Args)
+	if Debug {
+		log.Printf("Running identify command, args '%v'\n", cmd.Args)
+	}
 	err := cmd.Run()
 	if err != nil {
 		log.Printf("Error executing identify command: %s\n", err.Error())
