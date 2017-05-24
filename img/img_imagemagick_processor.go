@@ -113,7 +113,17 @@ func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
 	args = append(args, convertOpts...)
 	args = append(args, output) //Output
 
-	return p.execImagemagick(bytes.NewReader(data), args)
+	result, err := p.execImagemagick(bytes.NewReader(data), args)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(result) > len(data) {
+		log.Printf("WARNING: Optimised size [%d] is more than original [%d], fallback to original", len(result), len(data))
+		result = data
+	}
+
+	return result, nil
 }
 
 func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string) ([]byte, error) {
