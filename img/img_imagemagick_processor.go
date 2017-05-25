@@ -20,8 +20,6 @@ type imageInfo struct {
 }
 
 var convertOpts = []string{
-	"-filter", "Triangle",
-	"-define", "filter:support=2",
 	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
 	"-posterize", "136",
@@ -73,11 +71,16 @@ func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
 func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) {
+	imgInfo, err := p.loadImageInfo(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
 	args = append(args, convertOpts...)
-	args = append(args, "-") //Output
+	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args)
 }
@@ -85,13 +88,18 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) 
 // Resize input image to exact size with cropping everything that out of the bounds.
 // Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
 func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, error) {
+	imgInfo, err := p.loadImageInfo(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
-	args = append(args, "-") //Output
+	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args)
 }
@@ -101,20 +109,16 @@ func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	output := "-"
-	if imgInfo.format == "PNG" {
-		output = "PNG8:-"
-	}
 	quality := 82
 	if imgInfo.quality > 0 && imgInfo.quality < quality {
 		quality = imgInfo.quality
 	}
 
 	args := make([]string, 0)
-	args = append(args, "-")                               //Input
-	args = append(args, "-quality", strconv.Itoa(quality)) //Input
+	args = append(args, "-") //Input
+	args = append(args, "-quality", strconv.Itoa(quality))
 	args = append(args, convertOpts...)
-	args = append(args, output) //Output
+	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args)
 	if err != nil {
@@ -175,4 +179,13 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader) (*imageInfo, erro
 	fmt.Sscanf(out.String(), "%s %d", &imageInfo.format, &imageInfo.quality)
 
 	return imageInfo, nil
+}
+
+func getOutputFormat(inf *imageInfo) string {
+	output := "-"
+	if inf.format == "PNG" {
+		output = "PNG8:-"
+	}
+
+	return output
 }
