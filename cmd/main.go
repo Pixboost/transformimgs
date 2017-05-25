@@ -28,15 +28,17 @@ import (
 
 func main() {
 	var (
-		im    string
-		cache int
+		im      string
+		imIdent string
+		cache   int
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
+	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
 	flag.IntVar(&cache, "cache", 86400,
 		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
 	flag.Parse()
 
-	p, err := img.NewProcessor(im)
+	p, err := img.NewProcessor(im, imIdent)
 	if err != nil {
 		log.Fatalf("Can't create image magic processor: %+v", err)
 	}

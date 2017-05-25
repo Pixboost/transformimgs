@@ -14,4 +14,4 @@ WORKDIR /usr/local/go/src/github.com/dooman87/transformimgs/
 RUN godep restore
 
 WORKDIR /usr/local/go/src/github.com/dooman87/transformimgs/cmd
-ENTRYPOINT ["go", "run", "main.go", "-imConvert=/usr/bin/convert"]
+ENTRYPOINT ["go", "run", "main.go", "-imConvert=/usr/bin/convert", "-imIdentify=/usr/bin/identify"]

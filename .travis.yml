@@ -2,3 +2,7 @@ language: go
 
 go:
   - 1.7
+script: go test ./... -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y imagemagick
