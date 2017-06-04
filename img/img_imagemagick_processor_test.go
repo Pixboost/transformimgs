@@ -18,6 +18,7 @@ var (
 		"otto-funhouse.jpg",
 		"OW20170515_HPHB_B2B2.jpg",
 		"OW20170515_HPHB_B2C4.jpg",
+		"Monochrome_CategoryImage2.png",
 	}
 )
 
@@ -110,7 +111,7 @@ func imgOpT(t *testing.T, fn transform) {
 			origSize: len(orig),
 			optSize:  len(optimisedImg),
 		})
-		//ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s", imgFile), optimisedImg, 0777)
+		ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s", imgFile), optimisedImg, 0777)
 
 		if len(optimisedImg) > len(orig) {
 			t.Errorf("Image %s is not optimised", f)
