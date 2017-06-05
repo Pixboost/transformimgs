@@ -22,6 +22,7 @@ type imageInfo struct {
 var convertOpts = []string{
 	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
+	"-colors", "256",
 	"-posterize", "136",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",

@@ -18,6 +18,7 @@ var (
 		"otto-funhouse.jpg",
 		"OW20170515_HPHB_B2B2.jpg",
 		"OW20170515_HPHB_B2C4.jpg",
+		"Monochrome_CategoryImage2.png",
 	}
 )
 
