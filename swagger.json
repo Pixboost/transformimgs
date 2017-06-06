@@ -38,6 +38,33 @@
         }
       }
     },
+    "/img/asis": {
+      "get": {
+        "description": "Respond with original image without any modifications",
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "operationId": "asisImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the image",
+            "name": "url",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requested image."
+          }
+        }
+      }
+    },
     "/img/fit": {
       "get": {
         "description": "Will resize image and crop it to the size.\nIf you need to resize image with preserved aspect ratio then use /img/resize endpoint.",
