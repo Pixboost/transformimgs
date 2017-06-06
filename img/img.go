@@ -56,6 +56,7 @@ func (r *Service) GetRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/img/resize", http.HandlerFunc(r.ResizeUrl))
 	router.HandleFunc("/img/fit", http.HandlerFunc(r.FitToSizeUrl))
+	router.HandleFunc("/img/asis", http.HandlerFunc(r.AsIs))
 	router.HandleFunc("/img", http.HandlerFunc(r.OptimiseUrl))
 
 	return router
@@ -225,6 +226,45 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	r.addHeaders(resp, result)
+	resp.Write(result)
+}
+
+// swagger:operation GET /img/asis asisImage
+//
+// Respond with original image without any modifications
+//
+// ---
+// tags:
+// - images
+// produces:
+// - image/png
+// - image/jpeg
+// parameters:
+// - name: url
+//   required: true
+//   in: query
+//   type: string
+//   description: url of the image
+//
+// responses:
+//   '200':
+//     description: Requested image.
+func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
+	imgUrl := getQueryParam(req.URL, "url")
+	if len(imgUrl) == 0 {
+		http.Error(resp, "url param is required", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Requested image %s as is\n", imgUrl)
+
+	result, err := r.Reader.Read(imgUrl)
+	if err != nil {
+		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
