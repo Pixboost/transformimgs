@@ -22,7 +22,6 @@ type imageInfo struct {
 var convertOpts = []string{
 	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
-	"-colors", "256",
 	"-posterize", "136",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",
@@ -81,6 +80,7 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string) ([]byte, error) 
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
 	args = append(args, convertOpts...)
+	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args)
@@ -100,6 +100,7 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string) ([]byte, erro
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
+	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args)
@@ -119,6 +120,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte) ([]byte, error) {
 	args = append(args, "-") //Input
 	args = append(args, "-quality", strconv.Itoa(quality))
 	args = append(args, convertOpts...)
+	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo)) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args)
@@ -189,4 +191,14 @@ func getOutputFormat(inf *imageInfo) string {
 	}
 
 	return output
+}
+
+func getConvertFormatOptions(inf *imageInfo) []string {
+	if inf.format == "PNG" {
+		return []string{
+			"-colors", "256",
+		}
+	}
+
+	return []string{}
 }
