@@ -19,6 +19,7 @@ var (
 		"OW20170515_HPHB_B2B2.jpg",
 		"OW20170515_HPHB_B2C4.jpg",
 		"Monochrome_CategoryImage2.png",
+		"otto-brights-stationery.jpg",
 	}
 )
 
@@ -111,6 +112,7 @@ func imgOpT(t *testing.T, fn transform) {
 			origSize: len(orig),
 			optSize:  len(optimisedImg),
 		})
+		//Writes converted file for manual verification.
 		//ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s", imgFile), optimisedImg, 0777)
 
 		if len(optimisedImg) > len(orig) {

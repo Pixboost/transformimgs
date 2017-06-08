@@ -16,6 +16,7 @@ The first iteration goal:
 - [API](#api)
 - [Contribute](#contribute)
 - [License](#license)
+- [TODO](#todo)
 
 ## Install
 
@@ -37,11 +38,12 @@ To test that application started successfully:
 
 You should get 'OK' string in the response.
 
-At the moment application provides 3 operations that accessible through HTTP:
+At the moment application provides 4 operations that accessible through HTTP endpoints:
 
 * /img - optimises image
 * /img/resize - resizes image
 * /img/fit - resize image to the exact size by resizing and cropping it
+* /img/asis - returns original image
 
 Detailed API docs is here - http://docs.pixboost.com/api/index.html
 
@@ -88,3 +90,7 @@ Shout out with any ideas. PRs are more than welcome.
 ## License
 
 [MIT](./LICENSE)
+
+## Todo
+
+* Consider using [Zopfli](https://github.com/google/zopfli) for PNGs
