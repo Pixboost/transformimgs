@@ -24,6 +24,7 @@ import (
 	"github.com/dooman87/transformimgs/img"
 	"log"
 	"net/http"
+	"runtime"
 )
 
 func main() {
@@ -43,7 +44,8 @@ func main() {
 		log.Fatalf("Can't create image magic processor: %+v", err)
 	}
 
-	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache)
+	img.CacheTTL = cache
+	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache, runtime.NumCPU()*2)
 	if err != nil {
 		log.Fatalf("Can't create image service: %+v", err)
 	}

@@ -8,7 +8,11 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"sync"
 )
+
+//Number of seconds that will be written to max-age HTTP header
+var CacheTTL int
 
 //Reads image from a given source
 type ImgReader interface {
@@ -39,17 +43,51 @@ type ImgProcessor interface {
 }
 
 type Service struct {
-	Reader    ImgReader
-	Processor ImgProcessor
-	cache     int
+	Reader      ImgReader
+	Processor   ImgProcessor
+	OpChans     []chan *Operation
+	currProc    int
+	currProcMux sync.Mutex
+	cache       int
 }
 
-func NewService(r ImgReader, p ImgProcessor, cacheSec int) (*Service, error) {
-	return &Service{
+type ImgOp func([]byte) ([]byte, error)
+type ImgResizeOp func([]byte, string) ([]byte, error)
+
+type Operation struct {
+	ImgOp        ImgOp
+	ImgResizeOp  ImgResizeOp
+	In           []byte
+	Size         string
+	Resp         http.ResponseWriter
+	Result       []byte
+	FinishedCond *sync.Cond
+	Finished     bool
+	Err          error
+}
+
+func NewService(r ImgReader, p ImgProcessor, cacheSec int, procNum int) (*Service, error) {
+	if procNum <= 0 {
+		return nil, fmt.Errorf("procNum must be positive, but got [%d]", procNum)
+	}
+
+	fmt.Printf("Creating new service with [%d] number of processors\n", procNum)
+
+	srv := &Service{
 		Reader:    r,
 		Processor: p,
 		cache:     cacheSec,
-	}, nil
+		OpChans:   make([]chan *Operation, procNum),
+	}
+
+	for i := 0; i < procNum; i++ {
+		c := make(chan *Operation)
+		go proc(c)
+		srv.OpChans[i] = c
+	}
+	srv.currProc = 0
+
+	return srv, nil
 }
 
 func (r *Service) GetRouter() *mux.Router {
@@ -96,15 +134,11 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := r.Processor.Optimise(input)
-
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.addHeaders(resp, result)
-	resp.Write(result)
+	r.execOp(&Operation{
+		ImgOp: r.Processor.Optimise,
+		In:    input,
+		Resp:  resp,
+	})
 }
 
 // swagger:operation GET /img/resize resizeImage
@@ -155,15 +189,12 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := r.Processor.Resize(input, size)
-
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.addHeaders(resp, result)
-	resp.Write(result)
+	r.execOp(&Operation{
+		ImgResizeOp: r.Processor.Resize,
+		In:          input,
+		Size:        size,
+		Resp:        resp,
+	})
 }
 
 // swagger:operation GET /img/fit fitImage
@@ -222,15 +253,12 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := r.Processor.FitToSize(input, size)
-
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error transforming image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.addHeaders(resp, result)
-	resp.Write(result)
+	r.execOp(&Operation{
+		ImgResizeOp: r.Processor.FitToSize,
+		In:          input,
+		Size:        size,
+		Resp:        resp,
+	})
 }
 
 // swagger:operation GET /img/asis asisImage
@@ -266,16 +294,42 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
+	} else {
+		r.execOp(&Operation{
+			Result: result,
+			Resp:   resp,
+		})
 	}
+}
 
-	r.addHeaders(resp, result)
-	resp.Write(result)
+func (r *Service) execOp(op *Operation) {
+	op.FinishedCond = sync.NewCond(&sync.Mutex{})
+
+	//Adding operation to the next channel
+	r.currProcMux.Lock()
+	r.currProc++
+	if r.currProc == len(r.OpChans) {
+		r.currProc = 0
+	}
+	procIdx := r.currProc
+	r.currProcMux.Unlock()
+
+	r.OpChans[procIdx] <- op
+
+	//Waiting for operation to finish
+	op.FinishedCond.L.Lock()
+	for !op.Finished {
+		op.FinishedCond.Wait()
+	}
+	op.FinishedCond.L.Unlock()
+
+	writeResult(op)
 }
 
 //Adds Content-Length and Cache-Control headers
-func (r *Service) addHeaders(resp http.ResponseWriter, body []byte) {
+func addHeaders(resp http.ResponseWriter, body []byte) {
 	resp.Header().Add("Content-Length", strconv.Itoa(len(body)))
-	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", r.cache))
+	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
 }
 
 func getQueryParam(url *url.URL, name string) string {
@@ -283,4 +337,28 @@ func getQueryParam(url *url.URL, name string) string {
 		return url.Query()[name][0]
 	}
 	return ""
+}
+
+func proc(opChan chan *Operation) {
+	for op := range opChan {
+		if op.Result == nil {
+			if op.ImgResizeOp != nil {
+				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size)
+			} else if op.ImgOp != nil {
+				op.Result, op.Err = op.ImgOp(op.In)
+			}
+		}
+		op.Finished = true
+		op.FinishedCond.Signal()
+	}
+}
+
+func writeResult(op *Operation) {
+	if op.Err != nil {
+		http.Error(op.Resp, fmt.Sprintf("Error transforming image: '%s'", op.Err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	addHeaders(op.Resp, op.Result)
+	op.Resp.Write(op.Result)
 }
