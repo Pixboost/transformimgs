@@ -32,11 +32,13 @@ func main() {
 		im      string
 		imIdent string
 		cache   int
+		procNum int
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
 	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
 	flag.IntVar(&cache, "cache", 86400,
 		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
+	flag.IntVar(&procNum, "proc", runtime.NumCPU()*2, "Number of images processors to run. Defaults to number of CPU * 2")
 	flag.Parse()
 
 	p, err := img.NewProcessor(im, imIdent)
@@ -45,7 +47,7 @@ func main() {
 	}
 
 	img.CacheTTL = cache
-	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache, runtime.NumCPU()*2)
+	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache, procNum)
 	if err != nil {
 		log.Fatalf("Can't create image service: %+v", err)
 	}
