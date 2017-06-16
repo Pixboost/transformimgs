@@ -1,0 +1,16 @@
+version: '2'
+services:
+  transformimgs:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.dev
+    volumes:
+      - ./:/usr/local/go/src/github.com/dooman87/transformimgs
+    ports:
+      - "8080:8080"
+  nginx:
+    image: nginx:1.13.1-alpine
+    volumes:
+      - ./img/test_files:/usr/share/nginx/html:ro
+    ports:
+      - "9090:80"

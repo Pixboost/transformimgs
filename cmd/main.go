@@ -24,6 +24,7 @@ import (
 	"github.com/dooman87/transformimgs/img"
 	"log"
 	"net/http"
+	"runtime"
 )
 
 func main() {
@@ -31,11 +32,13 @@ func main() {
 		im      string
 		imIdent string
 		cache   int
+		procNum int
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
 	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
 	flag.IntVar(&cache, "cache", 86400,
 		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
+	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.Parse()
 
 	p, err := img.NewProcessor(im, imIdent)
@@ -43,7 +46,8 @@ func main() {
 		log.Fatalf("Can't create image magic processor: %+v", err)
 	}
 
-	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache)
+	img.CacheTTL = cache
+	srv, err := img.NewService(&img.ImgUrlReader{}, p, procNum)
 	if err != nil {
 		log.Fatalf("Can't create image service: %+v", err)
 	}

@@ -45,7 +45,7 @@ At the moment application provides 4 operations that accessible through HTTP end
 * /img/fit - resize image to the exact size by resizing and cropping it
 * /img/asis - returns original image
 
-Detailed API docs is here - http://docs.pixboost.com/api/index.html
+Detailed API docs are here - http://docs.pixboost.com/api/index.html
 
 ### Running the application locally from sources
 
@@ -68,6 +68,18 @@ $ go get github.com/dooman87/transformimgs
 $ cd $GOPATH/src/github.com/dooman87/transformimgs
 $ godep restore
 $ go run cmd/main.go -imConvert=/usr/bin/convert
+```
+
+### Perfomance tests
+
+There is a JMeter performance test that you can run against a service. To make it run
+* Run performance test environment:
+```
+$ docker-compose -f docker-compose-perf-test.yml up
+```
+* Run JMeter test:
+```
+$ jmeter -n -t perf-test.jmx -l ./results.jmx -e -o ./results
 ```
 
 ## API
