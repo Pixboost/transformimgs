@@ -38,7 +38,7 @@ func main() {
 	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
 	flag.IntVar(&cache, "cache", 86400,
 		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
-	flag.IntVar(&procNum, "proc", runtime.NumCPU()*2, "Number of images processors to run. Defaults to number of CPU * 2")
+	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.Parse()
 
 	p, err := img.NewProcessor(im, imIdent)
