@@ -188,7 +188,7 @@ func TestService_AsIs(t *testing.T) {
 
 func createService(t *testing.T) *img.Service {
 	img.CacheTTL = 86400
-	s, err := img.NewService(&readerMock{}, &resizerMock{}, 86400, 1)
+	s, err := img.NewService(&readerMock{}, &resizerMock{}, 1)
 	if err != nil {
 		t.Fatalf("Error while creating service: %+v", err)
 		return nil

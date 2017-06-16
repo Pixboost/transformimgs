@@ -48,7 +48,6 @@ type Service struct {
 	OpChans     []chan *Operation
 	currProc    int
 	currProcMux sync.Mutex
-	cache       int
 }
 
 type ImgOp func([]byte) ([]byte, error)
@@ -66,7 +65,7 @@ type Operation struct {
 	Err          error
 }
 
-func NewService(r ImgReader, p ImgProcessor, cacheSec int, procNum int) (*Service, error) {
+func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 	if procNum <= 0 {
 		return nil, fmt.Errorf("procNum must be positive, but got [%d]", procNum)
 	}
@@ -76,7 +75,6 @@ func NewService(r ImgReader, p ImgProcessor, cacheSec int, procNum int) (*Servic
 	srv := &Service{
 		Reader:    r,
 		Processor: p,
-		cache:     cacheSec,
 		OpChans:   make([]chan *Operation, procNum),
 	}
 

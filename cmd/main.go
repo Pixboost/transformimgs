@@ -47,7 +47,7 @@ func main() {
 	}
 
 	img.CacheTTL = cache
-	srv, err := img.NewService(&img.ImgUrlReader{}, p, cache, procNum)
+	srv, err := img.NewService(&img.ImgUrlReader{}, p, procNum)
 	if err != nil {
 		log.Fatalf("Can't create image service: %+v", err)
 	}
