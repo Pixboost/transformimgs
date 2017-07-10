@@ -14,6 +14,7 @@ var (
 	FILES = []string{
 		"HT_Paper.png",
 		"HT_Stationery.png",
+		"HT_Printers.png",
 		"JBBAKUMBBK_baku_medium_back_chair_black.jpg",
 		"otto-funhouse.jpg",
 		"OW20170515_HPHB_B2B2.jpg",
