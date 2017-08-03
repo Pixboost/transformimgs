@@ -1,4 +1,4 @@
-FROM golang:1.7-alpine
+FROM golang:1.7-alpine3.6
 
 #Installing imagemagick
 RUN apk add --no-cache imagemagick git

@@ -20,6 +20,7 @@ var (
 		"OW20170515_HPHB_B2C4.jpg",
 		"Monochrome_CategoryImage2.png",
 		"otto-brights-stationery.jpg",
+		"ollie.png",
 	}
 )
 

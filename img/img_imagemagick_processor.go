@@ -186,9 +186,6 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader) (*imageInfo, erro
 
 func getOutputFormat(inf *imageInfo) string {
 	output := "-"
-	if inf.format == "PNG" {
-		output = "PNG8:-"
-	}
 
 	return output
 }
