@@ -12,4 +12,4 @@ go test ./... -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
 
 cd cmd/
 echo 'Running Application'
-go run main.go -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
+go run main.go -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify $@

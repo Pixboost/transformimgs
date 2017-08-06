@@ -11,21 +11,21 @@ import (
 
 type resizerMock struct{}
 
-func (r *resizerMock) Resize(data []byte, size string) ([]byte, error) {
+func (r *resizerMock) Resize(data []byte, size string, imgId string) ([]byte, error) {
 	if string(data) == "321" && size == "300x200" {
 		return []byte("123"), nil
 	}
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) FitToSize(data []byte, size string) ([]byte, error) {
+func (r *resizerMock) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
 	if string(data) == "321" && size == "300x200" {
 		return []byte("123"), nil
 	}
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) Optimise(data []byte) ([]byte, error) {
+func (r *resizerMock) Optimise(data []byte, imgId string) ([]byte, error) {
 	if string(data) == "321" {
 		return []byte("123"), nil
 	}
