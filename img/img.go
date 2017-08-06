@@ -31,15 +31,15 @@ type ImgProcessor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string) ([]byte, error)
+	Resize(data []byte, size string, imageId string) ([]byte, error)
 
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
 	//For example, 300x400
-	FitToSize(data []byte, size string) ([]byte, error)
+	FitToSize(data []byte, size string, imageId string) ([]byte, error)
 
 	//Optimises given image to reduce size.
-	Optimise(data []byte) ([]byte, error)
+	Optimise(data []byte, imageId string) ([]byte, error)
 }
 
 type Service struct {
@@ -50,13 +50,14 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type ImgOp func([]byte) ([]byte, error)
-type ImgResizeOp func([]byte, string) ([]byte, error)
+type ImgOp func([]byte, string) ([]byte, error)
+type ImgResizeOp func([]byte, string, string) ([]byte, error)
 
 type Operation struct {
 	ImgOp        ImgOp
 	ImgResizeOp  ImgResizeOp
 	In           []byte
+	ImgId        string
 	Size         string
 	Resp         http.ResponseWriter
 	Result       []byte
@@ -134,6 +135,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 
 	r.execOp(&Operation{
 		ImgOp: r.Processor.Optimise,
+		ImgId: imgUrl,
 		In:    input,
 		Resp:  resp,
 	})
@@ -190,6 +192,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	r.execOp(&Operation{
 		ImgResizeOp: r.Processor.Resize,
 		In:          input,
+		ImgId:       imgUrl,
 		Size:        size,
 		Resp:        resp,
 	})
@@ -254,6 +257,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	r.execOp(&Operation{
 		ImgResizeOp: r.Processor.FitToSize,
 		In:          input,
+		ImgId:       imgUrl,
 		Size:        size,
 		Resp:        resp,
 	})
@@ -295,6 +299,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	} else {
 		r.execOp(&Operation{
 			Result: result,
+			ImgId:  imgUrl,
 			Resp:   resp,
 		})
 	}
@@ -303,7 +308,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 func (r *Service) execOp(op *Operation) {
 	op.FinishedCond = sync.NewCond(&sync.Mutex{})
 
-	//Adding operation to the next channel
+	//Get the next execution channel
 	r.currProcMux.Lock()
 	r.currProc++
 	if r.currProc == len(r.OpChans) {
@@ -312,6 +317,7 @@ func (r *Service) execOp(op *Operation) {
 	procIdx := r.currProc
 	r.currProcMux.Unlock()
 
+	//Adding operation to the execution channel
 	r.OpChans[procIdx] <- op
 
 	//Waiting for operation to finish
@@ -341,9 +347,9 @@ func proc(opChan chan *Operation) {
 	for op := range opChan {
 		if op.Result == nil {
 			if op.ImgResizeOp != nil {
-				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size)
+				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size, op.ImgId)
 			} else if op.ImgOp != nil {
-				op.Result, op.Err = op.ImgOp(op.In)
+				op.Result, op.Err = op.ImgOp(op.In, op.ImgId)
 			}
 		}
 		op.Finished = true

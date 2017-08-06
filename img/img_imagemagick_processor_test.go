@@ -30,7 +30,7 @@ type result struct {
 	optSize  int
 }
 
-type transform func(orig []byte) ([]byte, error)
+type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
 	proc *img.ImageMagickProcessor
@@ -56,8 +56,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestImageMagickProcessor_Optimise(t *testing.T) {
-	imgOpT(t, func(orig []byte) ([]byte, error) {
-		return proc.Optimise(orig)
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Optimise(orig, imgId)
 	})
 }
 
@@ -71,7 +71,7 @@ func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
 	img.Debug = false
 
 	for i := 0; i < b.N; i++ {
-		_, err = proc.Optimise(orig)
+		_, err = proc.Optimise(orig, f)
 		if err != nil {
 			b.Errorf("Can't transform file: %+v", err)
 		}
@@ -81,14 +81,14 @@ func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
 }
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
-	imgOpT(t, func(orig []byte) ([]byte, error) {
-		return proc.Resize(orig, "50")
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Resize(orig, "50", imgId)
 	})
 }
 
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
-	imgOpT(t, func(orig []byte) ([]byte, error) {
-		return proc.FitToSize(orig, "50x50")
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.FitToSize(orig, "50x50", imgId)
 	})
 }
 
@@ -102,7 +102,7 @@ func imgOpT(t *testing.T, fn transform) {
 			t.Errorf("Can't read file %s: %+v", f, err)
 		}
 
-		optimisedImg, err := fn(orig)
+		optimisedImg, err := fn(orig, f)
 
 		if err != nil {
 			t.Errorf("Can't transform file: %+v", err)
