@@ -42,12 +42,13 @@ func (r *readerMock) Read(url string) ([]byte, error) {
 }
 
 func TestService_ResizeUrl(t *testing.T) {
-	test.Service = createService(t).ResizeUrl
+	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
+
 
 	testCases := []test.TestCase{
 		{
-			Url:         "http://localhost/img?url=http://site.com/img.png&size=300x200",
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200",
 			Description: "Success",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
@@ -57,22 +58,17 @@ func TestService_ResizeUrl(t *testing.T) {
 			},
 		},
 		{
-			Url:          "http://localhost/img?size=300x200",
-			ExpectedCode: http.StatusBadRequest,
-			Description:  "Param url is required",
-		},
-		{
-			Url:          "http://localhost/img?url=http://site.com/img.png",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/resize",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Param size is required",
 		},
 		{
-			Url:          "http://localhost/img?url=NO_SUCH_IMAGE&size=300x200",
+			Url:          "http://localhost/img/NO_SUCH_IMAGE/resize?size=300x200",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
 		},
 		{
-			Url:          "http://localhost/img?url=http://site.com/img.png&size=BADSIZE",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=BADSIZE",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Resize error",
 		},
@@ -82,12 +78,12 @@ func TestService_ResizeUrl(t *testing.T) {
 }
 
 func TestService_FitToSizeUrl(t *testing.T) {
-	test.Service = createService(t).FitToSizeUrl
+	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
 	testCases := []test.TestCase{
 		{
-			Url:         "http://localhost/fit?url=http://site.com/img.png&size=300x200",
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200",
 			Description: "Success",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
@@ -97,29 +93,24 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			},
 		},
 		{
-			Url:          "http://localhost/fit?size=300x200",
-			ExpectedCode: http.StatusBadRequest,
-			Description:  "Param url is required",
-		},
-		{
-			Url:          "http://localhost/fit?url=http://site.com/img.png",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Param size is required",
 		},
 		{
-			Url:          "http://localhost/fit?url=NO_SUCH_IMAGE&size=300x200",
+			Url:          "http://localhost/img/NO_SUCH_IMAGE/fit?size=300x200",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
 		},
 		{
-			Url:          "http://localhost/fit?url=http://site.com/img.png&size=BADSIZE",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=BADSIZE",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Size param should be in format WxH",
 		},
 		{
-			Url:          "http://localhost/fit?url=http://site.com/img.png&size=300",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300",
 			ExpectedCode: http.StatusBadRequest,
-			Description:  "Size param should be in format WxH",
+			Description:  "2 - Size param should be in format WxH",
 		},
 	}
 
@@ -127,12 +118,12 @@ func TestService_FitToSizeUrl(t *testing.T) {
 }
 
 func TestService_OptimiseUrl(t *testing.T) {
-	test.Service = createService(t).OptimiseUrl
+	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
 	testCases := []test.TestCase{
 		{
-			Url:         "http://localhost/img?url=http://site.com/img.png",
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise",
 			Description: "Success",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
@@ -142,12 +133,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 			},
 		},
 		{
-			Url:          "http://localhost/img",
-			ExpectedCode: http.StatusBadRequest,
-			Description:  "Param url is required",
-		},
-		{
-			Url:          "http://localhost/fit?url=NO_SUCH_IMAGE",
+			Url:          "http://localhost/img/NO_SUCH_IMAGE/optimise",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
 		},
@@ -157,12 +143,12 @@ func TestService_OptimiseUrl(t *testing.T) {
 }
 
 func TestService_AsIs(t *testing.T) {
-	test.Service = createService(t).AsIs
+	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
 	testCases := []test.TestCase{
 		{
-			Url:         "http://localhost/asis?url=http://site.com/img.png",
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/asis",
 			Description: "Success",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
@@ -172,12 +158,7 @@ func TestService_AsIs(t *testing.T) {
 			},
 		},
 		{
-			Url:          "http://localhost/img",
-			ExpectedCode: http.StatusBadRequest,
-			Description:  "Param url is required",
-		},
-		{
-			Url:          "http://localhost/fit?url=NO_SUCH_IMAGE",
+			Url:          "http://localhost/img/NO_SUCH_IMAGE/asis",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
 		},

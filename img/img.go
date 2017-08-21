@@ -90,11 +90,11 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 }
 
 func (r *Service) GetRouter() *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/img/resize", http.HandlerFunc(r.ResizeUrl))
-	router.HandleFunc("/img/fit", http.HandlerFunc(r.FitToSizeUrl))
-	router.HandleFunc("/img/asis", http.HandlerFunc(r.AsIs))
-	router.HandleFunc("/img", http.HandlerFunc(r.OptimiseUrl))
+	router := mux.NewRouter().SkipClean(true)
+	router.HandleFunc("/img/{imgUrl:.*}/resize", http.HandlerFunc(r.ResizeUrl))
+	router.HandleFunc("/img/{imgUrl:.*}/fit", http.HandlerFunc(r.FitToSizeUrl))
+	router.HandleFunc("/img/{imgUrl:.*}/asis", http.HandlerFunc(r.AsIs))
+	router.HandleFunc("/img/{imgUrl:.*}/optimise", http.HandlerFunc(r.OptimiseUrl))
 
 	return router
 }
@@ -119,7 +119,7 @@ func (r *Service) GetRouter() *mux.Router {
 //   '200':
 //     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
@@ -170,7 +170,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -228,7 +228,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -284,7 +284,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Requested image.
 func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
