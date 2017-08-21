@@ -99,7 +99,7 @@ func (r *Service) GetRouter() *mux.Router {
 	return router
 }
 
-// swagger:operation GET /img optimiseImage
+// swagger:operation GET /img/{imgUrl}/optimise optimiseImage
 //
 // Optimises image from the given url.
 //
@@ -110,9 +110,9 @@ func (r *Service) GetRouter() *mux.Router {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // responses:
@@ -141,7 +141,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/resize resizeImage
+// swagger:operation GET /img/{imgUrl}/resize resizeImage
 //
 // Resize image with preserving aspect ratio and optimizes it.
 // If you need the exact size then use /fit operation.
@@ -153,9 +153,9 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // - name: size
@@ -198,7 +198,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/fit fitImage
+// swagger:operation GET /img/{imgUrl}/fit fitImage
 //
 // Resize image to the exact size and optimizes it.
 // Will resize image and crop it to the size.
@@ -211,9 +211,9 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // - name: size
@@ -263,7 +263,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/asis asisImage
+// swagger:operation GET /img/{imgUrl}/asis asisImage
 //
 // Respond with original image without any modifications
 //
@@ -274,9 +274,9 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the image
 //

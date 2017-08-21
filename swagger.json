@@ -11,34 +11,7 @@
   "host": "pixboost.com",
   "basePath": "/api/1/",
   "paths": {
-    "/img": {
-      "get": {
-        "produces": [
-          "image/png",
-          "image/jpeg"
-        ],
-        "tags": [
-          "images"
-        ],
-        "summary": "Optimises image from the given url.",
-        "operationId": "optimiseImage",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "url of the original image",
-            "name": "url",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Optimised image in the same format as original."
-          }
-        }
-      }
-    },
-    "/img/asis": {
+    "/img/{imgUrl}/asis": {
       "get": {
         "description": "Respond with original image without any modifications",
         "produces": [
@@ -53,8 +26,8 @@
           {
             "type": "string",
             "description": "url of the image",
-            "name": "url",
-            "in": "query",
+            "name": "imgUrl",
+            "in": "path",
             "required": true
           }
         ],
@@ -65,7 +38,7 @@
         }
       }
     },
-    "/img/fit": {
+    "/img/{imgUrl}/fit": {
       "get": {
         "description": "Will resize image and crop it to the size.\nIf you need to resize image with preserved aspect ratio then use /img/resize endpoint.",
         "produces": [
@@ -81,8 +54,8 @@
           {
             "type": "string",
             "description": "url of the original image",
-            "name": "url",
-            "in": "query",
+            "name": "imgUrl",
+            "in": "path",
             "required": true
           },
           {
@@ -101,7 +74,34 @@
         }
       }
     },
-    "/img/resize": {
+    "/img/{imgUrl}/optimise": {
+      "get": {
+        "produces": [
+          "image/png",
+          "image/jpeg"
+        ],
+        "tags": [
+          "images"
+        ],
+        "summary": "Optimises image from the given url.",
+        "operationId": "optimiseImage",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "url of the original image",
+            "name": "imgUrl",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Optimised image in the same format as original."
+          }
+        }
+      }
+    },
+    "/img/{imgUrl}/resize": {
       "get": {
         "description": "If you need the exact size then use /fit operation.",
         "produces": [
@@ -117,8 +117,8 @@
           {
             "type": "string",
             "description": "url of the original image",
-            "name": "url",
-            "in": "query",
+            "name": "imgUrl",
+            "in": "path",
             "required": true
           },
           {

@@ -11,10 +11,10 @@
 // Security:
 // - api_key:
 // SecurityDefinitions:
-// - api_key:
-//   type: apiKey
-//   name: auth
-//   in: query
+//   api_key:
+//     type: apiKey
+//     name: auth
+//     in: query
 // swagger:meta
 package main
 
