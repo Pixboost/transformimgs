@@ -3,11 +3,8 @@
 [![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/dpokidov/transformimgs/)
 
-Image transformations service.
-
-The first iteration goal:
-
-* Provide API to predefined operations implemented using [imagemagick](http://imagemagick.org) CLI.
+Image transformations web service. Provides Http API to image 
+manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
 
 ## Table of Contents
 
