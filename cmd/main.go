@@ -11,10 +11,10 @@
 // Security:
 // - api_key:
 // SecurityDefinitions:
-// - api_key:
-//   type: apiKey
-//   name: auth
-//   in: query
+//   api_key:
+//     type: apiKey
+//     name: auth
+//     in: query
 // swagger:meta
 package main
 
@@ -52,9 +52,9 @@ func main() {
 		log.Fatalf("Can't create image service: %+v", err)
 	}
 
-	http.HandleFunc("/health", health.Health)
-	http.Handle("/", srv.GetRouter())
+	router := srv.GetRouter()
+	router.HandleFunc("/health", health.Health)
 
 	log.Println("Running the applicaiton on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

@@ -3,11 +3,8 @@
 [![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/dpokidov/transformimgs/)
 
-Image transformations service.
-
-The first iteration goal:
-
-* Provide API to predefined operations implemented using [imagemagick](http://imagemagick.org) CLI.
+Image transformations web service. Provides Http API to image 
+manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
 
 ## Table of Contents
 
@@ -40,10 +37,10 @@ You should get 'OK' string in the response.
 
 At the moment application provides 4 operations that accessible through HTTP endpoints:
 
-* /img - optimises image
-* /img/resize - resizes image
-* /img/fit - resize image to the exact size by resizing and cropping it
-* /img/asis - returns original image
+* /img/{IMG_URL}/optimise - optimises image
+* /img/{IMG_URL}/resize - resizes image
+* /img/{IMG_URL}/fit - resize image to the exact size by resizing and cropping it
+* /img/{IMG_URL}/asis - returns original image
 
 Detailed API docs are here - http://docs.pixboost.com/api/index.html
 

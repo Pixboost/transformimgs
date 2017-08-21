@@ -90,16 +90,16 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 }
 
 func (r *Service) GetRouter() *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/img/resize", http.HandlerFunc(r.ResizeUrl))
-	router.HandleFunc("/img/fit", http.HandlerFunc(r.FitToSizeUrl))
-	router.HandleFunc("/img/asis", http.HandlerFunc(r.AsIs))
-	router.HandleFunc("/img", http.HandlerFunc(r.OptimiseUrl))
+	router := mux.NewRouter().SkipClean(true)
+	router.HandleFunc("/img/{imgUrl:.*}/resize", http.HandlerFunc(r.ResizeUrl))
+	router.HandleFunc("/img/{imgUrl:.*}/fit", http.HandlerFunc(r.FitToSizeUrl))
+	router.HandleFunc("/img/{imgUrl:.*}/asis", http.HandlerFunc(r.AsIs))
+	router.HandleFunc("/img/{imgUrl:.*}/optimise", http.HandlerFunc(r.OptimiseUrl))
 
 	return router
 }
 
-// swagger:operation GET /img optimiseImage
+// swagger:operation GET /img/{imgUrl}/optimise optimiseImage
 //
 // Optimises image from the given url.
 //
@@ -110,16 +110,16 @@ func (r *Service) GetRouter() *mux.Router {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // responses:
 //   '200':
 //     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
@@ -141,7 +141,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/resize resizeImage
+// swagger:operation GET /img/{imgUrl}/resize resizeImage
 //
 // Resize image with preserving aspect ratio and optimizes it.
 // If you need the exact size then use /fit operation.
@@ -153,9 +153,9 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // - name: size
@@ -170,7 +170,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -198,7 +198,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/fit fitImage
+// swagger:operation GET /img/{imgUrl}/fit fitImage
 //
 // Resize image to the exact size and optimizes it.
 // Will resize image and crop it to the size.
@@ -211,9 +211,9 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the original image
 // - name: size
@@ -228,7 +228,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -263,7 +263,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// swagger:operation GET /img/asis asisImage
+// swagger:operation GET /img/{imgUrl}/asis asisImage
 //
 // Respond with original image without any modifications
 //
@@ -274,9 +274,9 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 // - image/png
 // - image/jpeg
 // parameters:
-// - name: url
+// - name: imgUrl
 //   required: true
-//   in: query
+//   in: path
 //   type: string
 //   description: url of the image
 //
@@ -284,7 +284,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Requested image.
 func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getQueryParam(req.URL, "url")
+	imgUrl := mux.Vars(req)["imgUrl"]
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
