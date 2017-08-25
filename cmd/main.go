@@ -4,10 +4,10 @@
 // endpoints that will transform and optimise images.
 // Then it becomes easy to use the API with <img> and <picture> tags in web development.
 //
-// Version: 1
-// Schemes: http
+// Version: 2
+// Schemes: https
 // Host: pixboost.com
-// BasePath: /api/1/
+// BasePath: /api/2/
 // Security:
 // - api_key:
 // SecurityDefinitions:

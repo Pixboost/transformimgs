@@ -1,15 +1,15 @@
 {
   "schemes": [
-    "http"
+    "https"
   ],
   "swagger": "2.0",
   "info": {
     "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it becomes easy to use the API with \u003cimg\u003e and \u003cpicture\u003e tags in web development.",
     "title": "Images transformations API",
-    "version": "1"
+    "version": "2"
   },
   "host": "pixboost.com",
-  "basePath": "/api/1/",
+  "basePath": "/api/2/",
   "paths": {
     "/img/{imgUrl}/asis": {
       "get": {
