@@ -1,7 +1,7 @@
 # TransformImgs
 
 [![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
-[![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/dpokidov/transformimgs/)
+[![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
 
 Image transformations web service. Provides Http API to image 
 manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
