@@ -20,13 +20,13 @@ manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
 Using docker:
 
 ```
-$ docker pull dpokidov/transformimgs
+$ docker pull pixboost/transformimgs
 ```
 
 ## Usage
 
 ```
-$ docker run -p 8080:8080 dpokidov/transformimgs
+$ docker run -p 8080:8080 pixboost/transformimgs
 ```
 
 To test that application started successfully:
