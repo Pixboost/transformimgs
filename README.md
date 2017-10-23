@@ -81,7 +81,7 @@ $ jmeter -n -t perf-test.jmx -l ./results.jmx -e -o ./results
 
 ## API
 
-You can go through [API docs](http://docs.pixboost.com/api/index.html) and try it out there as well. Use 
+You can go through [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
 API key `MTg4MjMxMzM3MA__` to transform any images from pixabay.com.
 
 [Go-swagger](https://goswagger.io) is used to generate swagger.json file from sources. To generate:
