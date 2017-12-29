@@ -61,8 +61,8 @@ Dependencies:
 
 ```
 $ go get github.com/golang/dep/cmd/dep
-$ go get github.com/dooman87/transformimgs
-$ cd $GOPATH/src/github.com/dooman87/transformimgs
+$ go get github.com/Pixboost/transformimgs
+$ cd $GOPATH/src/github.com/Pixboost/transformimgs
 $ ./run.sh 
 ```
 
