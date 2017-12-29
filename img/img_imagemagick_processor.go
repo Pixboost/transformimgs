@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
-	"log"
 	"os/exec"
 	"strconv"
 )
@@ -46,12 +45,12 @@ var Debug bool = true
 //idi is a path to IM identify command.
 func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 	if len(im) == 0 {
-		log.Fatal("Command convert should be set by -imConvert flag")
-		return nil, errors.New("Path to imagemagick convert executable must be provided")
+		Log.Error("Command convert should be set by -imConvert flag")
+		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
 	}
 	if len(idi) == 0 {
-		log.Fatal("Command identify should be set by -imIdentify flag")
-		return nil, errors.New("Path to imagemagick identify executable must be provided")
+		Log.Error("Command identify should be set by -imIdentify flag")
+		return nil, fmt.Errorf("Path to imagemagick identify executable must be provided")
 	}
 
 	_, err := exec.LookPath(im)
@@ -129,7 +128,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, erro
 	}
 
 	if len(result) > len(data) {
-		log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
+		Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
 		result = data
 	}
 
@@ -147,12 +146,12 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, 
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
+		Log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
-		log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
+		Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
+		Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
 		return nil, err
 	}
 
@@ -169,12 +168,12 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
+		Log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
-		log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
+		Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
+		Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
 		return nil, err
 	}
 

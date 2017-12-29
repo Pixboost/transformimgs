@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dooman87/transformimgs/img"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 )
@@ -49,7 +48,7 @@ func TestMain(m *testing.M) {
 
 	proc, err = img.NewProcessor(im, imIdent)
 	if err != nil {
-		log.Printf("Error while creating image processor: %+v", err)
+		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(1)
 	}
 	os.Exit(m.Run())
@@ -122,6 +121,6 @@ func imgOpT(t *testing.T, fn transform) {
 	}
 
 	for _, r := range results {
-		log.Printf("%60s | %10d | %10d | %.2f", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
+		fmt.Printf("%60s | %10d | %10d | %.2f", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
 	}
 }
