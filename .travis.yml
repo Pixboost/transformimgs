@@ -14,4 +14,4 @@ before_install:
   - chmod +x $GOPATH/bin/dep
 install:
   - dep ensure -v
-  - ls
+  - ls vendor/github.com/dooman87
