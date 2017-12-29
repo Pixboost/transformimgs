@@ -3,7 +3,6 @@ package img
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"os/exec"
 	"strconv"
 )
