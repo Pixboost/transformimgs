@@ -3,7 +3,7 @@ package img_test
 import (
 	"flag"
 	"fmt"
-	"github.com/dooman87/transformimgs/img"
+	"github.com/Pixboost/transformimgs/img"
 	"io/ioutil"
 	"os"
 	"testing"
