@@ -1,6 +1,6 @@
 # TransformImgs
 
-[![Build Status](https://travis-ci.org/dooman87/transformimgs.svg?branch=master)](https://travis-ci.org/dooman87/transformimgs)
+[![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/dpokidov/transformimgs/)
 
 Image transformations web service. Provides Http API to image 
@@ -54,17 +54,16 @@ $ docker-compose up
 
 Dependencies:
 
-* Go 1.7+
+* Go 1.8+
 * [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
 * [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
 * Installed [imagemagick](http://imagemagick.org)
 
 ```
-$ go get github.com/tools/godep
+$ go get github.com/golang/dep/cmd/dep
 $ go get github.com/dooman87/transformimgs
 $ cd $GOPATH/src/github.com/dooman87/transformimgs
-$ godep restore
-$ go run cmd/main.go -imConvert=/usr/bin/convert
+$ ./run.sh 
 ```
 
 ### Perfomance tests
