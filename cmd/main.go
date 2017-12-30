@@ -21,10 +21,10 @@ package main
 import (
 	"flag"
 	"github.com/dooman87/kolibri/health"
-	"github.com/dooman87/transformimgs/img"
-	"log"
+	"github.com/Pixboost/transformimgs/img"
 	"net/http"
 	"runtime"
+	"os"
 )
 
 func main() {
@@ -43,18 +43,26 @@ func main() {
 
 	p, err := img.NewProcessor(im, imIdent)
 	if err != nil {
-		log.Fatalf("Can't create image magic processor: %+v", err)
+		img.Log.Errorf("Can't create image magic processor: %+v", err)
+		os.Exit(1)
 	}
 
 	img.CacheTTL = cache
 	srv, err := img.NewService(&img.ImgUrlReader{}, p, procNum)
 	if err != nil {
-		log.Fatalf("Can't create image service: %+v", err)
+		img.Log.Errorf("Can't create image service: %+v", err)
+		os.Exit(2)
 	}
 
 	router := srv.GetRouter()
 	router.HandleFunc("/health", health.Health)
 
-	log.Println("Running the applicaiton on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	img.Log.Printf("Running the applicaiton on port 8080...\n")
+	err = http.ListenAndServe(":8080", router)
+
+	if err != nil {
+		img.Log.Errorf("Error while stopping application: %+v", err)
+		os.Exit(3)
+	}
+	os.Exit(0)
 }

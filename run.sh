@@ -5,10 +5,10 @@
 # script to run the application inside docker
 # container.
 
-godep restore
+dep ensure
 
 echo 'Running Tests'
-go test ./... -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
+go test $(go list ./... | grep -v /vendor/) -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
 
 cd cmd/
 echo 'Running Application'

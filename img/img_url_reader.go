@@ -1,7 +1,6 @@
 package img
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,8 +16,8 @@ func (r *ImgUrlReader) Read(url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("Expected %d but got code %d.\n Error '%s'",
-			http.StatusOK, resp.StatusCode, resp.Status))
+		return nil, fmt.Errorf("Expected %d but got code %d.\n Error '%s'",
+			http.StatusOK, resp.StatusCode, resp.Status)
 	}
 
 	result, err := ioutil.ReadAll(resp.Body)

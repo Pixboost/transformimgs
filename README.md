@@ -54,17 +54,17 @@ $ docker-compose up
 
 Dependencies:
 
-* Go 1.7+
+* Go 1.8+
 * [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
 * [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
+* [glogi](https://github.com/dooman87/glogi) for logging interface
 * Installed [imagemagick](http://imagemagick.org)
 
 ```
-$ go get github.com/tools/godep
-$ go get github.com/dooman87/transformimgs
-$ cd $GOPATH/src/github.com/dooman87/transformimgs
-$ godep restore
-$ go run cmd/main.go -imConvert=/usr/bin/convert
+$ go get github.com/golang/dep/cmd/dep
+$ go get github.com/Pixboost/transformimgs
+$ cd $GOPATH/src/github.com/Pixboost/transformimgs
+$ ./run.sh 
 ```
 
 ### Perfomance tests
@@ -103,3 +103,4 @@ Shout out with any ideas. PRs are more than welcome.
 ## Todo
 
 * Consider using [Zopfli](https://github.com/google/zopfli) for PNGs
+* Add SVG support

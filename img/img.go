@@ -3,16 +3,20 @@ package img
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"sync"
+	"github.com/dooman87/glogi"
 )
 
 //Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
+
+//Log writer that can be overrided. Should implement interface glogi.Logger.
+// By default is using glogi.SimpleLogger.
+var Log glogi.Logger = glogi.NewSimpleLogger()
 
 //Reads image from a given source
 type ImgReader interface {
@@ -71,7 +75,7 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 		return nil, fmt.Errorf("procNum must be positive, but got [%d]", procNum)
 	}
 
-	fmt.Printf("Creating new service with [%d] number of processors\n", procNum)
+	Log.Printf("Creating new service with [%d] number of processors\n", procNum)
 
 	srv := &Service{
 		Reader:    r,
@@ -125,7 +129,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("Optimising image %s\n", imgUrl)
+	Log.Printf("Optimising image %s\n", imgUrl)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -181,7 +185,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("Resizing image %s to %s\n", imgUrl, size)
+	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -240,13 +244,13 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	}
 	if match, err := regexp.MatchString(`^\d*[x]\d*$`, size); !match || err != nil {
 		if err != nil {
-			log.Printf("Error while matching size: %s\n", err.Error())
+			Log.Printf("Error while matching size: %s\n", err.Error())
 		}
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
 
-	log.Printf("Fit image %s to size %s\n", imgUrl, size)
+	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
 	input, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -290,7 +294,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Printf("Requested image %s as is\n", imgUrl)
+	Log.Printf("Requested image %s as is\n", imgUrl)
 
 	result, err := r.Reader.Read(imgUrl)
 	if err != nil {

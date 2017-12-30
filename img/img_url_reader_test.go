@@ -1,7 +1,7 @@
 package img_test
 
 import (
-	"github.com/dooman87/transformimgs/img"
+	"github.com/Pixboost/transformimgs/img"
 	"net/http"
 	"net/http/httptest"
 	"testing"
