@@ -14,6 +14,8 @@ import (
 //Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
 
+//Log writer that can be overrided. Should implement interface glogi.Logger.
+// By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
 //Reads image from a given source
