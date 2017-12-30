@@ -32,7 +32,3 @@
 [[constraint]]
   name = "github.com/gorilla/mux"
   version = "1.3.0"
-
-[[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.7.1"

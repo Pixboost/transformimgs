@@ -57,6 +57,7 @@ Dependencies:
 * Go 1.8+
 * [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
 * [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
+* [glogi](https://github.com/dooman87/glogi) for logging interface
 * Installed [imagemagick](http://imagemagick.org)
 
 ```
@@ -102,3 +103,4 @@ Shout out with any ideas. PRs are more than welcome.
 ## Todo
 
 * Consider using [Zopfli](https://github.com/google/zopfli) for PNGs
+* Add SVG support
