@@ -5,6 +5,6 @@ services:
       context: ./
       dockerfile: ./Dockerfile.dev
     volumes:
-      - ./:/usr/local/go/src/github.com/Pixboost/transformimgs
+      - ./:/go/src/github.com/Pixboost/transformimgs
     ports:
       - "8080:8080"
