@@ -109,14 +109,17 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	quality := 82
-	if imgInfo.quality > 0 && imgInfo.quality < quality {
-		quality = imgInfo.quality
+	quality := -1
+	//Only changing quality if it wasn't set in original image
+	if imgInfo.quality == 100 {
+		quality = 82
 	}
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	args = append(args, "-quality", strconv.Itoa(quality))
+	if quality > 0 {
+		args = append(args, "-quality", strconv.Itoa(quality))
+	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo)) //Output

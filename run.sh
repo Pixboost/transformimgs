@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # Fetching and installing all dependencies
 # and running server on port 8080. Using this
 # script to run the application inside docker
