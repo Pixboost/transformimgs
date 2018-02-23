@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"net/url"
 )
 
 type resizerMock struct{}
@@ -58,6 +59,22 @@ func TestService_ResizeUrl(t *testing.T) {
 			},
 		},
 		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/resize?size=300x200", t),
+				Header: map[string][]string {
+					"X-Forwarded-Proto": {"http"},
+				},
+			},
+			Description: "X-Forwarded-Proto",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/resize",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Param size is required",
@@ -85,6 +102,22 @@ func TestService_FitToSizeUrl(t *testing.T) {
 		{
 			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200",
 			Description: "Success",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/fit?size=300x200", t),
+				Header: map[string][]string {
+					"X-Forwarded-Proto": {"http"},
+				},
+			},
+			Description: "X-Forwarded-Proto",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
@@ -133,6 +166,22 @@ func TestService_OptimiseUrl(t *testing.T) {
 			},
 		},
 		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/optimise", t),
+				Header: map[string][]string {
+					"X-Forwarded-Proto": {"http"},
+				},
+			},
+			Description: "X-Forwarded-Proto",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
 			Url:          "http://localhost/img/NO_SUCH_IMAGE/optimise",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
@@ -158,6 +207,22 @@ func TestService_AsIs(t *testing.T) {
 			},
 		},
 		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/asis", t),
+				Header: map[string][]string {
+					"X-Forwarded-Proto": {"http"},
+				},
+			},
+			Description: "X-Forwarded-Proto",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
 			Url:          "http://localhost/img/NO_SUCH_IMAGE/asis",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
@@ -175,4 +240,13 @@ func createService(t *testing.T) *img.Service {
 		return nil
 	}
 	return s
+}
+
+func parseUrl(strUrl string, t *testing.T) *url.URL {
+	u, err := url.Parse(strUrl)
+	if err != nil {
+		t.Fatalf("Error while creating URL from [%s]: %v", strUrl, err)
+		return nil
+	}
+	return u
 }

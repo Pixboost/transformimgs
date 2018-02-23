@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"github.com/dooman87/glogi"
+	"strings"
 )
 
 //Number of seconds that will be written to max-age HTTP header
@@ -123,7 +124,7 @@ func (r *Service) GetRouter() *mux.Router {
 //   '200':
 //     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := mux.Vars(req)["imgUrl"]
+	imgUrl := getImgUrl(req)
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
@@ -174,7 +175,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := mux.Vars(req)["imgUrl"]
+	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -232,7 +233,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image in the same format as original.
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := mux.Vars(req)["imgUrl"]
+	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
@@ -288,7 +289,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Requested image.
 func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := mux.Vars(req)["imgUrl"]
+	imgUrl := getImgUrl(req)
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
@@ -345,6 +346,19 @@ func getQueryParam(url *url.URL, name string) string {
 		return url.Query()[name][0]
 	}
 	return ""
+}
+
+func getImgUrl(req *http.Request) string {
+	imgUrl := mux.Vars(req)["imgUrl"]
+	if len(imgUrl) == 0 {
+		return ""
+	}
+
+	if strings.HasPrefix(imgUrl, "//") && len(req.Header["X-Forwarded-Proto"]) == 1 {
+		imgUrl = fmt.Sprintf("%s:%s", req.Header["X-Forwarded-Proto"][0], imgUrl)
+	}
+
+	return imgUrl
 }
 
 func proc(opChan chan *Operation) {
