@@ -42,7 +42,7 @@ At the moment application provides 4 operations that accessible through HTTP end
 * /img/{IMG_URL}/fit - resize image to the exact size by resizing and cropping it
 * /img/{IMG_URL}/asis - returns original image
 
-Detailed API docs are here - http://docs.pixboost.com/api/index.html
+Detailed API docs are here - https://pixboost.com/docs/api/
 
 ### Running the application locally from sources
 
