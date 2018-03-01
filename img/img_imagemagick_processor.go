@@ -15,6 +15,7 @@ type ImageMagickProcessor struct {
 type imageInfo struct {
 	format  string
 	quality int
+	opaque bool
 }
 
 var convertOpts = []string{
@@ -163,7 +164,7 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, 
 func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
-	cmd.Args = append(cmd.Args, "-format", "%m %Q", "-")
+	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque]", "-")
 
 	cmd.Stdin = in
 	cmd.Stdout = &out
@@ -180,7 +181,7 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	}
 
 	imageInfo := &imageInfo{}
-	fmt.Sscanf(out.String(), "%s %d", &imageInfo.format, &imageInfo.quality)
+	fmt.Sscanf(out.String(), "%s %d %t", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque)
 
 	return imageInfo, nil
 }
@@ -192,7 +193,7 @@ func getOutputFormat(inf *imageInfo) string {
 }
 
 func getConvertFormatOptions(inf *imageInfo) []string {
-	if inf.format == "PNG" {
+	if inf.format == "PNG" && inf.opaque {
 		return []string{
 			"-colors", "256",
 		}
