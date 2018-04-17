@@ -44,7 +44,7 @@ type ImgProcessor interface {
 	FitToSize(data []byte, size string, imageId string) ([]byte, error)
 
 	//Optimises given image to reduce size.
-	Optimise(data []byte, imageId string) ([]byte, error)
+	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
 }
 
 type Service struct {
@@ -55,7 +55,7 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type ImgOp func([]byte, string) ([]byte, error)
+type ImgOp func([]byte, string, []string) ([]byte, error)
 type ImgResizeOp func([]byte, string, string) ([]byte, error)
 
 type Operation struct {
@@ -65,6 +65,7 @@ type Operation struct {
 	ImgId        string
 	Size         string
 	Resp         http.ResponseWriter
+	SupportedFormats []string
 	Result       []byte
 	FinishedCond *sync.Cond
 	Finished     bool
@@ -129,6 +130,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Optimising image %s\n", imgUrl)
 
@@ -143,6 +145,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId: imgUrl,
 		In:    input,
 		Resp:  resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -361,13 +364,22 @@ func getImgUrl(req *http.Request) string {
 	return imgUrl
 }
 
+func getSupportedFormats(req *http.Request) []string {
+	acceptHeader := req.Header["Accept"]
+	if len(acceptHeader) > 0 {
+		return strings.Split(acceptHeader[0], ",")
+	}
+
+	return []string{}
+}
+
 func proc(opChan chan *Operation) {
 	for op := range opChan {
 		if op.Result == nil {
 			if op.ImgResizeOp != nil {
 				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size, op.ImgId)
 			} else if op.ImgOp != nil {
-				op.Result, op.Err = op.ImgOp(op.In, op.ImgId)
+				op.Result, op.Err = op.ImgOp(op.In, op.ImgId, op.SupportedFormats)
 			}
 		}
 		op.Finished = true

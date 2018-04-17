@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 
 func TestImageMagickProcessor_Optimise(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Optimise(orig, imgId)
+		return proc.Optimise(orig, imgId, []string{})
 	})
 }
 
@@ -70,7 +70,7 @@ func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
 	img.Debug = false
 
 	for i := 0; i < b.N; i++ {
-		_, err = proc.Optimise(orig, f)
+		_, err = proc.Optimise(orig, f, []string{})
 		if err != nil {
 			b.Errorf("Can't transform file: %+v", err)
 		}

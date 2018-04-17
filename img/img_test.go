@@ -26,7 +26,16 @@ func (r *resizerMock) FitToSize(data []byte, size string, imgId string) ([]byte,
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) Optimise(data []byte, imgId string) ([]byte, error) {
+func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+	hasWebP := false
+	for _, f := range supportedFormats {
+		if f == "image/webp" {
+			hasWebP = true
+		}
+	}
+	if string(data) == "321" && hasWebP {
+		return []byte("1234"), nil
+	}
 	if string(data) == "321" {
 		return []byte("123"), nil
 	}
@@ -162,6 +171,21 @@ func TestService_OptimiseUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
+				Header: map[string][]string {
+					"Accept": {"image/png,image/webp"},
+				},
+			},
+			Description: "Accept header",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},

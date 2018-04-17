@@ -13,6 +13,6 @@ func (p *DummyProcessor) FitToSize(data []byte, size string, imgId string) ([]by
 }
 
 //Returns original data
-func (p *DummyProcessor) Optimise(data []byte, imgId string) ([]byte, error) {
+func (p *DummyProcessor) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
 	return data, nil
 }

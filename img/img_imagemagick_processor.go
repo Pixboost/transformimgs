@@ -26,6 +26,7 @@ var convertOpts = []string{
 	"-define", "png:compression-filter=5",
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
+	"-define", "webp:method=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -80,7 +81,7 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string) ([
 	args = append(args, "-resize", size)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, []string{})) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
@@ -100,12 +101,12 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, []string{})) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
-func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, error) {
+func (p *ImageMagickProcessor) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -123,7 +124,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, erro
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
 	if err != nil {
@@ -186,17 +187,31 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	return imageInfo, nil
 }
 
-func getOutputFormat(inf *imageInfo) string {
+func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
+	webP := false
+	for _, f := range supportedFormats {
+		if f == "image/webp" {
+			webP = true
+		}
+	}
+
 	output := "-"
+	if webP {
+		output = "webp:-"
+	}
 
 	return output
 }
 
 func getConvertFormatOptions(inf *imageInfo) []string {
-	if inf.format == "PNG" && inf.opaque {
-		return []string{
-			"-colors", "256",
+	if inf.format == "PNG" {
+		opts := []string{
+			"-define", "webp:lossless=true",
 		}
+		if inf.opaque {
+			opts = append(opts, "-colors", "256")
+		}
+		return opts
 	}
 
 	return []string{}
