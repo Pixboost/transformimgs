@@ -2,12 +2,12 @@ package img_test
 
 import (
 	"errors"
-	"github.com/dooman87/kolibri/test"
 	"github.com/Pixboost/transformimgs/img"
+	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"net/url"
+	"testing"
 )
 
 type resizerMock struct{}
@@ -55,7 +55,6 @@ func TestService_ResizeUrl(t *testing.T) {
 	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
-
 	testCases := []test.TestCase{
 		{
 			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200",
@@ -71,7 +70,7 @@ func TestService_ResizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -122,7 +121,7 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -178,7 +177,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"Accept": {"image/png,image/webp"},
 				},
 			},
@@ -193,7 +192,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -234,7 +233,7 @@ func TestService_AsIs(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/asis", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},

@@ -2,14 +2,14 @@ package img
 
 import (
 	"fmt"
+	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
-	"sync"
-	"github.com/dooman87/glogi"
 	"strings"
+	"sync"
 )
 
 //Number of seconds that will be written to max-age HTTP header
@@ -50,7 +50,7 @@ type ImgProcessor interface {
 type Service struct {
 	Reader      ImgReader
 	Processor   ImgProcessor
-	Q [] *Queue
+	Q           []*Queue
 	currProc    int
 	currProcMux sync.Mutex
 }
@@ -82,7 +82,7 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 	srv := &Service{
 		Reader:    r,
 		Processor: p,
-		Q: make([] *Queue, procNum),
+		Q:         make([]*Queue, procNum),
 	}
 
 	for i := 0; i < procNum; i++ {
