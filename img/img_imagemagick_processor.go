@@ -70,7 +70,7 @@ func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -81,14 +81,14 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string) ([
 	args = append(args, "-resize", size)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, []string{})) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
 // Resize input image to exact size with cropping everything that out of the bounds.
 // Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
-func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, []string{})) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
@@ -189,6 +189,7 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 
 func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	webP := false
+	jxr := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" {
 			webP = true
@@ -198,6 +199,8 @@ func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	output := "-"
 	if webP {
 		output = "webp:-"
+	} else if jxr {
+		output = "jxr:-"
 	}
 
 	return output

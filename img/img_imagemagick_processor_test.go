@@ -81,13 +81,13 @@ func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Resize(orig, "50", imgId)
+		return proc.Resize(orig, "50", imgId, []string{})
 	})
 }
 
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.FitToSize(orig, "50x50", imgId)
+		return proc.FitToSize(orig, "50x50", imgId, []string{})
 	})
 }
 

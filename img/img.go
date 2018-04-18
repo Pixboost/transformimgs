@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"net/url"
 	"regexp"
-	"strconv"
 	"sync"
 	"github.com/dooman87/glogi"
+	"net/url"
 	"strings"
+	"strconv"
 )
 
 //Number of seconds that will be written to max-age HTTP header
@@ -36,12 +36,12 @@ type ImgProcessor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string) ([]byte, error)
+	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
 	//For example, 300x400
-	FitToSize(data []byte, size string, imageId string) ([]byte, error)
+	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
 	//Optimises given image to reduce size.
 	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
@@ -56,7 +56,7 @@ type Service struct {
 }
 
 type ImgOp func([]byte, string, []string) ([]byte, error)
-type ImgResizeOp func([]byte, string, string) ([]byte, error)
+type ImgResizeOp func([]byte, string, string, []string) ([]byte, error)
 
 type Operation struct {
 	ImgOp        ImgOp
@@ -139,6 +139,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Operation{
 		ImgOp: r.Processor.Optimise,
@@ -188,6 +189,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
@@ -196,6 +198,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Operation{
 		ImgResizeOp: r.Processor.Resize,
@@ -203,6 +206,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId:       imgUrl,
 		Size:        size,
 		Resp:        resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -253,6 +257,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
@@ -261,6 +266,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Operation{
 		ImgResizeOp: r.Processor.FitToSize,
@@ -268,6 +274,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId:       imgUrl,
 		Size:        size,
 		Resp:        resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -338,6 +345,20 @@ func (r *Service) execOp(op *Operation) {
 	writeResult(op)
 }
 
+func proc(opChan chan *Operation) {
+	for op := range opChan {
+		if op.Result == nil {
+			if op.ImgResizeOp != nil {
+				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size, op.ImgId, op.SupportedFormats)
+			} else if op.ImgOp != nil {
+				op.Result, op.Err = op.ImgOp(op.In, op.ImgId, op.SupportedFormats)
+			}
+		}
+		op.Finished = true
+		op.FinishedCond.Signal()
+	}
+}
+
 //Adds Content-Length and Cache-Control headers
 func addHeaders(resp http.ResponseWriter, body []byte) {
 	resp.Header().Add("Content-Length", strconv.Itoa(len(body)))
@@ -367,24 +388,15 @@ func getImgUrl(req *http.Request) string {
 func getSupportedFormats(req *http.Request) []string {
 	acceptHeader := req.Header["Accept"]
 	if len(acceptHeader) > 0 {
-		return strings.Split(acceptHeader[0], ",")
+		accepts := strings.Split(acceptHeader[0], ",")
+		trimmedAccepts := make([]string, len(accepts))
+		for i, a := range accepts {
+			trimmedAccepts[i] = strings.TrimSpace(a)
+		}
+		return trimmedAccepts
 	}
 
 	return []string{}
-}
-
-func proc(opChan chan *Operation) {
-	for op := range opChan {
-		if op.Result == nil {
-			if op.ImgResizeOp != nil {
-				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size, op.ImgId)
-			} else if op.ImgOp != nil {
-				op.Result, op.Err = op.ImgOp(op.In, op.ImgId, op.SupportedFormats)
-			}
-		}
-		op.Finished = true
-		op.FinishedCond.Signal()
-	}
 }
 
 func writeResult(op *Operation) {
