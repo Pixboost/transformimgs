@@ -2,10 +2,10 @@ package img_test
 
 import (
 	"github.com/Pixboost/transformimgs/img"
+	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"github.com/dooman87/kolibri/test"
 )
 
 func TestReadImg(t *testing.T) {

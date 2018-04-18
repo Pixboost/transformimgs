@@ -20,11 +20,11 @@ package main
 
 import (
 	"flag"
-	"github.com/dooman87/kolibri/health"
 	"github.com/Pixboost/transformimgs/img"
+	"github.com/dooman87/kolibri/health"
 	"net/http"
-	"runtime"
 	"os"
+	"runtime"
 )
 
 func main() {

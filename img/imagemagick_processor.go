@@ -15,7 +15,7 @@ type ImageMagickProcessor struct {
 type imageInfo struct {
 	format  string
 	quality int
-	opaque bool
+	opaque  bool
 }
 
 var convertOpts = []string{
