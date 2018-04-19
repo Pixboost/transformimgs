@@ -5,7 +5,7 @@ env:
 go:
   - 1.8
 
-script: go test $(go list ./... | grep -v /vendor/) -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
+script: go test $(go list ./... | grep -v /vendor/)
 
 before_install:
   - sudo apt-get -qq update
