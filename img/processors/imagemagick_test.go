@@ -45,13 +45,15 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestImageMagickProcessor_Optimise(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Optimise(orig, imgId, []string{})
-	})
+func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
+	benchmarkWithFormats(b, []string{})
 }
 
-func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
+func BenchmarkImageMagickProcessor_Optimise_Webp(b *testing.B) {
+	benchmarkWithFormats(b, []string{"image/webp"})
+}
+
+func benchmarkWithFormats(b *testing.B, formats []string) {
 	f := fmt.Sprintf("%s/%s", "./test_files", "OW20170515_HPHB_B2B2.jpg")
 
 	orig, err := ioutil.ReadFile(f)
@@ -61,13 +63,19 @@ func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
 	processors.Debug = false
 
 	for i := 0; i < b.N; i++ {
-		_, err = proc.Optimise(orig, f, []string{})
+		_, err = proc.Optimise(orig, f, formats)
 		if err != nil {
 			b.Errorf("Can't transform file: %+v", err)
 		}
 	}
 
 	processors.Debug = true
+}
+
+func TestImageMagickProcessor_Optimise(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Optimise(orig, imgId, []string{})
+	})
 }
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
@@ -79,6 +87,24 @@ func TestImageMagickProcessor_Resize(t *testing.T) {
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{})
+	})
+}
+
+func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Optimise(orig, imgId, []string{"image/webp"})
+	})
+}
+
+func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Resize(orig, "50", imgId, []string{"image/webp"})
+	})
+}
+
+func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.FitToSize(orig, "50x50", imgId, []string{"image/webp"})
 	})
 }
 
@@ -112,6 +138,6 @@ func imgOpT(t *testing.T, fn transform) {
 	}
 
 	for _, r := range results {
-		fmt.Printf("%60s | %10d | %10d | %.2f", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
+		fmt.Printf("%60s | %10d | %10d | %.2f\n", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
 	}
 }

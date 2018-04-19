@@ -10,7 +10,7 @@ set -e
 dep ensure
 
 echo 'Running Tests'
-go test $(go list ./... | grep -v /vendor/)
+go test $(go list ./... | grep -v /vendor/) -v -bench .
 
 cd cmd/
 echo 'Running Application'
