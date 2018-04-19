@@ -14,7 +14,7 @@ func TestReadImg(t *testing.T) {
 	}))
 	defer server.Close()
 
-	urlReader := &reader.ImgUrlReader{}
+	urlReader := &reader.Http{}
 
 	r, err := urlReader.Read(server.URL)
 
@@ -30,7 +30,7 @@ func TestReadImgErrorResponseStatus(t *testing.T) {
 	}))
 	defer server.Close()
 
-	urlReader := &reader.ImgUrlReader{}
+	urlReader := &reader.Http{}
 
 	_, err := urlReader.Read(server.URL)
 

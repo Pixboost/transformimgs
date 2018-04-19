@@ -8,7 +8,7 @@ import (
 	"github.com/Pixboost/transformimgs/img"
 )
 
-type ImageMagickProcessor struct {
+type ImageMagick struct {
 	convertCmd  string
 	identifyCmd string
 }
@@ -45,7 +45,7 @@ var Debug bool = true
 //Creates new imagemagick processor. im is a path to
 //IM convert executable that must be provided.
 //idi is a path to IM identify command.
-func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
+func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	if len(im) == 0 {
 		img.Log.Error("Command convert should be set by -imConvert flag")
 		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
@@ -64,14 +64,14 @@ func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 		return nil, err
 	}
 
-	return &ImageMagickProcessor{
+	return &ImageMagick{
 		convertCmd:  im,
 		identifyCmd: idi,
 	}, nil
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string, su
 
 // Resize input image to exact size with cropping everything that out of the bounds.
 // Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
-func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string,
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
-func (p *ImageMagickProcessor) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string, supportedForm
 	return result, nil
 }
 
-func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
+func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.convertCmd)
 
@@ -163,7 +163,7 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, 
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
+func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque]", "-")
