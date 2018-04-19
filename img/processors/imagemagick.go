@@ -1,10 +1,11 @@
-package img
+package processors
 
 import (
 	"bytes"
 	"fmt"
 	"os/exec"
 	"strconv"
+	"github.com/Pixboost/transformimgs/img"
 )
 
 type ImageMagickProcessor struct {
@@ -46,11 +47,11 @@ var Debug bool = true
 //idi is a path to IM identify command.
 func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 	if len(im) == 0 {
-		Log.Error("Command convert should be set by -imConvert flag")
+		img.Log.Error("Command convert should be set by -imConvert flag")
 		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
 	}
 	if len(idi) == 0 {
-		Log.Error("Command identify should be set by -imIdentify flag")
+		img.Log.Error("Command identify should be set by -imIdentify flag")
 		return nil, fmt.Errorf("Path to imagemagick identify executable must be provided")
 	}
 
@@ -132,7 +133,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string, supportedForm
 	}
 
 	if len(result) > len(data) {
-		Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
+		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
 		result = data
 	}
 
@@ -150,12 +151,12 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, 
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		Log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
+		img.Log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
-		Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
+		img.Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
+		img.Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
 		return nil, err
 	}
 
@@ -172,12 +173,12 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		Log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
+		img.Log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
-		Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
+		img.Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
+		img.Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
 		return nil, err
 	}
 
@@ -189,7 +190,6 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 
 func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	webP := false
-	jxr := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" {
 			webP = true
@@ -199,8 +199,6 @@ func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	output := "-"
 	if webP {
 		output = "webp:-"
-	} else if jxr {
-		output = "jxr:-"
 	}
 
 	return output

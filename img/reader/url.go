@@ -1,4 +1,4 @@
-package img
+package reader
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package img
+package processors
 
 type DummyProcessor struct{}
 

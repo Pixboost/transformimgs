@@ -10,7 +10,7 @@ set -e
 dep ensure
 
 echo 'Running Tests'
-go test $(go list ./... | grep -v /vendor/) -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify
+go test $(go list ./... | grep -v /vendor/)
 
 cd cmd/
 echo 'Running Application'
