@@ -72,11 +72,16 @@ $ ./run.sh
 There is a JMeter performance test that you can run against a service. To make it run
 * Run performance test environment:
 ```
-$ docker-compose -f docker-compose-perf-test.yml up
+$ docker-compose -f docker-compose-perf.yml up
 ```
 * Run JMeter test:
 ```
 $ jmeter -n -t perf-test.jmx -l ./results.jmx -e -o ./results
+```
+
+* Run JMeter WebP test:
+```
+$ jmeter -n -t perf-test-webp.jmx -l ./results-webp.jmx -e -o ./results-webp
 ```
 
 ## API
