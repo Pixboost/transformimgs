@@ -1,18 +1,18 @@
 package processors
 
-type DummyProcessor struct{}
+type Dummy struct{}
 
 //Returns original data
-func (p *DummyProcessor) Resize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *Dummy) Resize(data []byte, size string, imgId string) ([]byte, error) {
 	return data, nil
 }
 
 //Returns original data
-func (p *DummyProcessor) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *Dummy) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
 	return data, nil
 }
 
 //Returns original data
-func (p *DummyProcessor) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *Dummy) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
 	return data, nil
 }

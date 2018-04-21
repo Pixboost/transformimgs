@@ -43,14 +43,14 @@ func main() {
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.Parse()
 
-	p, err := processors.NewProcessor(im, imIdent)
+	p, err := processors.NewImageMagick(im, imIdent)
 	if err != nil {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
 		os.Exit(1)
 	}
 
 	img.CacheTTL = cache
-	srv, err := img.NewService(&reader.ImgUrlReader{}, p, procNum)
+	srv, err := img.NewService(&reader.Http{}, p, procNum)
 	if err != nil {
 		img.Log.Errorf("Can't create image service: %+v", err)
 		os.Exit(2)

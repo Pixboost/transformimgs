@@ -31,13 +31,13 @@ type result struct {
 type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
-	proc *processors.ImageMagickProcessor
+	proc *processors.ImageMagick
 )
 
 func TestMain(m *testing.M) {
 	var err error
 
-	proc, err = processors.NewProcessor("/usr/bin/convert", "/usr/bin/identify")
+	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
 	if err != nil {
 		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(1)

@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-type ImgUrlReader struct{}
+type Http struct{}
 
-func (r *ImgUrlReader) Read(url string) ([]byte, error) {
+func (r *Http) Read(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

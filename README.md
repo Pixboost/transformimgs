@@ -8,12 +8,22 @@ manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
 
 ## Table of Contents
 
+- [Features](#features)
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
 - [Contribute](#contribute)
 - [License](#license)
 - [TODO](#todo)
+
+## Features
+
+* Resizes and optimises raster (PNG and JPEG) images.
+* Sets "[Cache-Control](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9)" header in a response. 
+    Cache TTL is configurable through command line flag "-cache".
+* Execution queue that will create number of executors based number of CPUs or can be configured through "-proc" flag.
+* Webp support based on "Accept" header.
+* Supports "[Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44)" header to cache responses based on the output format.
 
 ## Install
 
@@ -35,7 +45,7 @@ To test that application started successfully:
 
 You should get 'OK' string in the response.
 
-At the moment application provides 4 operations that accessible through HTTP endpoints:
+At the moment application provides 4 HTTP endpoints:
 
 * /img/{IMG_URL}/optimise - optimises image
 * /img/{IMG_URL}/resize - resizes image
@@ -106,6 +116,7 @@ Shout out with any ideas. PRs are more than welcome.
 [MIT](./LICENSE)
 
 ## Todo
-
+* Add JpegXR support
+* Add Jpeg 2000 support
 * Consider using [Zopfli](https://github.com/google/zopfli) for PNGs
 * Add SVG support
