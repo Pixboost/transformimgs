@@ -1,13 +1,14 @@
-package img
+package processors
 
 import (
 	"bytes"
 	"fmt"
 	"os/exec"
 	"strconv"
+	"github.com/Pixboost/transformimgs/img"
 )
 
-type ImageMagickProcessor struct {
+type ImageMagick struct {
 	convertCmd  string
 	identifyCmd string
 }
@@ -15,7 +16,7 @@ type ImageMagickProcessor struct {
 type imageInfo struct {
 	format  string
 	quality int
-	opaque bool
+	opaque  bool
 }
 
 var convertOpts = []string{
@@ -26,6 +27,7 @@ var convertOpts = []string{
 	"-define", "png:compression-filter=5",
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
+	"-define", "webp:method=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -43,13 +45,13 @@ var Debug bool = true
 //Creates new imagemagick processor. im is a path to
 //IM convert executable that must be provided.
 //idi is a path to IM identify command.
-func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
+func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	if len(im) == 0 {
-		Log.Error("Command convert should be set by -imConvert flag")
+		img.Log.Error("Command convert should be set by -imConvert flag")
 		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
 	}
 	if len(idi) == 0 {
-		Log.Error("Command identify should be set by -imIdentify flag")
+		img.Log.Error("Command identify should be set by -imIdentify flag")
 		return nil, fmt.Errorf("Path to imagemagick identify executable must be provided")
 	}
 
@@ -62,14 +64,14 @@ func NewProcessor(im string, idi string) (*ImageMagickProcessor, error) {
 		return nil, err
 	}
 
-	return &ImageMagickProcessor{
+	return &ImageMagick{
 		convertCmd:  im,
 		identifyCmd: idi,
 	}, nil
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -80,14 +82,14 @@ func (p *ImageMagickProcessor) Resize(data []byte, size string, imgId string) ([
 	args = append(args, "-resize", size)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
 // Resize input image to exact size with cropping everything that out of the bounds.
 // Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
-func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
+func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -100,12 +102,12 @@ func (p *ImageMagickProcessor) FitToSize(data []byte, size string, imgId string)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
-func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, error) {
+func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -123,7 +125,7 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, erro
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo)) //Output
+	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
 	if err != nil {
@@ -131,14 +133,14 @@ func (p *ImageMagickProcessor) Optimise(data []byte, imgId string) ([]byte, erro
 	}
 
 	if len(result) > len(data) {
-		Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
+		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
 		result = data
 	}
 
 	return result, nil
 }
 
-func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
+func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.convertCmd)
 
@@ -149,19 +151,19 @@ func (p *ImageMagickProcessor) execImagemagick(in *bytes.Reader, args []string, 
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		Log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
+		img.Log.Printf("[%s] Running resize command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
-		Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
+		img.Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
+		img.Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
 		return nil, err
 	}
 
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
+func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque]", "-")
@@ -171,12 +173,12 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	cmd.Stderr = &cmderr
 
 	if Debug {
-		Log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
+		img.Log.Printf("[%s] Running identify command, args '%v'\n", imgId, cmd.Args)
 	}
 	err := cmd.Run()
 	if err != nil {
-		Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
-		Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
+		img.Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
+		img.Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
 		return nil, err
 	}
 
@@ -186,17 +188,31 @@ func (p *ImageMagickProcessor) loadImageInfo(in *bytes.Reader, imgId string) (*i
 	return imageInfo, nil
 }
 
-func getOutputFormat(inf *imageInfo) string {
+func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
+	webP := false
+	for _, f := range supportedFormats {
+		if f == "image/webp" {
+			webP = true
+		}
+	}
+
 	output := "-"
+	if webP {
+		output = "webp:-"
+	}
 
 	return output
 }
 
 func getConvertFormatOptions(inf *imageInfo) []string {
-	if inf.format == "PNG" && inf.opaque {
-		return []string{
-			"-colors", "256",
+	if inf.format == "PNG" {
+		opts := []string{
+			"-define", "webp:lossless=true",
 		}
+		if inf.opaque {
+			opts = append(opts, "-colors", "256")
+		}
+		return opts
 	}
 
 	return []string{}

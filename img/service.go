@@ -2,14 +2,14 @@ package img
 
 import (
 	"fmt"
+	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
-	"sync"
-	"github.com/dooman87/glogi"
 	"strings"
+	"sync"
+	"net/url"
 )
 
 //Number of seconds that will be written to max-age HTTP header
@@ -36,39 +36,40 @@ type ImgProcessor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string) ([]byte, error)
+	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
 	//For example, 300x400
-	FitToSize(data []byte, size string, imageId string) ([]byte, error)
+	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
 	//Optimises given image to reduce size.
-	Optimise(data []byte, imageId string) ([]byte, error)
+	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
 }
 
 type Service struct {
 	Reader      ImgReader
 	Processor   ImgProcessor
-	OpChans     []chan *Operation
+	Q           []*Queue
 	currProc    int
 	currProcMux sync.Mutex
 }
 
-type ImgOp func([]byte, string) ([]byte, error)
-type ImgResizeOp func([]byte, string, string) ([]byte, error)
+type OptimiseCmd func([]byte, string, []string) ([]byte, error)
+type ResizeCmd func([]byte, string, string, []string) ([]byte, error)
 
-type Operation struct {
-	ImgOp        ImgOp
-	ImgResizeOp  ImgResizeOp
-	In           []byte
-	ImgId        string
-	Size         string
-	Resp         http.ResponseWriter
-	Result       []byte
-	FinishedCond *sync.Cond
-	Finished     bool
-	Err          error
+type Command struct {
+	Optimise         OptimiseCmd
+	Resize           ResizeCmd
+	Image            []byte
+	ImgId            string
+	Size             string
+	Resp             http.ResponseWriter
+	SupportedFormats []string
+	Result           []byte
+	FinishedCond     *sync.Cond
+	Finished         bool
+	Err              error
 }
 
 func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
@@ -81,13 +82,11 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 	srv := &Service{
 		Reader:    r,
 		Processor: p,
-		OpChans:   make([]chan *Operation, procNum),
+		Q:         make([]*Queue, procNum),
 	}
 
 	for i := 0; i < procNum; i++ {
-		c := make(chan *Operation)
-		go proc(c)
-		srv.OpChans[i] = c
+		srv.Q[i] = NewQueue()
 	}
 	srv.currProc = 0
 
@@ -129,6 +128,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Optimising image %s\n", imgUrl)
 
@@ -137,12 +137,14 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
-	r.execOp(&Operation{
-		ImgOp: r.Processor.Optimise,
-		ImgId: imgUrl,
-		In:    input,
-		Resp:  resp,
+	r.execOp(&Command{
+		Optimise:         r.Processor.Optimise,
+		ImgId:            imgUrl,
+		Image:            input,
+		Resp:             resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -185,6 +187,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
@@ -193,13 +196,15 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
-	r.execOp(&Operation{
-		ImgResizeOp: r.Processor.Resize,
-		In:          input,
-		ImgId:       imgUrl,
-		Size:        size,
-		Resp:        resp,
+	r.execOp(&Command{
+		Resize: r.Processor.Resize,
+		Image:  input,
+		ImgId:  imgUrl,
+		Size:   size,
+		Resp:   resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -250,6 +255,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
+	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
@@ -258,13 +264,15 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	resp.Header().Add("Vary", "Accept")
 
-	r.execOp(&Operation{
-		ImgResizeOp: r.Processor.FitToSize,
-		In:          input,
-		ImgId:       imgUrl,
-		Size:        size,
-		Resp:        resp,
+	r.execOp(&Command{
+		Resize: r.Processor.FitToSize,
+		Image:  input,
+		ImgId:  imgUrl,
+		Size:   size,
+		Resp:   resp,
+		SupportedFormats: supportedFormats,
 	})
 }
 
@@ -302,7 +310,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	} else {
-		r.execOp(&Operation{
+		r.execOp(&Command{
 			Result: result,
 			ImgId:  imgUrl,
 			Resp:   resp,
@@ -310,29 +318,26 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (r *Service) execOp(op *Operation) {
+func (r *Service) execOp(op *Command) {
 	op.FinishedCond = sync.NewCond(&sync.Mutex{})
 
+	queue := r.getQueue()
+	queue.AddAndWait(op, func() {
+		writeResult(op)
+	})
+}
+
+func (r *Service) getQueue() *Queue {
 	//Get the next execution channel
 	r.currProcMux.Lock()
 	r.currProc++
-	if r.currProc == len(r.OpChans) {
+	if r.currProc == len(r.Q) {
 		r.currProc = 0
 	}
 	procIdx := r.currProc
 	r.currProcMux.Unlock()
 
-	//Adding operation to the execution channel
-	r.OpChans[procIdx] <- op
-
-	//Waiting for operation to finish
-	op.FinishedCond.L.Lock()
-	for !op.Finished {
-		op.FinishedCond.Wait()
-	}
-	op.FinishedCond.L.Unlock()
-
-	writeResult(op)
+	return r.Q[procIdx]
 }
 
 //Adds Content-Length and Cache-Control headers
@@ -361,21 +366,21 @@ func getImgUrl(req *http.Request) string {
 	return imgUrl
 }
 
-func proc(opChan chan *Operation) {
-	for op := range opChan {
-		if op.Result == nil {
-			if op.ImgResizeOp != nil {
-				op.Result, op.Err = op.ImgResizeOp(op.In, op.Size, op.ImgId)
-			} else if op.ImgOp != nil {
-				op.Result, op.Err = op.ImgOp(op.In, op.ImgId)
-			}
+func getSupportedFormats(req *http.Request) []string {
+	acceptHeader := req.Header["Accept"]
+	if len(acceptHeader) > 0 {
+		accepts := strings.Split(acceptHeader[0], ",")
+		trimmedAccepts := make([]string, len(accepts))
+		for i, a := range accepts {
+			trimmedAccepts[i] = strings.TrimSpace(a)
 		}
-		op.Finished = true
-		op.FinishedCond.Signal()
+		return trimmedAccepts
 	}
+
+	return []string{}
 }
 
-func writeResult(op *Operation) {
+func writeResult(op *Command) {
 	if op.Err != nil {
 		http.Error(op.Resp, fmt.Sprintf("Error transforming image: '%s'", op.Err.Error()), http.StatusInternalServerError)
 		return

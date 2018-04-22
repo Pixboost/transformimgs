@@ -2,31 +2,59 @@ package img_test
 
 import (
 	"errors"
-	"github.com/dooman87/kolibri/test"
 	"github.com/Pixboost/transformimgs/img"
+	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"net/url"
+	"testing"
 )
 
 type resizerMock struct{}
 
-func (r *resizerMock) Resize(data []byte, size string, imgId string) ([]byte, error) {
+func hasWebP(supportedFormats []string) bool {
+	hasWebP := false
+	for _, f := range supportedFormats {
+		if f == "image/webp" {
+			hasWebP = true
+		}
+	}
+
+	return hasWebP
+}
+
+func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+	hasWebP := hasWebP(supportedFormats)
+
+	if string(data) == "321" && size == "300x200" && hasWebP {
+		return []byte("1234"), nil
+	}
+
 	if string(data) == "321" && size == "300x200" {
 		return []byte("123"), nil
 	}
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) FitToSize(data []byte, size string, imgId string) ([]byte, error) {
+func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+	hasWebP := hasWebP(supportedFormats)
+
+	if string(data) == "321" && size == "300x200" && hasWebP {
+		return []byte("1234"), nil
+	}
+
 	if string(data) == "321" && size == "300x200" {
 		return []byte("123"), nil
 	}
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) Optimise(data []byte, imgId string) ([]byte, error) {
+func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+	hasWebP := hasWebP(supportedFormats)
+
+	if string(data) == "321" && hasWebP {
+		return []byte("1234"), nil
+	}
 	if string(data) == "321" {
 		return []byte("123"), nil
 	}
@@ -46,7 +74,6 @@ func TestService_ResizeUrl(t *testing.T) {
 	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
-
 	testCases := []test.TestCase{
 		{
 			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200",
@@ -55,6 +82,22 @@ func TestService_ResizeUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
+				Header: map[string][]string {
+					"Accept": {"image/png, image/webp"},
+				},
+			},
+			Description: "Output Formats Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},
@@ -62,7 +105,7 @@ func TestService_ResizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -106,6 +149,22 @@ func TestService_FitToSizeUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
+				Header: map[string][]string {
+					"Accept": {"image/png, image/webp"},
+				},
+			},
+			Description: "Output Formats Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},
@@ -113,7 +172,7 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -162,6 +221,22 @@ func TestService_OptimiseUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
+				Header: map[string][]string {
+					"Accept": {"image/png, image/webp"},
+				},
+			},
+			Description: "Output Formats Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},
@@ -169,7 +244,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
@@ -203,6 +278,7 @@ func TestService_AsIs(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
 				)
 			},
 		},
@@ -210,7 +286,7 @@ func TestService_AsIs(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/asis", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"X-Forwarded-Proto": {"http"},
 				},
 			},

@@ -1,11 +1,11 @@
-package img_test
+package reader_test
 
 import (
-	"github.com/Pixboost/transformimgs/img"
+	"github.com/Pixboost/transformimgs/img/reader"
+	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"github.com/dooman87/kolibri/test"
 )
 
 func TestReadImg(t *testing.T) {
@@ -14,9 +14,9 @@ func TestReadImg(t *testing.T) {
 	}))
 	defer server.Close()
 
-	reader := &img.ImgUrlReader{}
+	urlReader := &reader.Http{}
 
-	r, err := reader.Read(server.URL)
+	r, err := urlReader.Read(server.URL)
 
 	test.Error(t,
 		test.Nil(err, "error"),
@@ -30,9 +30,9 @@ func TestReadImgErrorResponseStatus(t *testing.T) {
 	}))
 	defer server.Close()
 
-	reader := &img.ImgUrlReader{}
+	urlReader := &reader.Http{}
 
-	_, err := reader.Read(server.URL)
+	_, err := urlReader.Read(server.URL)
 
 	test.Error(t,
 		test.NotNil(err, "error"),
