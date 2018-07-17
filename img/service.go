@@ -22,9 +22,8 @@ var Log glogi.Logger = glogi.NewSimpleLogger()
 //Reads image from a given source
 type ImgReader interface {
 	//Reads image from the url.
-	//Returns byte array of the image or
-	//error.
-	Read(url string) ([]byte, error)
+	//Returns byte array of the image and content type or error.
+	Read(url string) ([]byte, string, error)
 }
 
 //Processes images applying different transformations.
@@ -132,7 +131,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Optimising image %s\n", imgUrl)
 
-	input, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -191,7 +190,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
-	input, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -259,7 +258,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
-	input, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -305,11 +304,16 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
-	result, err := r.Reader.Read(imgUrl)
+	result, contentType, err := r.Reader.Read(imgUrl)
+
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	} else {
+		if len(contentType) > 0 {
+			resp.Header().Add("Content-Type", contentType)
+		}
+
 		r.execOp(&Command{
 			Result: result,
 			ImgId:  imgUrl,

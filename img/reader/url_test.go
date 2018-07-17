@@ -10,16 +10,18 @@ import (
 
 func TestReadImg(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "cool/stuff")
 		w.Write([]byte("123"))
 	}))
 	defer server.Close()
 
 	urlReader := &reader.Http{}
 
-	r, err := urlReader.Read(server.URL)
+	r, contentType, err := urlReader.Read(server.URL)
 
 	test.Error(t,
 		test.Nil(err, "error"),
+		test.Equal("cool/stuff", contentType, "content type"),
 		test.Equal("123", string(r), "resulted image"),
 	)
 }
@@ -32,7 +34,7 @@ func TestReadImgErrorResponseStatus(t *testing.T) {
 
 	urlReader := &reader.Http{}
 
-	_, err := urlReader.Read(server.URL)
+	_, _, err := urlReader.Read(server.URL)
 
 	test.Error(t,
 		test.NotNil(err, "error"),
