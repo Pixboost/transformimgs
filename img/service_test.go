@@ -63,11 +63,11 @@ func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []str
 
 type readerMock struct{}
 
-func (r *readerMock) Read(url string) ([]byte, error) {
+func (r *readerMock) Read(url string) ([]byte, string, error) {
 	if url == "http://site.com/img.png" {
-		return []byte("321"), nil
+		return []byte("321"), "image/png", nil
 	}
-	return nil, errors.New("read_error")
+	return nil, "", errors.New("read_error")
 }
 
 func TestService_ResizeUrl(t *testing.T) {
@@ -278,6 +278,7 @@ func TestService_AsIs(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
 				)
 			},
