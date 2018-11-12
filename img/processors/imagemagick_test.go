@@ -37,7 +37,7 @@ var (
 func TestMain(m *testing.M) {
 	var err error
 
-	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
+	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify", []string{})
 	if err != nil {
 		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(1)

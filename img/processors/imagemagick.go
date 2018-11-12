@@ -11,6 +11,7 @@ import (
 type ImageMagick struct {
 	convertCmd  string
 	identifyCmd string
+	additionalArgs []string
 }
 
 type imageInfo struct {
@@ -45,7 +46,7 @@ var Debug bool = true
 //Creates new imagemagick processor. im is a path to
 //IM convert executable that must be provided.
 //idi is a path to IM identify command.
-func NewImageMagick(im string, idi string) (*ImageMagick, error) {
+func NewImageMagick(im string, idi string, additionalArgs []string) (*ImageMagick, error) {
 	if len(im) == 0 {
 		img.Log.Error("Command convert should be set by -imConvert flag")
 		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
@@ -67,6 +68,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	return &ImageMagick{
 		convertCmd:  im,
 		identifyCmd: idi,
+		additionalArgs: additionalArgs,
 	}, nil
 }
 
@@ -80,6 +82,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
+	args = append(args, p.additionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
@@ -98,6 +101,7 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
+	args = append(args, p.additionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
@@ -124,6 +128,7 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 		args = append(args, "-quality", strconv.Itoa(quality))
 	}
 	args = append(args, convertOpts...)
+	args = append(args, p.additionalArgs...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 
