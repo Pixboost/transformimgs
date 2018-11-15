@@ -10,6 +10,7 @@ import (
 
 var (
 	FILES = []string{
+		"apple.jpg",
 		"HT_Paper.png",
 		"HT_Stationery.png",
 		"JBBAKUMBBK_baku_medium_back_chair_black.jpg",

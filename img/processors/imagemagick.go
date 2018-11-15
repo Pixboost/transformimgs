@@ -19,6 +19,8 @@ type imageInfo struct {
 	format  string
 	quality int
 	opaque  bool
+	width   int
+	height  int
 }
 
 var convertOpts = []string{
@@ -43,6 +45,11 @@ var cutToFitOpts = []string{
 
 //If set then will print all commands to stdout.
 var Debug bool = true
+
+const (
+	MaxWebpWidth  = 16383
+	MaxWebpHeight = 16383
+)
 
 //Creates new imagemagick processor.
 //im is a path to ImageMagick "convert" binary.
@@ -172,7 +179,7 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
-	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque]", "-")
+	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
 
 	cmd.Stdin = in
 	cmd.Stdout = &out
@@ -189,7 +196,7 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo,
 	}
 
 	imageInfo := &imageInfo{}
-	fmt.Sscanf(out.String(), "%s %d %t", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque)
+	fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque, &imageInfo.width, &imageInfo.height)
 
 	return imageInfo, nil
 }
@@ -197,7 +204,7 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo,
 func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	webP := false
 	for _, f := range supportedFormats {
-		if f == "image/webp" {
+		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
 			webP = true
 		}
 	}
