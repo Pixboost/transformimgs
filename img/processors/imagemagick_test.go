@@ -32,15 +32,26 @@ type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
 	proc *processors.ImageMagick
+	procWithArgs *processors.ImageMagick
 )
 
 func TestMain(m *testing.M) {
 	var err error
 
-	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify", []string{})
+	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
 	if err != nil {
 		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(1)
+	}
+
+	procWithArgs, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
+	if err != nil {
+		fmt.Printf("Error while creating image processor: %+v", err)
+		os.Exit(2)
+	}
+	procWithArgs.AdditionalArgs = []string{
+		"-limit", "memory", "64MiB",
+		"-limit", "map", "128MiB",
 	}
 	os.Exit(m.Run())
 }
@@ -76,17 +87,29 @@ func TestImageMagickProcessor_Optimise(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.Optimise(orig, imgId, []string{})
 	})
+
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return procWithArgs.Optimise(orig, imgId, []string{})
+	})
 }
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.Resize(orig, "50", imgId, []string{})
 	})
+
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return procWithArgs.Resize(orig, "50", imgId, []string{})
+	})
 }
 
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{})
+	})
+
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
 	})
 }
 

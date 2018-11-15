@@ -9,9 +9,10 @@ import (
 )
 
 type ImageMagick struct {
-	convertCmd  string
-	identifyCmd string
-	additionalArgs []string
+	convertCmd     string
+	identifyCmd    string
+	//additional arguments that will be passed to ImageMagick "convert" command for all operations.
+	AdditionalArgs []string
 }
 
 type imageInfo struct {
@@ -46,7 +47,7 @@ var Debug bool = true
 //Creates new imagemagick processor.
 //im is a path to ImageMagick "convert" binary.
 //idi is a path to ImageMagick "identify" command.
-func NewImageMagick(im string, idi string, additionalArgs []string) (*ImageMagick, error) {
+func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	if len(im) == 0 {
 		img.Log.Error("Path to \"convert\" command should be set by -imConvert flag")
 		return nil, fmt.Errorf("path to imagemagick convert binary must be provided")
@@ -66,9 +67,9 @@ func NewImageMagick(im string, idi string, additionalArgs []string) (*ImageMagic
 	}
 
 	return &ImageMagick{
-		convertCmd:  im,
-		identifyCmd: idi,
-		additionalArgs: additionalArgs,
+		convertCmd:     im,
+		identifyCmd:    idi,
+		AdditionalArgs: []string{},
 	}, nil
 }
 
@@ -82,7 +83,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	args = append(args, p.additionalArgs...)
+	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
@@ -101,7 +102,7 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
-	args = append(args, p.additionalArgs...)
+	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
@@ -127,8 +128,8 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	if quality > 0 {
 		args = append(args, "-quality", strconv.Itoa(quality))
 	}
+	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
-	args = append(args, p.additionalArgs...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
 

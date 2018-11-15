@@ -43,10 +43,8 @@ func main() {
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.Parse()
 
-	p, err := processors.NewImageMagick(im, imIdent, []string{
-		"-limit", "memory", "64MiB",
-		"-limit", "map", "128MiB",
-	})
+	p, err := processors.NewImageMagick(im, imIdent)
+
 	if err != nil {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
 		os.Exit(1)
