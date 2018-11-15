@@ -43,17 +43,17 @@ var cutToFitOpts = []string{
 //If set then will print all commands to stdout.
 var Debug bool = true
 
-//Creates new imagemagick processor. im is a path to
-//IM convert executable that must be provided.
-//idi is a path to IM identify command.
+//Creates new imagemagick processor.
+//im is a path to ImageMagick "convert" binary.
+//idi is a path to ImageMagick "identify" command.
 func NewImageMagick(im string, idi string, additionalArgs []string) (*ImageMagick, error) {
 	if len(im) == 0 {
-		img.Log.Error("Command convert should be set by -imConvert flag")
-		return nil, fmt.Errorf("Path to imagemagick convert executable must be provided")
+		img.Log.Error("Path to \"convert\" command should be set by -imConvert flag")
+		return nil, fmt.Errorf("path to imagemagick convert binary must be provided")
 	}
 	if len(idi) == 0 {
-		img.Log.Error("Command identify should be set by -imIdentify flag")
-		return nil, fmt.Errorf("Path to imagemagick identify executable must be provided")
+		img.Log.Error("Path to \"identify\" command should be set by -imIdentify flag")
+		return nil, fmt.Errorf("path to imagemagick identify binary must be provided")
 	}
 
 	_, err := exec.LookPath(im)
