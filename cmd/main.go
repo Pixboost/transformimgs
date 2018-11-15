@@ -45,7 +45,7 @@ func main() {
 
 	p, err := processors.NewImageMagick(im, imIdent, []string{
 		"-limit", "memory", "64MiB",
-		"-limit", "memory", "128MiB",
+		"-limit", "map", "128MiB",
 	})
 	if err != nil {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
