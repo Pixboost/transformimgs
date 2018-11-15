@@ -19,7 +19,7 @@ var (
 		"Monochrome_CategoryImage2.png",
 		"otto-brights-stationery.jpg",
 		"ollie.png",
-		"wepb-invalid-height.jpg",
+		"webp-invalid-height.jpg",
 	}
 )
 
