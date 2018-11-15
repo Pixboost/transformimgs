@@ -19,6 +19,7 @@ var (
 		"Monochrome_CategoryImage2.png",
 		"otto-brights-stationery.jpg",
 		"ollie.png",
+		"webp-invalid-height.jpg",
 	}
 )
 
@@ -31,7 +32,7 @@ type result struct {
 type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
-	proc *processors.ImageMagick
+	proc         *processors.ImageMagick
 	procWithArgs *processors.ImageMagick
 )
 

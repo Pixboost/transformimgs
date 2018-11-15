@@ -90,7 +90,7 @@ func TestService_ResizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"Accept": {"image/png, image/webp"},
 				},
 			},
@@ -157,7 +157,7 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"Accept": {"image/png, image/webp"},
 				},
 			},
@@ -229,7 +229,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string {
+				Header: map[string][]string{
 					"Accept": {"image/png, image/webp"},
 				},
 			},
