@@ -44,6 +44,7 @@ func main() {
 	flag.Parse()
 
 	p, err := processors.NewImageMagick(im, imIdent)
+
 	if err != nil {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
 		os.Exit(1)
