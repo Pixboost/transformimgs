@@ -3,14 +3,14 @@ package processors
 import (
 	"bytes"
 	"fmt"
+	"github.com/Pixboost/transformimgs/img"
 	"os/exec"
 	"strconv"
-	"github.com/Pixboost/transformimgs/img"
 )
 
 type ImageMagick struct {
-	convertCmd     string
-	identifyCmd    string
+	convertCmd  string
+	identifyCmd string
 	//additional arguments that will be passed to ImageMagick "convert" command for all operations.
 	AdditionalArgs []string
 }

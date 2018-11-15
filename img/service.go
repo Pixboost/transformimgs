@@ -5,11 +5,11 @@ import (
 	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
-	"net/url"
 )
 
 //Number of seconds that will be written to max-age HTTP header
@@ -198,11 +198,11 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize: r.Processor.Resize,
-		Image:  input,
-		ImgId:  imgUrl,
-		Size:   size,
-		Resp:   resp,
+		Resize:           r.Processor.Resize,
+		Image:            input,
+		ImgId:            imgUrl,
+		Size:             size,
+		Resp:             resp,
 		SupportedFormats: supportedFormats,
 	})
 }
@@ -266,11 +266,11 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize: r.Processor.FitToSize,
-		Image:  input,
-		ImgId:  imgUrl,
-		Size:   size,
-		Resp:   resp,
+		Resize:           r.Processor.FitToSize,
+		Image:            input,
+		ImgId:            imgUrl,
+		Size:             size,
+		Resp:             resp,
 		SupportedFormats: supportedFormats,
 	})
 }

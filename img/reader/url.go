@@ -20,7 +20,7 @@ func (r *Http) Read(url string) ([]byte, string, error) {
 			http.StatusOK, resp.StatusCode, resp.Status)
 	}
 
-	contentType := resp.Header.Get("Content-Type");
+	contentType := resp.Header.Get("Content-Type")
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

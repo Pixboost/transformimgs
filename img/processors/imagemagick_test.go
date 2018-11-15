@@ -32,7 +32,7 @@ type result struct {
 type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
-	proc *processors.ImageMagick
+	proc         *processors.ImageMagick
 	procWithArgs *processors.ImageMagick
 )
 
