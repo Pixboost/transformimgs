@@ -10,7 +10,6 @@ import (
 
 var (
 	FILES = []string{
-		"apple.jpg",
 		"HT_Paper.png",
 		"HT_Stationery.png",
 		"JBBAKUMBBK_baku_medium_back_chair_black.jpg",
@@ -20,6 +19,7 @@ var (
 		"Monochrome_CategoryImage2.png",
 		"otto-brights-stationery.jpg",
 		"ollie.png",
+		"wepb-invalid-height.jpg",
 	}
 )
 
