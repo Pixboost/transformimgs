@@ -116,7 +116,7 @@ Shout out with any ideas. PRs are more than welcome.
 [MIT](./LICENSE)
 
 ## Todo
-* -Add JpegXR support-
+* ~~Add JpegXR support~~ (IE supports WEBP)
 * Add Jpeg 2000 support
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
 * Add SVG support
