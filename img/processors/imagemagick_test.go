@@ -21,6 +21,8 @@ var (
 		"otto-brights-stationery.jpg",
 		"ollie.png",
 		"webp-invalid-height.jpg",
+		"wk30-hp-updates-refresh.jpg",
+		"01_saffron_safari_mini_dress.jpg",
 	}
 )
 
