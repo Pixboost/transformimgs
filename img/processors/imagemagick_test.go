@@ -38,8 +38,15 @@ var (
 	proc         *processors.ImageMagick
 	procWithArgs *processors.ImageMagick
 	emptyOpts = &img.CommandOpts{}
+	losslessOpts = &img.CommandOpts{
+		Lossless: true,
+	}
 	webpOpts = &img.CommandOpts{
 		SupportedFormats: []string{"image/webp"},
+	}
+	webpLosslessOpts = &img.CommandOpts{
+		SupportedFormats: []string{"image/webp"},
+		Lossless: true,
 	}
 )
 
@@ -101,6 +108,16 @@ func TestImageMagickProcessor_Optimise(t *testing.T) {
 	})
 }
 
+func TestImageMagickProcessor_Optimise_Lossless(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Optimise(orig, imgId, losslessOpts)
+	})
+
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return procWithArgs.Optimise(orig, imgId, losslessOpts)
+	})
+}
+
 func TestImageMagickProcessor_Resize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.Resize(orig, "50", imgId, emptyOpts)
@@ -127,6 +144,12 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 	})
 }
 
+func TestImageMagickProcessor_Optimise_Webp_Lossless(t *testing.T) {
+	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
+		return proc.Optimise(orig, imgId, webpLosslessOpts)
+	})
+}
+
 func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
 		return proc.Resize(orig, "50", imgId, webpOpts)
@@ -140,6 +163,7 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 }
 
 func imgOpT(t *testing.T, fn transform) {
+	fmt.Printf("==================== %s ====================\n", t.Name())
 	results := make([]*result, 0)
 	for _, imgFile := range FILES {
 		f := fmt.Sprintf("%s/%s", "./test_files", imgFile)
