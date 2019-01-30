@@ -81,7 +81,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Resize(data []byte, size string, imgId string, opts *img.CommandOpts) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -93,14 +93,14 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, getOutputFormat(imgInfo, opts.SupportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
 // Resize input image to exact size with cropping everything that out of the bounds.
 // Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
-func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, opts *img.CommandOpts) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -114,12 +114,12 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, getOutputFormat(imgInfo, opts.SupportedFormats)) //Output
 
 	return p.execImagemagick(bytes.NewReader(data), args, imgId)
 }
 
-func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Optimise(data []byte, imgId string, opts *img.CommandOpts) ([]byte, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, getOutputFormat(imgInfo, opts.SupportedFormats)) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
 	if err != nil {

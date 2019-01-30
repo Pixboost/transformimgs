@@ -2,6 +2,7 @@ package processors_test
 
 import (
 	"fmt"
+	"github.com/Pixboost/transformimgs/img"
 	"github.com/Pixboost/transformimgs/img/processors"
 	"io/ioutil"
 	"os"
@@ -34,6 +35,10 @@ type transform func(orig []byte, imgId string) ([]byte, error)
 var (
 	proc         *processors.ImageMagick
 	procWithArgs *processors.ImageMagick
+	emptyOpts = &img.CommandOpts{}
+	webpOpts = &img.CommandOpts{
+		SupportedFormats: []string{"image/webp"},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -58,14 +63,14 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkImageMagickProcessor_Optimise(b *testing.B) {
-	benchmarkWithFormats(b, []string{})
+	benchmarkWithFormats(b, emptyOpts)
 }
 
 func BenchmarkImageMagickProcessor_Optimise_Webp(b *testing.B) {
-	benchmarkWithFormats(b, []string{"image/webp"})
+	benchmarkWithFormats(b, webpOpts)
 }
 
-func benchmarkWithFormats(b *testing.B, formats []string) {
+func benchmarkWithFormats(b *testing.B, opts *img.CommandOpts) {
 	f := fmt.Sprintf("%s/%s", "./test_files", "OW20170515_HPHB_B2B2.jpg")
 
 	orig, err := ioutil.ReadFile(f)
@@ -75,7 +80,7 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 	processors.Debug = false
 
 	for i := 0; i < b.N; i++ {
-		_, err = proc.Optimise(orig, f, formats)
+		_, err = proc.Optimise(orig, f, opts)
 		if err != nil {
 			b.Errorf("Can't transform file: %+v", err)
 		}
@@ -86,49 +91,49 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 
 func TestImageMagickProcessor_Optimise(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Optimise(orig, imgId, []string{})
+		return proc.Optimise(orig, imgId, emptyOpts)
 	})
 
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return procWithArgs.Optimise(orig, imgId, []string{})
+		return procWithArgs.Optimise(orig, imgId, emptyOpts)
 	})
 }
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Resize(orig, "50", imgId, []string{})
+		return proc.Resize(orig, "50", imgId, emptyOpts)
 	})
 
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return procWithArgs.Resize(orig, "50", imgId, []string{})
+		return procWithArgs.Resize(orig, "50", imgId, emptyOpts)
 	})
 }
 
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.FitToSize(orig, "50x50", imgId, []string{})
+		return proc.FitToSize(orig, "50x50", imgId, emptyOpts)
 	})
 
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
+		return procWithArgs.FitToSize(orig, "50x50", imgId, emptyOpts)
 	})
 }
 
 func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Optimise(orig, imgId, []string{"image/webp"})
+		return proc.Optimise(orig, imgId, webpOpts)
 	})
 }
 
 func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.Resize(orig, "50", imgId, []string{"image/webp"})
+		return proc.Resize(orig, "50", imgId, webpOpts)
 	})
 }
 
 func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 	imgOpT(t, func(orig []byte, imgId string) ([]byte, error) {
-		return proc.FitToSize(orig, "50x50", imgId, []string{"image/webp"})
+		return proc.FitToSize(orig, "50x50", imgId, webpOpts)
 	})
 }
 

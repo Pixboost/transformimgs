@@ -23,8 +23,12 @@ func hasWebP(supportedFormats []string) bool {
 	return hasWebP
 }
 
-func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
+func (r *resizerMock) Resize(data []byte, size string, imgId string, opts *img.CommandOpts) ([]byte, error) {
+	hasWebP := hasWebP(opts.SupportedFormats)
+
+	if string(data) == "321" && size == "300x200" && opts.Lossless {
+		return []byte("12345"), nil
+	}
 
 	if string(data) == "321" && size == "300x200" && hasWebP {
 		return []byte("1234"), nil
@@ -36,8 +40,12 @@ func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFo
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
+func (r *resizerMock) FitToSize(data []byte, size string, imgId string, opts *img.CommandOpts) ([]byte, error) {
+	hasWebP := hasWebP(opts.SupportedFormats)
+
+	if string(data) == "321" && size == "300x200" && opts.Lossless {
+		return []byte("12345"), nil
+	}
 
 	if string(data) == "321" && size == "300x200" && hasWebP {
 		return []byte("1234"), nil
@@ -49,8 +57,12 @@ func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supporte
 	return nil, errors.New("resize_error")
 }
 
-func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
+func (r *resizerMock) Optimise(data []byte, imgId string, opts *img.CommandOpts) ([]byte, error) {
+	hasWebP := hasWebP(opts.SupportedFormats)
+
+	if string(data) == "321" && opts.Lossless {
+		return []byte("12345"), nil
+	}
 
 	if string(data) == "321" && hasWebP {
 		return []byte("1234"), nil
@@ -83,6 +95,15 @@ func TestService_ResizeUrl(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+				)
+			},
+		},
+		{
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200&lossless",
+			Description: "Lossless compression",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},
@@ -150,6 +171,15 @@ func TestService_FitToSizeUrl(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+				)
+			},
+		},
+		{
+			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200&lossless",
+			Description: "Lossless compression",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},
@@ -237,6 +267,18 @@ func TestService_OptimiseUrl(t *testing.T) {
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise?lossless", t),
+			},
+			Description: "Lossless compression",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
 				)
 			},
 		},

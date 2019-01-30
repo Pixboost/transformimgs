@@ -35,15 +35,15 @@ type ImgProcessor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
+	Resize(data []byte, size string, imageId string, opts *CommandOpts) ([]byte, error)
 
 	//Resize given image fitting it to a given size.
 	//Form of the the size string is width'x'height.
 	//For example, 300x400
-	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
+	FitToSize(data []byte, size string, imageId string, opts *CommandOpts) ([]byte, error)
 
 	//Optimises given image to reduce size.
-	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
+	Optimise(data []byte, imageId string, opts *CommandOpts) ([]byte, error)
 }
 
 type Service struct {
@@ -54,21 +54,28 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type OptimiseCmd func([]byte, string, []string) ([]byte, error)
-type ResizeCmd func([]byte, string, string, []string) ([]byte, error)
+type OptimiseCmd func([]byte, string, *CommandOpts) ([]byte, error)
+type ResizeCmd func([]byte, string, string, *CommandOpts) ([]byte, error)
 
 type Command struct {
 	Optimise         OptimiseCmd
 	Resize           ResizeCmd
+	Opts             *CommandOpts
 	Image            []byte
 	ImgId            string
 	Size             string
 	Resp             http.ResponseWriter
-	SupportedFormats []string
 	Result           []byte
 	FinishedCond     *sync.Cond
 	Finished         bool
 	Err              error
+}
+
+type CommandOpts struct {
+	// Array of mime-types that client supports, e.g. image/webp
+	SupportedFormats []string
+	// If true, then won't change image quality
+	Lossless bool
 }
 
 func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
@@ -118,6 +125,12 @@ func (r *Service) GetRouter() *mux.Router {
 //   in: path
 //   type: string
 //   description: url of the original image
+// - name: lossless
+//   required: false
+//   in: query
+//   description: |
+//    won't optimise quality of the output image, if present.
+//
 // responses:
 //   '200':
 //     description: Optimised image in the same format as original.
@@ -128,8 +141,9 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	supportedFormats := getSupportedFormats(req)
+	lossless := hasQueryParam(req.URL, "lossless")
 
-	Log.Printf("Optimising image %s\n", imgUrl)
+	Log.Printf("Optimising image %s [lossless: %v]\n", imgUrl, lossless)
 
 	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -143,7 +157,10 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId:            imgUrl,
 		Image:            input,
 		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Opts:             &CommandOpts{
+			SupportedFormats: supportedFormats,
+			Lossless: lossless,
+		},
 	})
 }
 
@@ -171,6 +188,11 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   description: |
 //    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
 //    Only width or height could be passed, e.g 200, x300.
+// - name: lossless
+//   required: false
+//   in: query
+//   description: |
+//    won't optimise quality of the output image, if present.
 //
 // responses:
 //   '200':
@@ -187,8 +209,9 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	supportedFormats := getSupportedFormats(req)
+	lossless := hasQueryParam(req.URL, "lossless")
 
-	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
+	Log.Printf("Resizing image %s to %s [lossless: %v]\n", imgUrl, size, lossless)
 
 	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -203,7 +226,10 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId:            imgUrl,
 		Size:             size,
 		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Opts:             &CommandOpts{
+			SupportedFormats: supportedFormats,
+			Lossless: lossless,
+		},
 	})
 }
 
@@ -232,6 +258,11 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   pattern: \d{1,4}x\d{1,4}
 //   description: |
 //    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+// - name: lossless
+//   required: false
+//   in: query
+//   description: |
+//    won't optimise quality of the output image, if present.
 //
 // responses:
 //   '200':
@@ -255,8 +286,9 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	supportedFormats := getSupportedFormats(req)
+	lossless := hasQueryParam(req.URL, "lossless")
 
-	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
+	Log.Printf("Fit image %s to size %s [lossless: %v]\n", imgUrl, size, lossless)
 
 	input, _, err := r.Reader.Read(imgUrl)
 	if err != nil {
@@ -271,7 +303,10 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		ImgId:            imgUrl,
 		Size:             size,
 		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Opts:             &CommandOpts{
+			SupportedFormats: supportedFormats,
+			Lossless: lossless,
+		},
 	})
 }
 
@@ -355,6 +390,12 @@ func getQueryParam(url *url.URL, name string) string {
 		return url.Query()[name][0]
 	}
 	return ""
+}
+
+func hasQueryParam(url *url.URL, name string) bool {
+	_, ok := url.Query()[name];
+
+	return ok
 }
 
 func getImgUrl(req *http.Request) string {
