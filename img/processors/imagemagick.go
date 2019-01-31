@@ -90,6 +90,9 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
+	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
+		args = append(args, "-quality", "82")
+	}
 	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
@@ -109,6 +112,9 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
+	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
+		args = append(args, "-quality", "82")
+	}
 	args = append(args, p.AdditionalArgs...)
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)

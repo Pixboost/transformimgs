@@ -11,7 +11,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:772a968ef620a84e84e39bad6c01e67fc19d178d2fdf85b3e3a1956062836325"
+  digest = "1:85a8ee8ba7eb367a0dc83b952f39895c90401009d79f8f304a5a4f09e51ddcd2"
   name = "github.com/dooman87/kolibri"
   packages = [
     "health",
