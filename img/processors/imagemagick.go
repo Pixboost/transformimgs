@@ -11,11 +11,16 @@ import (
 type ImageMagick struct {
 	convertCmd  string
 	identifyCmd string
-	//additional arguments that will be passed to ImageMagick "convert" command for all operations.
+	// AdditionalArgs are static arguments that will be passed to ImageMagick "convert" command for all operations.
+	// Argument name and value should be in separate array elements.
 	AdditionalArgs []string
+	// GetAdditionalArgs could return additional argument to ImageMagick "convert" command.
+	// "op" is the name of the operation: "optimise", "resize" or "fit".
+	// Argument name and value should be in separate array elements.
+	GetAdditionalArgs func(op string, image []byte, imageInfo *ImageInfo) []string
 }
 
-type imageInfo struct {
+type ImageInfo struct {
 	format  string
 	quality int
 	opaque  bool
@@ -94,6 +99,9 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 		args = append(args, "-quality", "82")
 	}
 	args = append(args, p.AdditionalArgs...)
+	if p.GetAdditionalArgs != nil {
+		args = append(args, p.GetAdditionalArgs("resize", data, imgInfo)...)
+	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
@@ -116,6 +124,9 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 		args = append(args, "-quality", "82")
 	}
 	args = append(args, p.AdditionalArgs...)
+	if p.GetAdditionalArgs != nil {
+		args = append(args, p.GetAdditionalArgs("fit", data, imgInfo)...)
+	}
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
@@ -142,6 +153,9 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 		args = append(args, "-quality", strconv.Itoa(quality))
 	}
 	args = append(args, p.AdditionalArgs...)
+	if p.GetAdditionalArgs != nil {
+		args = append(args, p.GetAdditionalArgs("optimise", data, imgInfo)...)
+	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
 	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
@@ -182,7 +196,7 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo, error) {
+func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
@@ -201,13 +215,16 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*imageInfo,
 		return nil, err
 	}
 
-	imageInfo := &imageInfo{}
-	fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque, &imageInfo.width, &imageInfo.height)
+	imageInfo := &ImageInfo{}
+	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque, &imageInfo.width, &imageInfo.height)
+	if err != nil {
+		return nil, err
+	}
 
 	return imageInfo, nil
 }
 
-func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
+func getOutputFormat(inf *ImageInfo, supportedFormats []string) string {
 	webP := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
@@ -223,7 +240,7 @@ func getOutputFormat(inf *imageInfo, supportedFormats []string) string {
 	return output
 }
 
-func getConvertFormatOptions(inf *imageInfo) []string {
+func getConvertFormatOptions(inf *ImageInfo) []string {
 	if inf.format == "PNG" {
 		opts := []string{
 			"-define", "webp:lossless=true",

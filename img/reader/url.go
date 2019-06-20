@@ -6,10 +6,23 @@ import (
 	"net/http"
 )
 
-type Http struct{}
+type Http struct {
+	// Headers will set headers on each request
+	Headers http.Header
+}
 
 func (r *Http) Read(url string) ([]byte, string, error) {
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	for k, v := range r.Headers {
+		for _, headerVal := range v {
+			req.Header.Add(k, headerVal)
+		}
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, "", err
 	}

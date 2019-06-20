@@ -21,8 +21,10 @@ var Log glogi.Logger = glogi.NewSimpleLogger()
 
 //Reads image from a given source
 type ImgReader interface {
-	//Reads image from the url.
-	//Returns byte array of the image and content type or error.
+	// Read reads image from the url.
+	//
+	// Returns content of the image and Content-Type header.
+	// If error occurred then return nil, "", err.
 	Read(url string) ([]byte, string, error)
 }
 
