@@ -40,8 +40,7 @@ var convertOpts = []string{
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
-	"-strip",
-	"+profile", "*",
+	"+profile", "!icc,*",
 }
 
 var cutToFitOpts = []string{
