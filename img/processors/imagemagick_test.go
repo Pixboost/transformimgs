@@ -154,7 +154,7 @@ func imgOpT(t *testing.T, fn transform) {
 			optSize:  len(optimisedImg),
 		})
 		//Writes converted file for manual verification.
-		//ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s", imgFile), optimisedImg, 0777)
+		// ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s_%s", t.Name(), imgFile), optimisedImg, 0777)
 
 		if len(optimisedImg) > len(orig) {
 			t.Errorf("Image %s is not optimised", f)
