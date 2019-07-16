@@ -36,6 +36,7 @@ var convertOpts = []string{
 	"-define", "png:compression-filter=5",
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
+	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
 	"-define", "webp:method=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
