@@ -1,7 +1,7 @@
-FROM golang:1.9-alpine3.7
+FROM golang:1.12-alpine3.10
 
 #Installing imagemagick
-RUN apk add --no-cache imagemagick git
+RUN apk add --no-cache imagemagick git gcc libc-dev
 
 #Installing godeps
 RUN go get github.com/golang/dep/cmd/dep
