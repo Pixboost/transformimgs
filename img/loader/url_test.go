@@ -1,7 +1,7 @@
-package reader_test
+package loader_test
 
 import (
-	"github.com/Pixboost/transformimgs/img/reader"
+	"github.com/Pixboost/transformimgs/img/loader"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +15,7 @@ func TestReadImg(t *testing.T) {
 	}))
 	defer server.Close()
 
-	urlReader := &reader.Http{}
+	urlReader := &loader.Http{}
 
 	r, contentType, err := urlReader.Read(server.URL)
 
@@ -32,7 +32,7 @@ func TestReadImgErrorResponseStatus(t *testing.T) {
 	}))
 	defer server.Close()
 
-	urlReader := &reader.Http{}
+	urlReader := &loader.Http{}
 
 	_, _, err := urlReader.Read(server.URL)
 
@@ -52,9 +52,9 @@ func TestCustomHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	urlReader := &reader.Http{
-		Headers: http.Header {
-			"This-Is-Header": []string {
+	urlReader := &loader.Http{
+		Headers: http.Header{
+			"This-Is-Header": []string{
 				"wow",
 			},
 		},

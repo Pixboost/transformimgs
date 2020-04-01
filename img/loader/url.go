@@ -1,6 +1,7 @@
-package reader
+package loader
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,7 +12,7 @@ type Http struct {
 	Headers http.Header
 }
 
-func (r *Http) Read(url string) ([]byte, string, error) {
+func (r *Http) Load(url string, ctx context.Context) ([]byte, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, "", err

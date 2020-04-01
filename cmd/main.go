@@ -21,8 +21,8 @@ package main
 import (
 	"flag"
 	"github.com/Pixboost/transformimgs/img"
+	"github.com/Pixboost/transformimgs/img/loader"
 	"github.com/Pixboost/transformimgs/img/processors"
-	"github.com/Pixboost/transformimgs/img/reader"
 	"github.com/dooman87/kolibri/health"
 	"net/http"
 	"os"
@@ -51,7 +51,7 @@ func main() {
 	}
 
 	img.CacheTTL = cache
-	srv, err := img.NewService(&reader.Http{}, p, procNum)
+	srv, err := img.NewService(&loader.Http{}, p, procNum)
 	if err != nil {
 		img.Log.Errorf("Can't create image service: %+v", err)
 		os.Exit(2)
