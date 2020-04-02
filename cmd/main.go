@@ -22,7 +22,7 @@ import (
 	"flag"
 	"github.com/Pixboost/transformimgs/img"
 	"github.com/Pixboost/transformimgs/img/loader"
-	"github.com/Pixboost/transformimgs/img/processors"
+	"github.com/Pixboost/transformimgs/img/processor"
 	"github.com/dooman87/kolibri/health"
 	"net/http"
 	"os"
@@ -43,7 +43,7 @@ func main() {
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.Parse()
 
-	p, err := processors.NewImageMagick(im, imIdent)
+	p, err := processor.NewImageMagick(im, imIdent)
 
 	if err != nil {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
