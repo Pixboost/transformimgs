@@ -1,6 +1,7 @@
 package img_test
 
 import (
+	"context"
 	"errors"
 	"github.com/Pixboost/transformimgs/img"
 	"github.com/dooman87/kolibri/test"
@@ -61,9 +62,9 @@ func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []str
 	return nil, errors.New("resize_error")
 }
 
-type readerMock struct{}
+type loaderMock struct{}
 
-func (r *readerMock) Read(url string) ([]byte, string, error) {
+func (l *loaderMock) Load(url string, ctx context.Context) ([]byte, string, error) {
 	if url == "http://site.com/img.png" {
 		return []byte("321"), "image/png", nil
 	}
@@ -311,7 +312,7 @@ func TestService_AsIs(t *testing.T) {
 
 func createService(t *testing.T) *img.Service {
 	img.CacheTTL = 86400
-	s, err := img.NewService(&readerMock{}, &resizerMock{}, 1)
+	s, err := img.NewService(&loaderMock{}, &resizerMock{}, 1)
 	if err != nil {
 		t.Fatalf("Error while creating service: %+v", err)
 		return nil

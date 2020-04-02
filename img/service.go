@@ -1,6 +1,7 @@
 package img
 
 import (
+	"context"
 	"fmt"
 	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
@@ -19,18 +20,21 @@ var CacheTTL int
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-//Reads image from a given source
-type ImgReader interface {
-	// Read reads image from the url.
+//Loaders is responsible for loading an original image for transformation
+type Loader interface {
+	// Load loads an image from the given source.
+	//
+	// ctx is a context of the current transaction. Typically it's a context
+	// of an incoming HTTP request, so it's possible to pass values through middlewares.
 	//
 	// Returns content of the image and Content-Type header.
 	// If error occurred then return nil, "", err.
-	Read(url string) ([]byte, string, error)
+	Load(src string, ctx context.Context) ([]byte, string, error)
 }
 
-//Processes images applying different transformations.
-type ImgProcessor interface {
-	//Resize given image.
+//Processor is an interface for transforming/optimising images.
+type Processor interface {
+	//Resize resize given image.
 	//Form of the the size string is
 	//width'x'height. Any dimension could be skipped.
 	//For example:
@@ -39,18 +43,18 @@ type ImgProcessor interface {
 	//* x200 - only height
 	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
-	//Resize given image fitting it to a given size.
+	//FitToSize resize given image cropping it to the given size.
 	//Form of the the size string is width'x'height.
 	//For example, 300x400
 	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
-	//Optimises given image to reduce size.
+	//Optimise optimises given image to reduce size if the served image.
 	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
 }
 
 type Service struct {
-	Reader      ImgReader
-	Processor   ImgProcessor
+	Loader      Loader
+	Processor   Processor
 	Q           []*Queue
 	currProc    int
 	currProcMux sync.Mutex
@@ -73,7 +77,7 @@ type Command struct {
 	Err              error
 }
 
-func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
+func NewService(r Loader, p Processor, procNum int) (*Service, error) {
 	if procNum <= 0 {
 		return nil, fmt.Errorf("procNum must be positive, but got [%d]", procNum)
 	}
@@ -81,7 +85,7 @@ func NewService(r ImgReader, p ImgProcessor, procNum int) (*Service, error) {
 	Log.Printf("Creating new service with [%d] number of processors\n", procNum)
 
 	srv := &Service{
-		Reader:    r,
+		Loader:    r,
 		Processor: p,
 		Q:         make([]*Queue, procNum),
 	}
@@ -133,7 +137,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Optimising image %s\n", imgUrl)
 
-	input, _, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -192,7 +196,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
-	input, _, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -260,7 +264,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
-	input, _, err := r.Reader.Read(imgUrl)
+	input, _, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -306,7 +310,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
-	result, contentType, err := r.Reader.Read(imgUrl)
+	result, contentType, err := r.Loader.Load(imgUrl, req.Context())
 
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)

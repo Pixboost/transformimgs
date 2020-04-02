@@ -1,8 +1,8 @@
-package processors_test
+package processor_test
 
 import (
 	"fmt"
-	"github.com/Pixboost/transformimgs/img/processors"
+	"github.com/Pixboost/transformimgs/img/processor"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -32,20 +32,20 @@ type result struct {
 type transform func(orig []byte, imgId string) ([]byte, error)
 
 var (
-	proc         *processors.ImageMagick
-	procWithArgs *processors.ImageMagick
+	proc         *processor.ImageMagick
+	procWithArgs *processor.ImageMagick
 )
 
 func TestMain(m *testing.M) {
 	var err error
 
-	proc, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
+	proc, err = processor.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
 	if err != nil {
 		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(1)
 	}
 
-	procWithArgs, err = processors.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
+	procWithArgs, err = processor.NewImageMagick("/usr/bin/convert", "/usr/bin/identify")
 	if err != nil {
 		fmt.Printf("Error while creating image processor: %+v", err)
 		os.Exit(2)
@@ -72,7 +72,7 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 	if err != nil {
 		b.Errorf("Can't read file %s: %+v", f, err)
 	}
-	processors.Debug = false
+	processor.Debug = false
 
 	for i := 0; i < b.N; i++ {
 		_, err = proc.Optimise(orig, f, formats)
@@ -81,7 +81,7 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 		}
 	}
 
-	processors.Debug = true
+	processor.Debug = true
 }
 
 func TestImageMagickProcessor_Optimise(t *testing.T) {
