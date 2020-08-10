@@ -226,15 +226,22 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo,
 
 func getOutputFormat(inf *ImageInfo, supportedFormats []string) string {
 	webP := false
+	avif := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
 			webP = true
+		}
+		if f == "image/avif" {
+			avif = true
 		}
 	}
 
 	output := "-"
 	if webP {
 		output = "webp:-"
+	}
+	if avif {
+		output = "avif:-"
 	}
 
 	return output

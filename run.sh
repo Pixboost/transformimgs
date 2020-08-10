@@ -14,4 +14,4 @@ go test $(go list ./... | grep -v /vendor/) -v -bench . -benchmem
 
 cd cmd/
 echo 'Running Application'
-go run main.go -imConvert=/usr/bin/convert -imIdentify=/usr/bin/identify $@
+go run main.go -imConvert=/usr/local/bin/convert -imIdentify=/usr/local/bin/identify $@

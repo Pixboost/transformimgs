@@ -1,7 +1,47 @@
-FROM golang:1.12-alpine3.10
+FROM dpokidov/imagemagick:7.0.10-25-buster
 
-#Installing imagemagick
-RUN apk add --no-cache imagemagick git gcc libc-dev
+#Installing golang
+# gcc for cgo
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+		pkg-config \
+		wget \
+		git \
+	&& rm -rf /var/lib/apt/lists/*
+
+ENV PATH /usr/local/go/bin:$PATH
+
+ENV GOLANG_VERSION 1.14.7
+
+RUN set -eux; \
+	\
+# this "case" statement is generated via "update.sh"
+	dpkgArch="$(dpkg --print-architecture)"; \
+	case "${dpkgArch##*-}" in \
+		amd64) goRelArch='linux-amd64'; goRelSha256='4a7fa60f323ee1416a4b1425aefc37ea359e9d64df19c326a58953a97ad41ea5' ;; \
+		armhf) goRelArch='linux-armv6l'; goRelSha256='6079eb82bcf24b33dda0e32777c7fdddcc3b1ec70e374308cc8311562449b107' ;; \
+		arm64) goRelArch='linux-arm64'; goRelSha256='fe5b6f6e441f3cb7b53ebf1a010bbebcb720ac98124984cfe2e51d72b8a58c71' ;; \
+		i386) goRelArch='linux-386'; goRelSha256='2f5793f10bb6b08eedecd376aa3d594e10193c6b5cf198ada46200259ff76547' ;; \
+		ppc64el) goRelArch='linux-ppc64le'; goRelSha256='bd1f12a2271a6d1689bcf3ec01d123c81cbaca5d16c3f7df294a2d725ac4d3d1' ;; \
+		s390x) goRelArch='linux-s390x'; goRelSha256='ea570b3caa0c271da440f568ab646cfea80d712c51fb4d08189bb66bd5eb949c' ;; \
+		*) goRelArch='src'; goRelSha256='064392433563660c73186991c0a315787688e7c38a561e26647686f89b6c30e3'; \
+			echo >&2; echo >&2 "warning: current architecture ($dpkgArch) does not have a corresponding Go binary release; will be building from source"; echo >&2 ;; \
+	esac; \
+	\
+	url="https://golang.org/dl/go${GOLANG_VERSION}.${goRelArch}.tar.gz"; \
+	wget -O go.tgz "$url" --progress=dot:giga; \
+	echo "${goRelSha256} *go.tgz" | sha256sum -c -; \
+	tar -C /usr/local -xzf go.tgz; \
+	rm go.tgz; \
+	go version
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:$PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+WORKDIR $GOPATH
 
 #Installing godeps
 RUN go get github.com/golang/dep/cmd/dep
