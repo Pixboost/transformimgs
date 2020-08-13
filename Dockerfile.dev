@@ -1,7 +1,5 @@
 FROM dpokidov/imagemagick:7.0.10-25-buster
 
-#Installing golang
-# gcc for cgo
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
 		gcc \
@@ -12,6 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 		git \
 	&& rm -rf /var/lib/apt/lists/*
 
+#Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
 ENV GOLANG_VERSION 1.14.7
