@@ -20,6 +20,11 @@ var CacheTTL int
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
+type Image struct {
+	Data     []byte
+	MimeType string
+}
+
 // Loaders is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.
@@ -27,9 +32,8 @@ type Loader interface {
 	// ctx is a context of the current transaction. Typically it's a context
 	// of an incoming HTTP request, so it's possible to pass values through middlewares.
 	//
-	// Returns content of the image and Content-Type header.
-	// If error occurred then returns nil, "", err.
-	Load(src string, ctx context.Context) ([]byte, string, error)
+	// Returns an image.
+	Load(src string, ctx context.Context) (*Image, error)
 }
 
 // Processor is an interface for transforming/optimising images.
@@ -46,14 +50,14 @@ type Processor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
+	Resize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
 
-	// FitToSize resizes given image cropping it to the given size.
-	// Format of the the size string is width'x'height, e.g. 300x400
-	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
+	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
+	// Format of the the size string is width'x'height, e.g. 300x400.
+	FitToSize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
-	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
+	Optimise(data []byte, imageId string, supportedFormats []string) (*Image, error)
 }
 
 type Service struct {
@@ -64,8 +68,8 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type OptimiseCmd func([]byte, string, []string) ([]byte, error)
-type ResizeCmd func([]byte, string, string, []string) ([]byte, error)
+type OptimiseCmd func([]byte, string, []string) (*Image, error)
+type ResizeCmd func([]byte, string, string, []string) (*Image, error)
 
 type Command struct {
 	Optimise         OptimiseCmd
@@ -141,7 +145,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Optimising image %s\n", imgUrl)
 
-	input, _, err := r.Loader.Load(imgUrl, req.Context())
+	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -151,7 +155,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	r.execOp(&Command{
 		Optimise:         r.Processor.Optimise,
 		ImgId:            imgUrl,
-		Image:            input,
+		Image:            srcImage.Data,
 		Resp:             resp,
 		SupportedFormats: supportedFormats,
 	})
@@ -200,7 +204,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
 
-	input, _, err := r.Loader.Load(imgUrl, req.Context())
+	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -209,7 +213,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	r.execOp(&Command{
 		Resize:           r.Processor.Resize,
-		Image:            input,
+		Image:            srcImage.Data,
 		ImgId:            imgUrl,
 		Size:             size,
 		Resp:             resp,
@@ -268,7 +272,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
 
-	input, _, err := r.Loader.Load(imgUrl, req.Context())
+	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
@@ -277,7 +281,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	r.execOp(&Command{
 		Resize:           r.Processor.FitToSize,
-		Image:            input,
+		Image:            srcImage.Data,
 		ImgId:            imgUrl,
 		Size:             size,
 		Resp:             resp,
@@ -314,18 +318,18 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
-	result, contentType, err := r.Loader.Load(imgUrl, req.Context())
+	result, err := r.Loader.Load(imgUrl, req.Context())
 
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	} else {
-		if len(contentType) > 0 {
-			resp.Header().Add("Content-Type", contentType)
+		if len(result.MimeType) > 0 {
+			resp.Header().Add("Content-Type", result.MimeType)
 		}
 
 		r.execOp(&Command{
-			Result: result,
+			Result: result.Data,
 			ImgId:  imgUrl,
 			Resp:   resp,
 		})
