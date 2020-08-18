@@ -13,14 +13,14 @@ import (
 	"sync"
 )
 
-//Number of seconds that will be written to max-age HTTP header
+// Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
 
-//Log writer that can be overrided. Should implement interface glogi.Logger.
+// Log writer that can be overrided. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-//Loaders is responsible for loading an original image for transformation
+// Loaders is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.
 	//
@@ -28,27 +28,31 @@ type Loader interface {
 	// of an incoming HTTP request, so it's possible to pass values through middlewares.
 	//
 	// Returns content of the image and Content-Type header.
-	// If error occurred then return nil, "", err.
+	// If error occurred then returns nil, "", err.
 	Load(src string, ctx context.Context) ([]byte, string, error)
 }
 
-//Processor is an interface for transforming/optimising images.
+// Processor is an interface for transforming/optimising images.
+//
+// Each function accepts original image and a list of supported
+// output format by client. Each format should be a MIME type, e.g.
+// image/png, image/webp. The output image will be encoded in one
+// of those formats.
 type Processor interface {
-	//Resize resize given image.
-	//Form of the the size string is
-	//width'x'height. Any dimension could be skipped.
-	//For example:
+	// Resize resizes given image preserving aspect ratio.
+	// Format of the the size argument is width'x'height.
+	// Any dimension could be skipped.
+	// For example:
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
 	Resize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
-	//FitToSize resize given image cropping it to the given size.
-	//Form of the the size string is width'x'height.
-	//For example, 300x400
+	// FitToSize resizes given image cropping it to the given size.
+	// Format of the the size string is width'x'height, e.g. 300x400
 	FitToSize(data []byte, size string, imageId string, supportedFormats []string) ([]byte, error)
 
-	//Optimise optimises given image to reduce size if the served image.
+	// Optimise optimises given image to reduce size of the served image.
 	Optimise(data []byte, imageId string, supportedFormats []string) ([]byte, error)
 }
 
@@ -338,7 +342,7 @@ func (r *Service) execOp(op *Command) {
 }
 
 func (r *Service) getQueue() *Queue {
-	//Get the next execution channel
+	// Get the next execution channel
 	r.currProcMux.Lock()
 	r.currProc++
 	if r.currProc == len(r.Q) {
@@ -350,7 +354,7 @@ func (r *Service) getQueue() *Queue {
 	return r.Q[procIdx]
 }
 
-//Adds Content-Length and Cache-Control headers
+// Adds Content-Length and Cache-Control headers
 func addHeaders(resp http.ResponseWriter, body []byte) {
 	resp.Header().Add("Content-Length", strconv.Itoa(len(body)))
 	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
