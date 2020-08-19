@@ -79,7 +79,7 @@ type Command struct {
 	Size             string
 	Resp             http.ResponseWriter
 	SupportedFormats []string
-	Result           []byte
+	Result           *Image
 	FinishedCond     *sync.Cond
 	Finished         bool
 	Err              error
@@ -108,10 +108,10 @@ func NewService(r Loader, p Processor, procNum int) (*Service, error) {
 
 func (r *Service) GetRouter() *mux.Router {
 	router := mux.NewRouter().SkipClean(true)
-	router.HandleFunc("/img/{imgUrl:.*}/resize", http.HandlerFunc(r.ResizeUrl))
-	router.HandleFunc("/img/{imgUrl:.*}/fit", http.HandlerFunc(r.FitToSizeUrl))
-	router.HandleFunc("/img/{imgUrl:.*}/asis", http.HandlerFunc(r.AsIs))
-	router.HandleFunc("/img/{imgUrl:.*}/optimise", http.HandlerFunc(r.OptimiseUrl))
+	router.HandleFunc("/img/{imgUrl:.*}/resize", r.ResizeUrl)
+	router.HandleFunc("/img/{imgUrl:.*}/fit", r.FitToSizeUrl)
+	router.HandleFunc("/img/{imgUrl:.*}/asis", r.AsIs)
+	router.HandleFunc("/img/{imgUrl:.*}/optimise", r.OptimiseUrl)
 
 	return router
 }
@@ -329,7 +329,7 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		r.execOp(&Command{
-			Result: result.Data,
+			Result: result,
 			ImgId:  imgUrl,
 			Resp:   resp,
 		})
@@ -359,8 +359,11 @@ func (r *Service) getQueue() *Queue {
 }
 
 // Adds Content-Length and Cache-Control headers
-func addHeaders(resp http.ResponseWriter, body []byte) {
-	resp.Header().Add("Content-Length", strconv.Itoa(len(body)))
+func addHeaders(resp http.ResponseWriter, image *Image) {
+	if len(image.MimeType) != 0 {
+		resp.Header().Add("Content-Type", image.MimeType)
+	}
+	resp.Header().Add("Content-Length", strconv.Itoa(len(image.Data)))
 	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
 }
 
@@ -405,5 +408,5 @@ func writeResult(op *Command) {
 	}
 
 	addHeaders(op.Resp, op.Result)
-	op.Resp.Write(op.Result)
+	op.Resp.Write(op.Result.Data)
 }

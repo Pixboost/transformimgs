@@ -86,7 +86,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 }
 
 // Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
