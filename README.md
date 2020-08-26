@@ -79,7 +79,8 @@ $ ./run.sh
 
 ### Perfomance tests
 
-There is a JMeter performance test that you can run against a service. To make it run
+There is a [JMeter](https://jmeter.apache.org) performance test you can run against a service. To run tests:
+
 * Run performance test environment:
 ```
 $ docker-compose -f docker-compose-perf.yml up
@@ -92,6 +93,11 @@ $ jmeter -n -t perf-test.jmx -l ./results.jmx -e -o ./results
 * Run JMeter WebP test:
 ```
 $ jmeter -n -t perf-test-webp.jmx -l ./results-webp.jmx -e -o ./results-webp
+```
+
+* Run JMeter AVIF test:
+```
+$ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 ```
 
 ## API
