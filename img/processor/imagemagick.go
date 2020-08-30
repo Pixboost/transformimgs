@@ -262,7 +262,8 @@ func getOutputFormat(inf *ImageInfo, supportedFormats []string) (string, string)
 		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
 			webP = true
 		}
-		if f == "image/avif" {
+		// ImageMagick doesn't support encoding of alpha channel for AVIF.
+		if f == "image/avif" && inf.opaque {
 			avif = true
 		}
 	}
