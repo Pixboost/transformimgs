@@ -1,7 +1,4 @@
-FROM golang:1.12-alpine3.10
-
-#Installing imagemagick
-RUN apk add --no-cache imagemagick git gcc libc-dev
+FROM golang:1.14-buster AS build
 
 #Installing godeps
 RUN go get github.com/golang/dep/cmd/dep
@@ -14,4 +11,13 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/
 RUN dep ensure
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
-ENTRYPOINT ["go", "run", "main.go", "-imConvert=/usr/bin/convert", "-imIdentify=/usr/bin/identify"]
+
+RUN go build -o /transformimgs
+
+FROM dpokidov/imagemagick:latest-buster
+
+ENV IM_HOME /usr/local/bin
+
+COPY --from=build /transformimgs /transformimgs
+
+ENTRYPOINT ["/transformimgs", "-imConvert=/usr/local/bin/convert", "-imIdentify=/usr/local/bin/identify"]
