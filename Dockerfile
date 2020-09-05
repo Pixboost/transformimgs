@@ -14,7 +14,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:latest-buster
+FROM dpokidov/imagemagick:7.0.10-28
 
 ENV IM_HOME /usr/local/bin
 
