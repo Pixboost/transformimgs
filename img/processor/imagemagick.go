@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/img"
 	"os/exec"
-	"strconv"
 )
 
 type ImageMagick struct {
@@ -101,9 +100,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
-		args = append(args, "-quality", "82")
-	}
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("resize", data, imgInfo)...)
@@ -138,9 +135,8 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
-	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
-		args = append(args, "-quality", "82")
-	}
+
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("fit", data, imgInfo)...)
@@ -167,19 +163,13 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	if err != nil {
 		return nil, err
 	}
-	quality := -1
-	//Only changing quality if it wasn't set in original image
-	if imgInfo.quality == 100 {
-		quality = 82
-	}
 
 	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	if quality > 0 {
-		args = append(args, "-quality", strconv.Itoa(quality))
-	}
+
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("optimise", data, imgInfo)...)
@@ -287,6 +277,15 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 			opts = append(opts, "-colors", "256")
 		}
 		return opts
+	}
+
+	return []string{}
+}
+
+func getQualityOptions(inf *ImageInfo) []string {
+	//Only changing quality if it wasn't set in the original image
+	if inf.quality == 100 {
+		return []string{"-quality", "82"}
 	}
 
 	return []string{}
