@@ -13,62 +13,84 @@ import (
 
 type resizerMock struct{}
 
-func hasWebP(supportedFormats []string) bool {
-	hasWebP := false
+func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
+	if (string(data) != "321" && string(data) != "111") || size != "300x200" {
+		return nil, errors.New("resize_error")
+	}
+
+	return r.resultImage(data, supportedFormats), nil
+}
+
+func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
+	if (string(data) != "321" && string(data) != "111") || size != "300x200" {
+		return nil, errors.New("fit_error")
+	}
+
+	return r.resultImage(data, supportedFormats), nil
+}
+
+func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) (*img.Image, error) {
+	if string(data) != "321" && string(data) != "111" {
+		return nil, errors.New("optimise_error")
+	}
+
+	return r.resultImage(data, supportedFormats), nil
+}
+
+func (r *resizerMock) supports(supportedFormats []string, format string) bool {
+	supports := false
 	for _, f := range supportedFormats {
-		if f == "image/webp" {
-			hasWebP = true
+		if f == format {
+			supports = true
 		}
 	}
 
-	return hasWebP
+	return supports
 }
 
-func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
-
-	if string(data) == "321" && size == "300x200" && hasWebP {
-		return []byte("1234"), nil
+func (r *resizerMock) resultImage(data []byte, supportedFormats []string) *img.Image {
+	if string(data) == "111" {
+		return &img.Image{
+			Data: []byte("222"),
+		}
 	}
 
-	if string(data) == "321" && size == "300x200" {
-		return []byte("123"), nil
-	}
-	return nil, errors.New("resize_error")
-}
-
-func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
-
-	if string(data) == "321" && size == "300x200" && hasWebP {
-		return []byte("1234"), nil
+	if r.supports(supportedFormats, "image/avif") {
+		return &img.Image{
+			Data:     []byte("12345"),
+			MimeType: "image/avif",
+		}
 	}
 
-	if string(data) == "321" && size == "300x200" {
-		return []byte("123"), nil
+	if r.supports(supportedFormats, "image/webp") {
+		return &img.Image{
+			Data:     []byte("1234"),
+			MimeType: "image/webp",
+		}
 	}
-	return nil, errors.New("resize_error")
-}
 
-func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
-	hasWebP := hasWebP(supportedFormats)
-
-	if string(data) == "321" && hasWebP {
-		return []byte("1234"), nil
+	return &img.Image{
+		Data:     []byte("123"),
+		MimeType: "image/png",
 	}
-	if string(data) == "321" {
-		return []byte("123"), nil
-	}
-	return nil, errors.New("resize_error")
 }
 
 type loaderMock struct{}
 
-func (l *loaderMock) Load(url string, ctx context.Context) ([]byte, string, error) {
+func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 	if url == "http://site.com/img.png" {
-		return []byte("321"), "image/png", nil
+		return &img.Image{
+			Data:     []byte("321"),
+			MimeType: "image/png",
+		}, nil
 	}
-	return nil, "", errors.New("read_error")
+	if url == "http://site.com/img2.png" {
+		return &img.Image{
+			Data:     []byte("111"),
+			MimeType: "image/png",
+		}, nil
+	}
+	return nil, errors.New("read_error")
 }
 
 func TestService_ResizeUrl(t *testing.T) {
@@ -83,7 +105,9 @@ func TestService_ResizeUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("123", w.Body.String(), "Resulted image"),
 					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -95,10 +119,41 @@ func TestService_ResizeUrl(t *testing.T) {
 					"Accept": {"image/png, image/webp"},
 				},
 			},
-			Description: "Output Formats Support",
+			Description: "WEBP Support",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("1234", w.Body.String(), "Resulted image"),
+					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
+				Header: map[string][]string{
+					"Accept": {"image/png, image/webp, image/avif"},
+				},
+			},
+			Description: "AVIF Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("12345", w.Body.String(), "Resulted image"),
+					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/resize?size=300x200", t),
+			},
+			Description: "MIME Sniffing",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -110,7 +165,7 @@ func TestService_ResizeUrl(t *testing.T) {
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
-			Description: "X-Forwarded-Proto",
+			Description: "Using protocol from X-Forwarded-Proto header to load source image",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
@@ -151,6 +206,8 @@ func TestService_FitToSizeUrl(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+					test.Equal("123", w.Body.String(), "Resulted image"),
+					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -162,10 +219,41 @@ func TestService_FitToSizeUrl(t *testing.T) {
 					"Accept": {"image/png, image/webp"},
 				},
 			},
-			Description: "Output Formats Support",
+			Description: "WebP Support",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("1234", w.Body.String(), "Resulted image"),
+					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
+				Header: map[string][]string{
+					"Accept": {"image/png, image/webp, image/avif"},
+				},
+			},
+			Description: "AVIF Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("12345", w.Body.String(), "Resulted image"),
+					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/fit?size=300x200", t),
+			},
+			Description: "MIME Sniffing",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -177,7 +265,7 @@ func TestService_FitToSizeUrl(t *testing.T) {
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
-			Description: "X-Forwarded-Proto",
+			Description: "Using protocol from X-Forwarded-Proto header to load source image",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
@@ -223,6 +311,8 @@ func TestService_OptimiseUrl(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+					test.Equal("123", w.Body.String(), "Resulted image"),
+					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -234,10 +324,41 @@ func TestService_OptimiseUrl(t *testing.T) {
 					"Accept": {"image/png, image/webp"},
 				},
 			},
-			Description: "Output Formats Support",
+			Description: "Webp Support",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("1234", w.Body.String(), "Resulted image"),
+					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
+				Header: map[string][]string{
+					"Accept": {"image/png, image/webp, image/avif"},
+				},
+			},
+			Description: "AVIF Support",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("12345", w.Body.String(), "Resulted image"),
+					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
+				)
+			},
+		},
+		{
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/optimise", t),
+			},
+			Description: "MIME Sniffing",
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
 		},
@@ -249,7 +370,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
-			Description: "X-Forwarded-Proto",
+			Description: "Using protocol from X-Forwarded-Proto header to load source image",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
@@ -292,7 +413,7 @@ func TestService_AsIs(t *testing.T) {
 					"X-Forwarded-Proto": {"http"},
 				},
 			},
-			Description: "X-Forwarded-Proto",
+			Description: "Using protocol from X-Forwarded-Proto header to load source image",
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),

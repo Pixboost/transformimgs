@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/img"
 	"os/exec"
-	"strconv"
 )
 
 type ImageMagick struct {
@@ -56,9 +55,11 @@ const (
 	MaxWebpHeight = 16383
 )
 
-//Creates new imagemagick processor.
-//im is a path to ImageMagick "convert" binary.
-//idi is a path to ImageMagick "identify" command.
+// NewImageMagick creates a new ImageMagick processor. It does require
+// ImageMagick binaries to be installed on the local machine.
+//
+// im is a path to ImageMagick "convert" binary.
+// idi is a path to ImageMagick "identify" binary.
 func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	if len(im) == 0 {
 		img.Log.Error("Path to \"convert\" command should be set by -imConvert flag")
@@ -85,44 +86,57 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	}, nil
 }
 
-// Resize image to the given size preserving aspect ratio. No cropping applying.
-func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+// Resize resizes an image to the given size preserving aspect ratio. No cropping applies.
+//
+// Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
+func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
 
+	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
+
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
-		args = append(args, "-quality", "82")
-	}
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("resize", data, imgInfo)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, outputFormatArg) //Output
 
-	return p.execImagemagick(bytes.NewReader(data), args, imgId)
+	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &img.Image{
+		Data:     outputImageData,
+		MimeType: mimeType,
+	}, nil
 }
 
-// Resize input image to exact size with cropping everything that out of the bounds.
-// Size must specified in format WIDTHxHEIGHT. Both dimensions must be included.
-func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) ([]byte, error) {
+// FitToSize resizes input image to exact size with cropping everything that out of the bound.
+// It doesn't respect the aspect ratio of the original image.
+//
+// Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
+func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
 
+	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
+
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
-	if imgInfo.format == "JPEG" && imgInfo.quality < 82 {
-		args = append(args, "-quality", "82")
-	}
+
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("fit", data, imgInfo)...)
@@ -131,34 +145,38 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, outputFormatArg) //Output
 
-	return p.execImagemagick(bytes.NewReader(data), args, imgId)
+	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &img.Image{
+		Data:     outputImageData,
+		MimeType: mimeType,
+	}, nil
 }
 
-func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) ([]byte, error) {
+func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) (*img.Image, error) {
 	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
-	quality := -1
-	//Only changing quality if it wasn't set in original image
-	if imgInfo.quality == 100 {
-		quality = 82
-	}
+
+	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	if quality > 0 {
-		args = append(args, "-quality", strconv.Itoa(quality))
-	}
+
+	args = append(args, getQualityOptions(imgInfo)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("optimise", data, imgInfo)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(imgInfo)...)
-	args = append(args, getOutputFormat(imgInfo, supportedFormats)) //Output
+	args = append(args, outputFormatArg) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
 	if err != nil {
@@ -170,7 +188,10 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 		result = data
 	}
 
-	return result, nil
+	return &img.Image{
+		Data:     result,
+		MimeType: mimeType,
+	}, nil
 }
 
 func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
@@ -224,20 +245,27 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo,
 	return imageInfo, nil
 }
 
-func getOutputFormat(inf *ImageInfo, supportedFormats []string) string {
+func getOutputFormat(inf *ImageInfo, supportedFormats []string) (string, string) {
 	webP := false
+	avif := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
 			webP = true
 		}
+		// ImageMagick doesn't support encoding of alpha channel for AVIF.
+		if f == "image/avif" && inf.opaque {
+			avif = true
+		}
 	}
 
-	output := "-"
+	if avif {
+		return "avif:-", "image/avif"
+	}
 	if webP {
-		output = "webp:-"
+		return "webp:-", "image/webp"
 	}
 
-	return output
+	return "-", ""
 }
 
 func getConvertFormatOptions(inf *ImageInfo) []string {
@@ -249,6 +277,15 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 			opts = append(opts, "-colors", "256")
 		}
 		return opts
+	}
+
+	return []string{}
+}
+
+func getQualityOptions(inf *ImageInfo) []string {
+	//Only changing quality if it wasn't set in the original image
+	if inf.quality == 100 {
+		return []string{"-quality", "82"}
 	}
 
 	return []string{}

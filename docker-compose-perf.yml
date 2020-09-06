@@ -11,6 +11,6 @@ services:
   nginx:
     image: nginx:1.13.1-alpine
     volumes:
-      - ./img/processors/test_files:/usr/share/nginx/html:ro
+      - ./img/processor/test_files:/usr/share/nginx/html:ro
     ports:
       - "9090:80"

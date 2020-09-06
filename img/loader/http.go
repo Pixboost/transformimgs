@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 	"fmt"
+	"github.com/Pixboost/transformimgs/img"
 	"io/ioutil"
 	"net/http"
 )
@@ -12,10 +13,10 @@ type Http struct {
 	Headers http.Header
 }
 
-func (r *Http) Load(url string, ctx context.Context) ([]byte, string, error) {
+func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	for k, v := range r.Headers {
 		for _, headerVal := range v {
@@ -25,12 +26,12 @@ func (r *Http) Load(url string, ctx context.Context) ([]byte, string, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("Expected %d but got code %d.\n Error '%s'",
+		return nil, fmt.Errorf("Expected %d but got code %d.\n Error '%s'",
 			http.StatusOK, resp.StatusCode, resp.Status)
 	}
 
@@ -38,8 +39,11 @@ func (r *Http) Load(url string, ctx context.Context) ([]byte, string, error) {
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	return result, contentType, nil
+	return &img.Image{
+		Data:     result,
+		MimeType: contentType,
+	}, nil
 }

@@ -18,12 +18,12 @@ func TestHttp_LoadImg(t *testing.T) {
 
 	httpLoader := &loader.Http{}
 
-	r, contentType, err := httpLoader.Load(server.URL, context.Background())
+	image, err := httpLoader.Load(server.URL, context.Background())
 
 	test.Error(t,
 		test.Nil(err, "error"),
-		test.Equal("cool/stuff", contentType, "content type"),
-		test.Equal("123", string(r), "resulted image"),
+		test.Equal("cool/stuff", image.MimeType, "content type"),
+		test.Equal("123", string(image.Data), "resulted image"),
 	)
 }
 
@@ -35,7 +35,7 @@ func TestHttp_LoadImgErrorResponseStatus(t *testing.T) {
 
 	httpLoader := &loader.Http{}
 
-	_, _, err := httpLoader.Load(server.URL, context.Background())
+	_, err := httpLoader.Load(server.URL, context.Background())
 
 	test.Error(t,
 		test.NotNil(err, "error"),
@@ -61,11 +61,11 @@ func TestHttp_LoadCustomHeaders(t *testing.T) {
 		},
 	}
 
-	r, contentType, err := httpLoader.Load(server.URL, context.Background())
+	image, err := httpLoader.Load(server.URL, context.Background())
 
 	test.Error(t,
 		test.Nil(err, "error"),
-		test.Equal("cool/stuff", contentType, "content type"),
-		test.Equal("123", string(r), "resulted image"),
+		test.Equal("cool/stuff", image.MimeType, "content type"),
+		test.Equal("123", string(image.Data), "resulted image"),
 	)
 }
