@@ -6,7 +6,7 @@ go:
   - "1.8"
 
 script:
-  - docker run transformimgs /bin/sh -c "go test $(go list ./... | grep -v /vendor/)"
+  - docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs
 
 before_install:
   - docker build -t transformimgs -f Dockerfile.dev .
