@@ -19,10 +19,10 @@ manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
 ## Features
 
 * Resize/optimises/crops raster (PNG and JPEG) images.
-* [WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
+* [AVIF](https://en.wikipedia.org/wiki/AV1)/[WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
 * Sets "[Cache-Control](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9)" header in a response. 
     Cache TTL is configurable through command line flag "-cache".
-* Execution queue that will create number of executors based number of CPUs or can be configured through "-proc" flag.
+* Execution queue that will create number of executors based on number of CPUs or can be configured through "-proc" flag.
 * Supports "[Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44)" header to cache responses based on the output format.
 
 ## Install
