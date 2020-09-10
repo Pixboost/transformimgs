@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/img"
 	"os/exec"
+	"strconv"
 )
 
 type ImageMagick struct {
@@ -100,7 +101,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	args = append(args, getQualityOptions(imgInfo)...)
+	args = append(args, getQualityOptions(imgInfo, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("resize", data, imgInfo)...)
@@ -136,7 +137,7 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
 
-	args = append(args, getQualityOptions(imgInfo)...)
+	args = append(args, getQualityOptions(imgInfo, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("fit", data, imgInfo)...)
@@ -169,7 +170,7 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 
-	args = append(args, getQualityOptions(imgInfo)...)
+	args = append(args, getQualityOptions(imgInfo, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("optimise", data, imgInfo)...)
@@ -282,10 +283,19 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 	return []string{}
 }
 
-func getQualityOptions(inf *ImageInfo) []string {
-	//Only changing quality if it wasn't set in the original image
+func getQualityOptions(inf *ImageInfo, outputMimeType string) []string {
+	//Changing quality if it wasn't set in the original image
 	if inf.quality == 100 {
 		return []string{"-quality", "82"}
+	}
+
+	// Setting max quality to 90 for avif
+	if outputMimeType == "image/avif" {
+		if inf.quality < 90 {
+			return []string{"-quality", strconv.Itoa(inf.quality)}
+		} else {
+			return []string{"-quality", "90"}
+		}
 	}
 
 	return []string{}
