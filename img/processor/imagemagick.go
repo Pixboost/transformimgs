@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/img"
 	"os/exec"
-	"strconv"
 )
 
 type ImageMagick struct {
@@ -285,17 +284,8 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 
 func getQualityOptions(inf *ImageInfo, outputMimeType string) []string {
 	//Changing quality if it wasn't set in the original image
-	if inf.quality == 100 {
+	if inf.quality == 100 && outputMimeType != "image/avif" {
 		return []string{"-quality", "82"}
-	}
-
-	// Setting max quality to 90 for avif
-	if outputMimeType == "image/avif" {
-		if inf.quality < 90 {
-			return []string{"-quality", strconv.Itoa(inf.quality)}
-		} else {
-			return []string{"-quality", "90"}
-		}
 	}
 
 	return []string{}
