@@ -283,13 +283,16 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 }
 
 func getQualityOptions(inf *ImageInfo, outputMimeType string) []string {
-	if outputMimeType == "image/avif" {
+	if inf.quality == 100 {
+		return []string{"-quality", "82"}
+	}
+
+	if outputMimeType == "image/avif" && inf.quality > 85 {
 		return []string{"-quality", "70"}
 	}
 
-	//Changing quality if it wasn't set in the original image
-	if inf.quality == 100 {
-		return []string{"-quality", "82"}
+	if outputMimeType == "image/avif" && inf.quality <= 85 {
+		return []string{"-quality", "60"}
 	}
 
 	return []string{}
