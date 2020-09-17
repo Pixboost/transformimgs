@@ -287,12 +287,14 @@ func getQualityOptions(inf *ImageInfo, outputMimeType string) []string {
 		return []string{"-quality", "82"}
 	}
 
-	if outputMimeType == "image/avif" && inf.quality > 85 {
-		return []string{"-quality", "70"}
-	}
-
-	if outputMimeType == "image/avif" && inf.quality <= 85 {
-		return []string{"-quality", "60"}
+	if outputMimeType == "image/avif" {
+		if inf.quality > 85 {
+			return []string{"-quality", "70"}
+		} else if inf.quality > 75 {
+			return []string{"-quality", "60"}
+		} else {
+			return []string{"-quality", "50"}
+		}
 	}
 
 	return []string{}
