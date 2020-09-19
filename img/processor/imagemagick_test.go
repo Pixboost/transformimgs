@@ -184,8 +184,11 @@ func imgOpT(t *testing.T, fn transform) {
 			t.Errorf("Expected image/webp mime type, but got %s", optimisedImg.MimeType)
 		}
 
-		// AVIF doesn't support images with transparency, so MIME type could be avif or empty
-		if strings.HasSuffix(t.Name(), "_Avif") && !(optimisedImg.MimeType == "image/avif" || len(optimisedImg.MimeType) == 0) {
+		// AVIF doesn't support images with transparency, so MIME type will be empty in those cases
+		// Max size for AVIF is 1000x1000, so webp-invalid-height.jpg won't be processes as well
+		if strings.HasSuffix(t.Name(), "_Avif") &&
+			!(optimisedImg.MimeType == "image/avif" ||
+				len(optimisedImg.MimeType) == 0 && (imgFile == "HT_Paper.png" || imgFile == "HT_Stationery.png" || imgFile == "ollie.png" || imgFile == "webp-invalid-height.jpg")) {
 			t.Errorf("Expected image/avif mime type, but got %s", optimisedImg.MimeType)
 		}
 

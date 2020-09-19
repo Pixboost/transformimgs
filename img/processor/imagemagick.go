@@ -253,7 +253,8 @@ func getOutputFormat(inf *ImageInfo, supportedFormats []string) (string, string)
 			webP = true
 		}
 		// ImageMagick doesn't support encoding of alpha channel for AVIF.
-		if f == "image/avif" && inf.opaque {
+		// Converting 1000x1000 image into AVIF will consume about 500Mb of RAM.
+		if f == "image/avif" && inf.opaque && (inf.width*inf.height) < (1000*1000) {
 			avif = true
 		}
 	}
