@@ -77,7 +77,7 @@ $ cd $GOPATH/src/github.com/Pixboost/transformimgs
 $ ./run.sh 
 ```
 
-### Perfomance tests
+### Performance tests
 
 There is a [JMeter](https://jmeter.apache.org) performance test you can run against a service. To run tests:
 
@@ -123,7 +123,9 @@ Shout out with any ideas. PRs are more than welcome.
 
 ## Todo
 * ~~Add JpegXR support~~ (IE supports WEBP)
-* Add Jpeg 2000 support
+* ~~Add Jpeg 2000 support~~ (Safari support WEBP)
+* Client Hints
+* [Save-Data header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Save-Data)
+* SVG support
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
-* Add SVG support
-* Add GIF support
+* GIF support
