@@ -6,24 +6,13 @@ import (
 	"github.com/Pixboost/transformimgs/img/processor"
 	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
 )
 
-var (
-	FILES = []string{
-		"HT_Paper.png",
-		"HT_Stationery.png",
-		"JBBAKUMBBK_baku_medium_back_chair_black.jpg",
-		"otto-funhouse.jpg",
-		"OW20170515_HPHB_B2B2.jpg",
-		"OW20170515_HPHB_B2C4.jpg",
-		"Monochrome_CategoryImage2.png",
-		"otto-brights-stationery.jpg",
-		"ollie.png",
-		"webp-invalid-height.jpg",
-	}
-)
+type test struct {
+	file                   string
+	expectedOutputMimeType string
+}
 
 type result struct {
 	file     string
@@ -72,7 +61,7 @@ func BenchmarkImageMagickProcessor_Optimise_Avif(b *testing.B) {
 }
 
 func benchmarkWithFormats(b *testing.B, formats []string) {
-	f := fmt.Sprintf("%s/%s", "./test_files", "OW20170515_HPHB_B2B2.jpg")
+	f := fmt.Sprintf("%s/%s", "./test_files", "medium-jpeg.jpg")
 
 	orig, err := ioutil.ReadFile(f)
 	if err != nil {
@@ -90,75 +79,164 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 	processor.Debug = true
 }
 
-func TestImageMagickProcessor_Optimise(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(orig, imgId, []string{})
-	})
+func TestImageMagickProcessor_NoAccept(t *testing.T) {
+	tests := []*test{
+		{"big-jpeg.jpg", ""},
+		{"opaque-png.png", ""},
+		{"transparent-png-use-original.png", ""},
+		{"transparent-png.png", ""},
+	}
 
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return procWithArgs.Optimise(orig, imgId, []string{})
+	t.Run("optimise", func(t *testing.T) {
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return proc.Optimise(orig, imgId, []string{})
+		}, tests)
+
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return procWithArgs.Optimise(orig, imgId, []string{})
+		}, tests)
 	})
+}
+
+func TestImageMagickProcessor_Optimise(t *testing.T) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return proc.Optimise(orig, imgId, []string{})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+			{"transparent-png.png", ""},
+		})
+
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return procWithArgs.Optimise(orig, imgId, []string{})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+			{"transparent-png.png", ""},
+		})
 }
 
 func TestImageMagickProcessor_Resize(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Resize(orig, "50", imgId, []string{})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+		})
 
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return procWithArgs.Resize(orig, "50", imgId, []string{})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+		})
 }
 
 func TestImageMagickProcessor_FitToSize(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+		})
 
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"opaque-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+		})
 }
 
 func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Optimise(orig, imgId, []string{"image/webp"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", "image/webp"},
+			{"opaque-png.png", "image/webp"},
+			{"transparent-png-use-original.png", "image/webp"},
+			{"webp-invalid-height.jpg", ""},
+		})
 }
 
 func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Resize(orig, "50", imgId, []string{"image/webp"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", "image/webp"},
+			{"opaque-png.png", "image/webp"},
+			{"transparent-png-use-original.png", "image/webp"},
+			{"webp-invalid-height.jpg", ""},
+		})
 }
 
 func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{"image/webp"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", "image/webp"},
+			{"opaque-png.png", "image/webp"},
+			{"transparent-png-use-original.png", "image/webp"},
+			{"webp-invalid-height.jpg", ""},
+		})
 }
 
 func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Optimise(orig, imgId, []string{"image/avif"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"medium-jpeg.jpg", "image/avif"},
+			{"opaque-png.png", "image/avif"},
+			{"transparent-png-use-original.png", ""},
+		})
 }
 
 func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Resize(orig, "50", imgId, []string{"image/avif"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"medium-jpeg.jpg", "image/avif"},
+			{"opaque-png.png", "image/avif"},
+			{"transparent-png-use-original.png", ""},
+		})
 }
 
 func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
-	imgOpT(t, func(orig []byte, imgId string) (*img.Image, error) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{"image/avif"})
-	})
+	},
+		[]*test{
+			{"big-jpeg.jpg", ""},
+			{"medium-jpeg.jpg", "image/avif"},
+			{"opaque-png.png", "image/avif"},
+			{"transparent-png-use-original.png", ""},
+		})
 }
 
-func imgOpT(t *testing.T, fn transform) {
+func testImages(t *testing.T, fn transform, files []*test) {
 	results := make([]*result, 0)
-	for _, imgFile := range FILES {
+	for _, tt := range files {
+		imgFile := tt.file
+
 		f := fmt.Sprintf("%s/%s", "./test_files", imgFile)
 
 		orig, err := ioutil.ReadFile(f)
@@ -166,7 +244,7 @@ func imgOpT(t *testing.T, fn transform) {
 			t.Errorf("Can't read file %s: %+v", f, err)
 		}
 
-		optimisedImg, err := fn(orig, f)
+		transformedImg, err := fn(orig, f)
 
 		if err != nil {
 			t.Errorf("Can't transform file: %+v", err)
@@ -175,28 +253,16 @@ func imgOpT(t *testing.T, fn transform) {
 		results = append(results, &result{
 			file:     imgFile,
 			origSize: len(orig),
-			optSize:  len(optimisedImg.Data),
+			optSize:  len(transformedImg.Data),
 		})
 		//Writes converted file for manual verification.
-		// ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s_%s", t.Name(), imgFile), optimisedImg, 0777)
+		// ioutil.WriteFile(fmt.Sprintf("./test_files/opt_%s_%s", t.Name(), imgFile), transformedImg, 0777)
 
-		if strings.HasSuffix(t.Name(), "_Webp") && optimisedImg.MimeType != "image/webp" && imgFile != "webp-invalid-height.jpg" {
-			t.Errorf("Expected image/webp mime type, but got %s", optimisedImg.MimeType)
+		if transformedImg.MimeType != tt.expectedOutputMimeType {
+			t.Errorf("%s: Expected [%s] mime type, but got [%s]", tt.file, tt.expectedOutputMimeType, transformedImg.MimeType)
 		}
 
-		// AVIF doesn't support images with transparency, so MIME type will be empty in those cases
-		// Max size for AVIF is 1000x1000, so webp-invalid-height.jpg won't be processes as well
-		if strings.HasSuffix(t.Name(), "_Avif") &&
-			!(optimisedImg.MimeType == "image/avif" ||
-				len(optimisedImg.MimeType) == 0 && (imgFile == "HT_Paper.png" || imgFile == "HT_Stationery.png" || imgFile == "ollie.png" || imgFile == "webp-invalid-height.jpg")) {
-			t.Errorf("Expected image/avif mime type, but got %s", optimisedImg.MimeType)
-		}
-
-		if !strings.HasSuffix(t.Name(), "_Webp") && !strings.HasSuffix(t.Name(), "_Avif") && len(optimisedImg.MimeType) != 0 {
-			t.Errorf("Expected empty mime type, but got %s", optimisedImg.MimeType)
-		}
-
-		if len(optimisedImg.Data) > len(orig) {
+		if len(transformedImg.Data) > len(orig) {
 			t.Errorf("Image %s is not optimised", f)
 		}
 	}

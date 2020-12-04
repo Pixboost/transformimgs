@@ -7,7 +7,7 @@ set -e
 # script to run the application inside docker
 # container.
 
-dep ensure
+go mod vendor
 
 echo 'Running Tests'
 go test $(go list ./... | grep -v /vendor/) -v -bench . -benchmem

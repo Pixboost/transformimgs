@@ -42,9 +42,6 @@ ENV PATH $GOPATH/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 WORKDIR $GOPATH
 
-#Installing godeps
-RUN go get github.com/golang/dep/cmd/dep
-
 ENV IM_HOME /usr/local/bin
 
 VOLUME /go/src/github.com/Pixboost/transformimgs/
