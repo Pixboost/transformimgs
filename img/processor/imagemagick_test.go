@@ -96,68 +96,26 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 			return procWithArgs.Optimise(orig, imgId, []string{})
 		}, tests)
 	})
-}
 
-func TestImageMagickProcessor_Optimise(t *testing.T) {
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(orig, imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-			{"transparent-png.png", ""},
-		})
+	t.Run("resize", func(t *testing.T) {
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return proc.Resize(orig, "50", imgId, []string{})
+		}, tests)
 
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return procWithArgs.Optimise(orig, imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-			{"transparent-png.png", ""},
-		})
-}
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return procWithArgs.Resize(orig, "50", imgId, []string{})
+		}, tests)
+	})
 
-func TestImageMagickProcessor_Resize(t *testing.T) {
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Resize(orig, "50", imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-		})
+	t.Run("fit", func(t *testing.T) {
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return proc.FitToSize(orig, "50x50", imgId, []string{})
+		}, tests)
 
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return procWithArgs.Resize(orig, "50", imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-		})
-}
-
-func TestImageMagickProcessor_FitToSize(t *testing.T) {
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.FitToSize(orig, "50x50", imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-		})
-
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
-	},
-		[]*test{
-			{"big-jpeg.jpg", ""},
-			{"opaque-png.png", ""},
-			{"transparent-png-use-original.png", ""},
-		})
+		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+			return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
+		}, tests)
+	})
 }
 
 func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
