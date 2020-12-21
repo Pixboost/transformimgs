@@ -20,11 +20,6 @@ var CacheTTL int
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-type Image struct {
-	Data     []byte
-	MimeType string
-}
-
 // Loaders is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.

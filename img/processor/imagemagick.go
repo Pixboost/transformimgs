@@ -3,7 +3,8 @@ package processor
 import (
 	"bytes"
 	"fmt"
-	"github.com/Pixboost/transformimgs/img"
+	"github.com/Pixboost/transformimgs/v2/img"
+	"github.com/Pixboost/transformimgs/v2/img/processor/internal"
 	"os/exec"
 )
 
@@ -16,15 +17,7 @@ type ImageMagick struct {
 	// GetAdditionalArgs could return additional argument to ImageMagick "convert" command.
 	// "op" is the name of the operation: "optimise", "resize" or "fit".
 	// Argument name and value should be in separate array elements.
-	GetAdditionalArgs func(op string, image []byte, imageInfo *ImageInfo) []string
-}
-
-type ImageInfo struct {
-	format  string
-	quality int
-	opaque  bool
-	width   int
-	height  int
+	GetAdditionalArgs func(op string, image []byte, imageInfo *img.Info) []string
 }
 
 var convertOpts = []string{
@@ -90,23 +83,27 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 //
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
 func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
-	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
 
-	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
+	target := &img.Info{
+		Opaque: source.Opaque,
+	}
+	internal.CalculateTargetSize(source, target, size)
+	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	args = append(args, getQualityOptions(imgInfo, mimeType)...)
+	args = append(args, getQualityOptions(source, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("resize", data, imgInfo)...)
+		args = append(args, p.GetAdditionalArgs("resize", data, source)...)
 	}
 	args = append(args, convertOpts...)
-	args = append(args, getConvertFormatOptions(imgInfo)...)
+	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
 	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
@@ -125,26 +122,30 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 //
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
 func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
-	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
 
-	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
+	target := &img.Info{
+		Opaque: source.Opaque,
+	}
+	fmt.Sscanf(size, "%dx%d", &target.Width, &target.Height)
+	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
 
-	args = append(args, getQualityOptions(imgInfo, mimeType)...)
+	args = append(args, getQualityOptions(source, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("fit", data, imgInfo)...)
+		args = append(args, p.GetAdditionalArgs("fit", data, source)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
 	args = append(args, "-extent", size)
-	args = append(args, getConvertFormatOptions(imgInfo)...)
+	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
 	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
@@ -159,23 +160,28 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 }
 
 func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) (*img.Image, error) {
-	imgInfo, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
 	}
 
-	outputFormatArg, mimeType := getOutputFormat(imgInfo, supportedFormats)
+	target := &img.Info{
+		Opaque: source.Opaque,
+		Width:  source.Width,
+		Height: source.Height,
+	}
+	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 
-	args = append(args, getQualityOptions(imgInfo, mimeType)...)
+	args = append(args, getQualityOptions(source, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("optimise", data, imgInfo)...)
+		args = append(args, p.GetAdditionalArgs("optimise", data, source)...)
 	}
 	args = append(args, convertOpts...)
-	args = append(args, getConvertFormatOptions(imgInfo)...)
+	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
 	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
@@ -217,7 +223,7 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo, error) {
+func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
@@ -236,8 +242,8 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo,
 		return nil, err
 	}
 
-	imageInfo := &ImageInfo{}
-	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.format, &imageInfo.quality, &imageInfo.opaque, &imageInfo.width, &imageInfo.height)
+	imageInfo := &img.Info{}
+	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -245,16 +251,16 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*ImageInfo,
 	return imageInfo, nil
 }
 
-func getOutputFormat(inf *ImageInfo, supportedFormats []string) (string, string) {
+func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
 	webP := false
 	avif := false
 	for _, f := range supportedFormats {
-		if f == "image/webp" && inf.height < MaxWebpHeight && inf.width < MaxWebpWidth {
+		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
 		}
 		// ImageMagick doesn't support encoding of alpha channel for AVIF.
 		// Converting 1000x1000 image into AVIF will consume about 500Mb of RAM.
-		if f == "image/avif" && inf.opaque && (inf.width*inf.height) < (1000*1000) {
+		if f == "image/avif" && src.Opaque && (target.Width*target.Height) < (1000*1000) {
 			avif = true
 		}
 	}
@@ -269,12 +275,12 @@ func getOutputFormat(inf *ImageInfo, supportedFormats []string) (string, string)
 	return "-", ""
 }
 
-func getConvertFormatOptions(inf *ImageInfo) []string {
-	if inf.format == "PNG" {
+func getConvertFormatOptions(inf *img.Info) []string {
+	if inf.Format == "PNG" {
 		opts := []string{
 			"-define", "webp:lossless=true",
 		}
-		if inf.opaque {
+		if inf.Opaque {
 			opts = append(opts, "-colors", "256")
 		}
 		return opts
@@ -283,15 +289,15 @@ func getConvertFormatOptions(inf *ImageInfo) []string {
 	return []string{}
 }
 
-func getQualityOptions(inf *ImageInfo, outputMimeType string) []string {
-	if inf.quality == 100 {
+func getQualityOptions(inf *img.Info, outputMimeType string) []string {
+	if inf.Quality == 100 {
 		return []string{"-quality", "82"}
 	}
 
 	if outputMimeType == "image/avif" {
-		if inf.quality > 85 {
+		if inf.Quality > 85 {
 			return []string{"-quality", "70"}
-		} else if inf.quality > 75 {
+		} else if inf.Quality > 75 {
 			return []string{"-quality", "60"}
 		} else {
 			return []string{"-quality", "50"}
