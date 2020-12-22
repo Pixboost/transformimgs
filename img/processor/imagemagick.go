@@ -91,7 +91,10 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	target := &img.Info{
 		Opaque: source.Opaque,
 	}
-	internal.CalculateTargetSize(source, target, size)
+	err = internal.CalculateTargetSizeForResize(source, target, size)
+	if err != nil {
+		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", imgId, size)
+	}
 	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
 
 	args := make([]string, 0)
@@ -130,7 +133,10 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	target := &img.Info{
 		Opaque: source.Opaque,
 	}
-	fmt.Sscanf(size, "%dx%d", &target.Width, &target.Height)
+	err = internal.CalculateTargetSizeForFit(target, size)
+	if err != nil {
+		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", imgId, size)
+	}
 	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
 
 	args := make([]string, 0)
@@ -260,7 +266,8 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 		// ImageMagick doesn't support encoding of alpha channel for AVIF.
 		// Converting 1000x1000 image into AVIF will consume about 500Mb of RAM.
-		if f == "image/avif" && src.Opaque && (target.Width*target.Height) < (1000*1000) {
+		targetSize := target.Width * target.Height
+		if f == "image/avif" && src.Opaque && targetSize < (1000*1000) && targetSize != 0 {
 			avif = true
 		}
 	}

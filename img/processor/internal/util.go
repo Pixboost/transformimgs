@@ -7,16 +7,41 @@ import (
 	"strconv"
 )
 
-var sizeRegexp = regexp.MustCompile(`^(\d*)[x|X]?(\d*)$`)
+var (
+	resizeRegexp = regexp.MustCompile(`^(\d*)[x]?(\d*)$`)
+	fitRegexp    = regexp.MustCompile(`^(\d*)x(\d*)$`)
+)
 
-func CalculateTargetSize(source *img.Info, target *img.Info, targetSize string) error {
+func CalculateTargetSizeForFit(target *img.Info, targetSize string) error {
+
+	parsedSize := resizeRegexp.FindStringSubmatch(targetSize)
+	if len(parsedSize) < 3 || len(parsedSize[1]) == 0 || len(parsedSize[2]) == 0 {
+		return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
+	}
+
+	var err error
+
+	target.Width, err = strconv.Atoi(parsedSize[1])
+	if err != nil {
+		return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
+	}
+
+	target.Height, err = strconv.Atoi(parsedSize[2])
+	if err != nil {
+		return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
+	}
+
+	return nil
+}
+
+func CalculateTargetSizeForResize(source *img.Info, target *img.Info, targetSize string) error {
 	if source.Width <= 0 || source.Height <= 0 {
 		return nil
 	}
 
 	var err error
 
-	parsedSize := sizeRegexp.FindStringSubmatch(targetSize)
+	parsedSize := resizeRegexp.FindStringSubmatch(targetSize)
 	if len(parsedSize) < 3 {
 		return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
 	}

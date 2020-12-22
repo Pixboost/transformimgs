@@ -1,10 +1,17 @@
 # TransformImgs
 
 [![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
+![Codecov](https://img.shields.io/codecov/c/github/Pixboost/transformimgs)
+[![Docker Pulls](https://img.shields.io/docker/pulls/pixboost/transformimgs)](https://hub.docker.com/r/pixboost/transformimgs/)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
 
-Image transformations web service. Provides Http API to image 
-manipulation operations backed by [Imagemagick](http://imagemagick.org) CLI.
+Open Source [Image CDN](https://web.dev/image-cdns/) that provides image transformation API and supports 
+the latest image formats, such as WebP, AVIF. 
+
+There are two ways of using the service:
+
+* Deploy on your own infrastructure using docker image
+* Use as SaaS at [pixboost.com](https://pixboost.com?source=github)
 
 ## Table of Contents
 
@@ -62,13 +69,10 @@ $ docker-compose up
 
 ### Building and Running from sources 
 
-Dependencies:
+Prerequisites:
 
-* Go with [modules support]()
-* [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
-* [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
-* [glogi](https://github.com/dooman87/glogi) for logging interface
-* Installed [imagemagick v7+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
+* Go with [modules support](https://golang.org/ref/mod)
+* Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support. Run script assumes that binaries are in `/usr/local/bin`
 
 ```
 $ git clone git@github.com:Pixboost/transformimgs.git

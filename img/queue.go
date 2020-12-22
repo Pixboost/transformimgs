@@ -22,7 +22,10 @@ func (q *Queue) start() {
 				op.Result, op.Err = op.Optimise(op.Image, op.ImgId, op.SupportedFormats)
 			}
 		}
+		op.FinishedCond.L.Lock()
 		op.Finished = true
+		op.FinishedCond.L.Unlock()
+
 		op.FinishedCond.Signal()
 	}
 }
