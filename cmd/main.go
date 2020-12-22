@@ -20,9 +20,9 @@ package main
 
 import (
 	"flag"
-	"github.com/Pixboost/transformimgs/img"
-	"github.com/Pixboost/transformimgs/img/loader"
-	"github.com/Pixboost/transformimgs/img/processor"
+	"github.com/Pixboost/transformimgs/v6/img"
+	"github.com/Pixboost/transformimgs/v6/img/loader"
+	"github.com/Pixboost/transformimgs/v6/img/processor"
 	"github.com/dooman87/kolibri/health"
 	"net/http"
 	"os"

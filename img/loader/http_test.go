@@ -2,7 +2,7 @@ package loader_test
 
 import (
 	"context"
-	"github.com/Pixboost/transformimgs/img/loader"
+	"github.com/Pixboost/transformimgs/v6/img/loader"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"

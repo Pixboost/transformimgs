@@ -1,14 +1,11 @@
 FROM golang:1.14-buster AS build
 
-#Installing godeps
-RUN go get github.com/golang/dep/cmd/dep
-
 RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/
 RUN git clone https://github.com/Pixboost/transformimgs.git
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/
-RUN dep ensure
+RUN go mod vendor
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 

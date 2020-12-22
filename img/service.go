@@ -20,11 +20,6 @@ var CacheTTL int
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-type Image struct {
-	Data     []byte
-	MimeType string
-}
-
 // Loaders is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.
@@ -200,6 +195,14 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
 	}
+	if match, err := regexp.MatchString(`^\d*[x]?\d*$`, size); !match || err != nil {
+		if err != nil {
+			Log.Printf("Error while matching size: %s\n", err.Error())
+		}
+		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
