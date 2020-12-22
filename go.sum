@@ -1,5 +1,3 @@
-github.com/Pixboost/transformimgs v5.0.3+incompatible h1:96jtcMzj4Ct7+D1hvUkbhpBh6Kz9FoEFFnfjgAHOyUs=
-github.com/Pixboost/transformimgs v5.0.3+incompatible/go.mod h1:NxvlyuQRVlgtRC1b4wa52uh/TQCbZKG1knGrHyzdOaU=
 github.com/dooman87/glogi v0.0.0-20171229170332-1a9ee96f1380 h1:OC9HJVXdYvuq5z4t2lS7650zQKnXvUtFXellMX2zu7E=
 github.com/dooman87/glogi v0.0.0-20171229170332-1a9ee96f1380/go.mod h1:uWlPVNZ0PJcbKCdXMJL/MGta7m/H+wg0nzy6ZKYvEGw=
 github.com/dooman87/kolibri v0.0.0-20170117194222-c194ff118b67 h1:5zx4LUSP0iPn0KL6ciINexzNAw4imx4Db7B+LHCIP3s=
