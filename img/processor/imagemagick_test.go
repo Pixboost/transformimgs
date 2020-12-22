@@ -2,8 +2,8 @@ package processor_test
 
 import (
 	"fmt"
-	"github.com/Pixboost/transformimgs/img"
-	"github.com/Pixboost/transformimgs/img/processor"
+	"github.com/Pixboost/transformimgs/v2/img"
+	"github.com/Pixboost/transformimgs/v2/img/processor"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -171,7 +171,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 		return proc.Resize(orig, "50", imgId, []string{"image/avif"})
 	},
 		[]*test{
-			{"big-jpeg.jpg", ""},
+			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
 			{"transparent-png-use-original.png", ""},
@@ -183,7 +183,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 		return proc.FitToSize(orig, "50x50", imgId, []string{"image/avif"})
 	},
 		[]*test{
-			{"big-jpeg.jpg", ""},
+			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
 			{"transparent-png-use-original.png", ""},
