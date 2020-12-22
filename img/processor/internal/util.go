@@ -13,8 +13,7 @@ var (
 )
 
 func CalculateTargetSizeForFit(target *img.Info, targetSize string) error {
-
-	parsedSize := resizeRegexp.FindStringSubmatch(targetSize)
+	parsedSize := fitRegexp.FindStringSubmatch(targetSize)
 	if len(parsedSize) < 3 || len(parsedSize[1]) == 0 || len(parsedSize[2]) == 0 {
 		return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
 	}
@@ -56,7 +55,7 @@ func CalculateTargetSizeForResize(source *img.Info, target *img.Info, targetSize
 	if len(parsedSize[2]) > 0 && target.Width == 0 {
 		target.Height, err = strconv.Atoi(parsedSize[2])
 		if err != nil {
-			//TODO
+			return fmt.Errorf("expected target size in format [WIDTH]x[HEIGHT], but got [%s]", targetSize)
 		}
 	}
 	aspectRatio := float32(source.Width) / float32(source.Height)

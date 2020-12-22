@@ -64,7 +64,6 @@ func TestCalculateTargetSizeForResize(t *testing.T) {
 		{800, 600, "abc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abc]"},
 		{800, 600, "abx400", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abx400]"},
 		{800, 600, "300xabc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [300xabc]"},
-		{800, 600, "xabc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [xabc]"},
 	}
 
 	for idx, tt := range tests {
