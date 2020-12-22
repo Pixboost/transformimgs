@@ -3,7 +3,7 @@ package img_test
 import (
 	"context"
 	"errors"
-	"github.com/Pixboost/transformimgs/img"
+	"github.com/Pixboost/transformimgs/v2/img"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"
@@ -185,7 +185,22 @@ func TestService_ResizeUrl(t *testing.T) {
 		},
 		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=BADSIZE",
-			ExpectedCode: http.StatusInternalServerError,
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Resize error",
+		},
+		{
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300xx",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Resize error",
+		},
+		{
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=abcx200",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Resize error",
+		},
+		{
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300xabc",
+			ExpectedCode: http.StatusBadRequest,
 			Description:  "Resize error",
 		},
 	}

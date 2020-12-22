@@ -3,7 +3,7 @@ services:
   - docker
 
 go:
-  - "1.8"
+  - "1.15"
 
 script:
   - docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs

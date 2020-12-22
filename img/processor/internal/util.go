@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-var sizeRegexp = regexp.MustCompile(`^(\d*)x?(\d*)$`)
+var sizeRegexp = regexp.MustCompile(`^(\d*)[x|X]?(\d*)$`)
 
 func CalculateTargetSize(source *img.Info, target *img.Info, targetSize string) error {
 	if source.Width <= 0 || source.Height <= 0 {
