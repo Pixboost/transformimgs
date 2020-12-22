@@ -3,7 +3,7 @@ package img_test
 import (
 	"context"
 	"errors"
-	"github.com/Pixboost/transformimgs/v2/img"
+	"github.com/Pixboost/transformimgs/v6/img"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"

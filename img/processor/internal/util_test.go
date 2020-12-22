@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/Pixboost/transformimgs/v2/img"
+	"github.com/Pixboost/transformimgs/v6/img"
 	"testing"
 )
 

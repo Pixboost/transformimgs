@@ -3,8 +3,8 @@ package processor
 import (
 	"bytes"
 	"fmt"
-	"github.com/Pixboost/transformimgs/v2/img"
-	"github.com/Pixboost/transformimgs/v2/img/processor/internal"
+	"github.com/Pixboost/transformimgs/v6/img"
+	"github.com/Pixboost/transformimgs/v6/img/processor/internal"
 	"os/exec"
 )
 

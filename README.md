@@ -64,18 +64,19 @@ $ docker-compose up
 
 Dependencies:
 
-* Go 1.8+
+* Go with [modules support]()
 * [Gorilla MUX](https://github.com/gorilla/mux) for HTTP routing
 * [kolibri](https://github.com/dooman87/kolibri) for healthcheck and testing
 * [glogi](https://github.com/dooman87/glogi) for logging interface
-* Installed [imagemagick](http://imagemagick.org)
+* Installed [imagemagick v7+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
 
 ```
-$ go get github.com/golang/dep/cmd/dep
-$ go get github.com/Pixboost/transformimgs
-$ cd $GOPATH/src/github.com/Pixboost/transformimgs
+$ git clone git@github.com:Pixboost/transformimgs.git
+$ cd transformimgs
 $ ./run.sh 
 ```
+
+Go modules have been introduced in v6.
 
 ### Performance tests
 

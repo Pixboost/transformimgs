@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/Pixboost/transformimgs/v2/img"
+	"github.com/Pixboost/transformimgs/v6/img"
 	"regexp"
 	"strconv"
 )
