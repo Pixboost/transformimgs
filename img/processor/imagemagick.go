@@ -6,6 +6,7 @@ import (
 	"github.com/Pixboost/transformimgs/v6/img"
 	"github.com/Pixboost/transformimgs/v6/img/processor/internal"
 	"os/exec"
+	"strconv"
 )
 
 type ImageMagick struct {
@@ -100,7 +101,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size)
-	args = append(args, getQualityOptions(source, mimeType)...)
+	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("resize", data, source)...)
@@ -143,7 +144,7 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	args = append(args, "-") //Input
 	args = append(args, "-resize", size+"^")
 
-	args = append(args, getQualityOptions(source, mimeType)...)
+	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("fit", data, source)...)
@@ -181,7 +182,7 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 
-	args = append(args, getQualityOptions(source, mimeType)...)
+	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("optimise", data, source)...)
@@ -296,18 +297,23 @@ func getConvertFormatOptions(inf *img.Info) []string {
 	return []string{}
 }
 
-func getQualityOptions(inf *img.Info, outputMimeType string) []string {
-	if inf.Quality == 100 {
+func getQualityOptions(source *img.Info, target *img.Info, outputMimeType string) []string {
+	if source.Quality == 100 {
 		return []string{"-quality", "82"}
 	}
 
 	if outputMimeType == "image/avif" {
-		if inf.Quality > 85 {
-			return []string{"-quality", "70"}
-		} else if inf.Quality > 75 {
-			return []string{"-quality", "60"}
+		var addQuality = 0
+		if (target.Height * target.Width) > (500 * 500) {
+			addQuality = 10
+		}
+
+		if source.Quality > 85 {
+			return []string{"-quality", strconv.Itoa(70 + addQuality)}
+		} else if source.Quality > 75 {
+			return []string{"-quality", strconv.Itoa(60 + addQuality)}
 		} else {
-			return []string{"-quality", "50"}
+			return []string{"-quality", strconv.Itoa(50 + addQuality)}
 		}
 	}
 

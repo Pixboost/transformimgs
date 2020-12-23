@@ -26,3 +26,5 @@ _testmain.go
 *.iml
 .idea/**
 vendor/**
+
+coverage.txt
