@@ -6,7 +6,6 @@ import (
 	"github.com/Pixboost/transformimgs/v6/img"
 	"github.com/Pixboost/transformimgs/v6/img/processor/internal"
 	"os/exec"
-	"strconv"
 )
 
 type ImageMagick struct {
@@ -47,6 +46,11 @@ var Debug bool = true
 const (
 	MaxWebpWidth  = 16383
 	MaxWebpHeight = 16383
+
+	// There are two aspects to this:
+	// * Encoding to AVIF consumes a lot of memory
+	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
+	MaxAVIFTargetSize = 1000 * 1000
 )
 
 // NewImageMagick creates a new ImageMagick processor. It does require
@@ -265,10 +269,10 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
 		}
-		// ImageMagick doesn't support encoding of alpha channel for AVIF.
-		// Converting 1000x1000 image into AVIF will consume about 500Mb of RAM.
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Opaque && targetSize < (1000*1000) && targetSize != 0 {
+
+		// ImageMagick doesn't support encoding of alpha channel for AVIF.
+		if f == "image/avif" && src.Opaque && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -303,17 +307,12 @@ func getQualityOptions(source *img.Info, target *img.Info, outputMimeType string
 	}
 
 	if outputMimeType == "image/avif" {
-		var addQuality = 0
-		if (target.Height * target.Width) > (500 * 500) {
-			addQuality = 10
-		}
-
 		if source.Quality > 85 {
-			return []string{"-quality", strconv.Itoa(70 + addQuality)}
+			return []string{"-quality", "70"}
 		} else if source.Quality > 75 {
-			return []string{"-quality", strconv.Itoa(60 + addQuality)}
+			return []string{"-quality", "60"}
 		} else {
-			return []string{"-quality", strconv.Itoa(50 + addQuality)}
+			return []string{"-quality", "50"}
 		}
 	}
 
