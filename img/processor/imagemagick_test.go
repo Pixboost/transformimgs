@@ -162,7 +162,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
-			{"transparent-png-use-original.png", ""},
+			{"transparent-png-use-original.png", "image/avif"},
 		})
 }
 
@@ -174,7 +174,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
-			{"transparent-png-use-original.png", ""},
+			{"transparent-png-use-original.png", "image/avif"},
 		})
 }
 
@@ -186,7 +186,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
-			{"transparent-png-use-original.png", ""},
+			{"transparent-png-use-original.png", "image/avif"},
 		})
 }
 
