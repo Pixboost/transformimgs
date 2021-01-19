@@ -133,4 +133,4 @@ Shout out with any ideas. PRs are more than welcome.
 * [Save-Data header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Save-Data)
 * SVG support
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
-* GIF support
+* ~~GIF support~~ (Added in version 6.1.0)

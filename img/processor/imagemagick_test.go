@@ -85,6 +85,7 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 		{"opaque-png.png", ""},
 		{"transparent-png-use-original.png", ""},
 		{"transparent-png.png", ""},
+		{"animated.gif", ""},
 	}
 
 	t.Run("optimise", func(t *testing.T) {
@@ -126,6 +127,7 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
+			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
 		})
 }
@@ -138,6 +140,7 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
+			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
 		})
 }
@@ -150,6 +153,7 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
+			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
 		})
 }
@@ -162,6 +166,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
+			{"animated.gif", ""},
 			{"transparent-png-use-original.png", "image/avif"},
 		})
 }
@@ -174,6 +179,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
+			{"animated.gif", ""},
 			{"transparent-png-use-original.png", "image/avif"},
 		})
 }
@@ -186,6 +192,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
+			{"animated.gif", ""},
 			{"transparent-png-use-original.png", "image/avif"},
 		})
 }

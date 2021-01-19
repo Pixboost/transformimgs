@@ -203,6 +203,7 @@ func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []str
 	if len(result) > len(data) {
 		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
 		result = data
+		mimeType = ""
 	}
 
 	return &img.Image{
@@ -271,7 +272,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 		targetSize := target.Width * target.Height
 
-		if f == "image/avif" && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
