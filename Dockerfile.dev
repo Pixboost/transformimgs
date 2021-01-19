@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.0.10-28
+FROM dpokidov/imagemagick:7.0.10-58
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \

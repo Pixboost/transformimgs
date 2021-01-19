@@ -254,7 +254,9 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 		return nil, err
 	}
 
-	imageInfo := &img.Info{}
+	imageInfo := &img.Info{
+		Size: in.Size(),
+	}
 	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
@@ -270,10 +272,9 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
 		}
-		targetSize := target.Width * target.Height
 
-		// ImageMagick doesn't support encoding of alpha channel for AVIF.
-		if f == "image/avif" && src.Opaque && src.Format != "GIF" && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		targetSize := target.Width * target.Height
+		if f == "image/avif" && src.Format != "GIF" && src.Size > 20*1024 && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -288,12 +289,12 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 	return "-", ""
 }
 
-func getConvertFormatOptions(inf *img.Info) []string {
-	if inf.Format == "PNG" {
+func getConvertFormatOptions(source *img.Info) []string {
+	if source.Format == "PNG" {
 		opts := []string{
 			"-define", "webp:lossless=true",
 		}
-		if inf.Opaque {
+		if source.Opaque {
 			opts = append(opts, "-colors", "256")
 		}
 		return opts
@@ -303,6 +304,10 @@ func getConvertFormatOptions(inf *img.Info) []string {
 }
 
 func getQualityOptions(source *img.Info, target *img.Info, outputMimeType string) []string {
+	// Lossless compression for PNG -> AVIF
+	if source.Format == "PNG" && outputMimeType == "image/avif" {
+		return []string{"-quality", "100"}
+	}
 	if source.Quality == 100 {
 		return []string{"-quality", "82"}
 	}
