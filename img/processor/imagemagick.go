@@ -254,7 +254,9 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 		return nil, err
 	}
 
-	imageInfo := &img.Info{}
+	imageInfo := &img.Info{
+		Size: in.Size(),
+	}
 	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
@@ -270,9 +272,9 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
 		}
-		targetSize := target.Width * target.Height
 
-		if f == "image/avif" && src.Format != "GIF" && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		targetSize := target.Width * target.Height
+		if f == "image/avif" && src.Format != "GIF" && src.Size > 20*1024 && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}

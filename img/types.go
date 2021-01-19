@@ -5,11 +5,13 @@ type Image struct {
 	MimeType string
 }
 
-// Info holds basic information about image
+// Info holds basic information about an image
 type Info struct {
 	Format  string
 	Quality int
 	Opaque  bool
 	Width   int
 	Height  int
+	// Size is the size of the image in bytes
+	Size int64
 }

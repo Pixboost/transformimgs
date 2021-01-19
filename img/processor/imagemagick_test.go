@@ -84,7 +84,7 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 		{"big-jpeg.jpg", ""},
 		{"opaque-png.png", ""},
 		{"transparent-png-use-original.png", ""},
-		{"transparent-png.png", ""},
+		{"small-transparent-png.png", ""},
 		{"animated.gif", ""},
 	}
 
@@ -167,7 +167,24 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
-			{"transparent-png-use-original.png", "image/avif"},
+			{"transparent-png.png", "image/avif"},
+			{"small-transparent-png.png", ""},
+			{"transparent-png-use-original.png", ""},
+		})
+}
+
+func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return proc.Optimise(orig, imgId, []string{"image/avif", "image/webp"})
+	},
+		[]*test{
+			{"big-jpeg.jpg", "image/webp"},
+			{"medium-jpeg.jpg", "image/avif"},
+			{"opaque-png.png", "image/avif"},
+			{"animated.gif", "image/webp"},
+			{"transparent-png.png", "image/avif"},
+			{"small-transparent-png.png", "image/webp"},
+			{"transparent-png-use-original.png", ""},
 		})
 }
 
