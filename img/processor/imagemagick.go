@@ -29,7 +29,6 @@ var convertOpts = []string{
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
 	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
-	"-define", "webp:method=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -290,17 +289,19 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 }
 
 func getConvertFormatOptions(source *img.Info) []string {
+	var opts []string
 	if source.Format == "PNG" {
-		opts := []string{
-			"-define", "webp:lossless=true",
-		}
+		opts = append(opts, "-define", "webp:lossless=true")
 		if source.Opaque {
 			opts = append(opts, "-colors", "256")
 		}
-		return opts
+
+	}
+	if source.Format != "GIF" {
+		opts = append(opts, "-define", "webp:method=6")
 	}
 
-	return []string{}
+	return opts
 }
 
 func getQualityOptions(source *img.Info, target *img.Info, outputMimeType string) []string {
