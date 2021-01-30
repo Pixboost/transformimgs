@@ -129,8 +129,8 @@ Shout out with any ideas. PRs are more than welcome.
 ## Todo
 * ~~Add JpegXR support~~ (IE supports WEBP)
 * ~~Add Jpeg 2000 support~~ (Safari support WEBP)
-* Client Hints
-* [Save-Data header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Save-Data)
-* SVG support
+* [Client Hints](https://github.com/Pixboost/transformimgs/issues/26) - on hold due to browsers adoption
+* [Save-Data header](https://github.com/Pixboost/transformimgs/issues/27)
+* [SVG support](https://github.com/Pixboost/transformimgs/issues/12)
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
 * ~~GIF support~~ (Added in version 6.1.0)
