@@ -1,6 +1,8 @@
 package img
 
 type Image struct {
+	// Id of the image mainly used for debugging purposes
+	Id       string
 	Data     []byte
 	MimeType string
 }

@@ -25,10 +25,31 @@ type Loader interface {
 	// Load loads an image from the given source.
 	//
 	// ctx is a context of the current transaction. Typically it's a context
-	// of an incoming HTTP request, so it's possible to pass values through middlewares.
+	// of an incoming HTTP request, so we make it possible to pass values through middlewares.
 	//
 	// Returns an image.
 	Load(src string, ctx context.Context) (*Image, error)
+}
+
+type Quality int
+
+const (
+	DEFAULT Quality = 1 + iota
+	LOW
+)
+
+// ProcessorInput is a configuration passed to Processor
+// that used during transformations.
+type ProcessorInput struct {
+	// Src is a source image to transform.
+	// This field is required for transformations.
+	Src *Image
+	// SupportedFormats is a list of output formats supported by client.
+	// Processor will use one of those formats for result image. If list
+	// is empty the format of the source image will be used.
+	SupportedFormats []string
+	// Quality defines quality of output image
+	Quality Quality
 }
 
 // Processor is an interface for transforming/optimising images.
@@ -45,14 +66,14 @@ type Processor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
+	Resize(input *ProcessorInput, size string) (*Image, error)
 
 	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
 	// Format of the the size string is width'x'height, e.g. 300x400.
-	FitToSize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
+	FitToSize(input *ProcessorInput, size string) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
-	Optimise(data []byte, imageId string, supportedFormats []string) (*Image, error)
+	Optimise(input *ProcessorInput) (*Image, error)
 }
 
 type Service struct {
