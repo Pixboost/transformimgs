@@ -86,20 +86,27 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 // Resize resizes an image to the given size preserving aspect ratio. No cropping applies.
 //
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
-func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
-	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+func (p *ImageMagick) Resize(input *img.TransformationConfig) (*img.Image, error) {
+	srcData := input.Src.Data
+	source, err := p.loadImageInfo(bytes.NewReader(srcData), input.Src.Id)
 	if err != nil {
 		return nil, err
 	}
 
+	resizeConfig, ok := input.Config.(*img.ResizeConfig)
+	if !ok {
+		return nil, fmt.Errorf("could not get resizeConfig")
+	}
+
+	size := resizeConfig.Size
 	target := &img.Info{
 		Opaque: source.Opaque,
 	}
 	err = internal.CalculateTargetSizeForResize(source, target, size)
 	if err != nil {
-		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", imgId, size)
+		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", input.Src.Id, size)
 	}
-	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
+	outputFormatArg, mimeType := getOutputFormat(source, target, input.SupportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
@@ -107,13 +114,13 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("resize", data, source)...)
+		args = append(args, p.GetAdditionalArgs("resize", srcData, source)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
-	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
+	outputImageData, err := p.execImagemagick(bytes.NewReader(srcData), args, input.Src.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +135,7 @@ func (p *ImageMagick) Resize(data []byte, size string, imgId string, supportedFo
 // It doesn't respect the aspect ratio of the original image.
 //
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
-func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
+func (p *ImageMagick) FitToSize(input *img.TransformationConfig) (*img.Image, error) {
 	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err
@@ -169,7 +176,7 @@ func (p *ImageMagick) FitToSize(data []byte, size string, imgId string, supporte
 	}, nil
 }
 
-func (p *ImageMagick) Optimise(data []byte, imgId string, supportedFormats []string) (*img.Image, error) {
+func (p *ImageMagick) Optimise(input *img.TransformationConfig) (*img.Image, error) {
 	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
 	if err != nil {
 		return nil, err

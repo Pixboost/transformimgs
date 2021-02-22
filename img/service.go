@@ -38,9 +38,14 @@ const (
 	LOW
 )
 
-// ProcessorInput is a configuration passed to Processor
+type ResizeConfig struct {
+	// Size is a size of output images in the format WxH.
+	Size string
+}
+
+// TransformationConfig is a configuration passed to Processor
 // that used during transformations.
-type ProcessorInput struct {
+type TransformationConfig struct {
 	// Src is a source image to transform.
 	// This field is required for transformations.
 	Src *Image
@@ -50,6 +55,8 @@ type ProcessorInput struct {
 	SupportedFormats []string
 	// Quality defines quality of output image
 	Quality Quality
+	// Config is a configuration for the specific transformation
+	Config interface{}
 }
 
 // Processor is an interface for transforming/optimising images.
@@ -66,14 +73,14 @@ type Processor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(input *ProcessorInput, size string) (*Image, error)
+	Resize(input *TransformationConfig) (*Image, error)
 
 	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
 	// Format of the the size string is width'x'height, e.g. 300x400.
-	FitToSize(input *ProcessorInput, size string) (*Image, error)
+	FitToSize(input *TransformationConfig) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
-	Optimise(input *ProcessorInput) (*Image, error)
+	Optimise(input *TransformationConfig) (*Image, error)
 }
 
 type Service struct {
@@ -84,21 +91,19 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type OptimiseCmd func([]byte, string, []string) (*Image, error)
-type ResizeCmd func([]byte, string, string, []string) (*Image, error)
+type Cmd func(input *TransformationConfig) (*Image, error)
+
+//type OptimiseCmd func(input *TransformationConfig) (*Image, error)
+//type ResizeCmd func(input *TransformationConfig,size string) (*Image, error)
 
 type Command struct {
-	Optimise         OptimiseCmd
-	Resize           ResizeCmd
-	Image            []byte
-	ImgId            string
-	Size             string
-	Resp             http.ResponseWriter
-	SupportedFormats []string
-	Result           *Image
-	FinishedCond     *sync.Cond
-	Finished         bool
-	Err              error
+	Transformation Cmd
+	Config         *TransformationConfig
+	Resp           http.ResponseWriter
+	Result         *Image
+	FinishedCond   *sync.Cond
+	Finished       bool
+	Err            error
 }
 
 func NewService(r Loader, p Processor, procNum int) (*Service, error) {
@@ -169,11 +174,12 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Optimise:         r.Processor.Optimise,
-		ImgId:            imgUrl,
-		Image:            srcImage.Data,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.Optimise,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+		},
+		Resp: resp,
 	})
 }
 
@@ -236,12 +242,13 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize:           r.Processor.Resize,
-		Image:            srcImage.Data,
-		ImgId:            imgUrl,
-		Size:             size,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.Resize,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Config:           &ResizeConfig{Size: size},
+		},
+		Resp: resp,
 	})
 }
 
@@ -304,12 +311,13 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize:           r.Processor.FitToSize,
-		Image:            srcImage.Data,
-		ImgId:            imgUrl,
-		Size:             size,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.FitToSize,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Config:           &ResizeConfig{Size: size},
+		},
+		Resp: resp,
 	})
 }
 
@@ -353,8 +361,12 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		r.execOp(&Command{
+			Config: &TransformationConfig{
+				Src: &Image{
+					Id: imgUrl,
+				},
+			},
 			Result: result,
-			ImgId:  imgUrl,
 			Resp:   resp,
 		})
 	}

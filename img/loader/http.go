@@ -43,6 +43,7 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 	}
 
 	return &img.Image{
+		Id:       url,
 		Data:     result,
 		MimeType: contentType,
 	}, nil
