@@ -171,13 +171,20 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
+
+	quality := DEFAULT
+	if req.Header.Get("Save-Data") == "on" {
+		quality = LOW
+	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.Optimise,
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
+			Quality:          quality,
 		},
 		Resp: resp,
 	})
@@ -239,13 +246,20 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
+
+	quality := DEFAULT
+	if req.Header.Get("Save-Data") == "on" {
+		quality = LOW
+	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.Resize,
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
+			Quality:          quality,
 			Config:           &ResizeConfig{Size: size},
 		},
 		Resp: resp,

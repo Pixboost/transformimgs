@@ -6,6 +6,7 @@ import (
 	"github.com/Pixboost/transformimgs/v6/img"
 	"github.com/Pixboost/transformimgs/v6/img/processor/internal"
 	"os/exec"
+	"strconv"
 )
 
 type ImageMagick struct {
@@ -111,7 +112,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 	args = append(args, "-resize", targetSize)
-	args = append(args, getQualityOptions(source, target, mimeType)...)
+	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("resize", srcData, source)...)
@@ -161,7 +162,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 	args = append(args, "-") //Input
 	args = append(args, "-resize", targetSize+"^")
 
-	args = append(args, getQualityOptions(source, target, mimeType)...)
+	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("fit", srcData, source)...)
@@ -200,7 +201,7 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 	args := make([]string, 0)
 	args = append(args, "-") //Input
 
-	args = append(args, getQualityOptions(source, target, mimeType)...)
+	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
 		args = append(args, p.GetAdditionalArgs("optimise", srcData, source)...)
@@ -319,24 +320,32 @@ func getConvertFormatOptions(source *img.Info) []string {
 	return opts
 }
 
-func getQualityOptions(source *img.Info, target *img.Info, outputMimeType string) []string {
+func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
+	var quality int
+
 	// Lossless compression for PNG -> AVIF
 	if source.Format == "PNG" && outputMimeType == "image/avif" {
-		return []string{"-quality", "100"}
-	}
-	if source.Quality == 100 {
-		return []string{"-quality", "82"}
-	}
-
-	if outputMimeType == "image/avif" {
+		quality = 100
+	} else if source.Quality == 100 {
+		quality = 82
+	} else if outputMimeType == "image/avif" {
 		if source.Quality > 85 {
-			return []string{"-quality", "70"}
+			quality = 70
 		} else if source.Quality > 75 {
-			return []string{"-quality", "60"}
+			quality = 60
 		} else {
-			return []string{"-quality", "50"}
+			quality = 50
 		}
+	} else if config.Quality == img.LOW {
+		quality = source.Quality
 	}
 
-	return []string{}
+	if quality == 0 {
+		return []string{}
+	}
+	if quality != 100 && config.Quality == img.LOW {
+		quality -= 10
+	}
+
+	return []string{"-quality", strconv.Itoa(quality)}
 }

@@ -115,7 +115,7 @@ func TestService_ResizeUrl(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("123", w.Body.String(), "Resulted image"),
-					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+					test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
 					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
 			},
@@ -334,7 +334,7 @@ func TestService_OptimiseUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal("Accept", w.Header().Get("Vary"), "Vary header"),
+					test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
 					test.Equal("123", w.Body.String(), "Resulted image"),
 					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
 				)
