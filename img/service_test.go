@@ -13,7 +13,10 @@ import (
 
 type resizerMock struct{}
 
-func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
+func (r *resizerMock) Resize(config *img.TransformationConfig) (*img.Image, error) {
+	data := config.Src.Data
+	size := config.Config.(*img.ResizeConfig).Size
+	supportedFormats := config.SupportedFormats
 	if (string(data) != "321" && string(data) != "111") || size != "300x200" {
 		return nil, errors.New("resize_error")
 	}
@@ -21,7 +24,10 @@ func (r *resizerMock) Resize(data []byte, size string, imgId string, supportedFo
 	return r.resultImage(data, supportedFormats), nil
 }
 
-func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supportedFormats []string) (*img.Image, error) {
+func (r *resizerMock) FitToSize(config *img.TransformationConfig) (*img.Image, error) {
+	data := config.Src.Data
+	size := config.Config.(*img.ResizeConfig).Size
+	supportedFormats := config.SupportedFormats
 	if (string(data) != "321" && string(data) != "111") || size != "300x200" {
 		return nil, errors.New("fit_error")
 	}
@@ -29,7 +35,10 @@ func (r *resizerMock) FitToSize(data []byte, size string, imgId string, supporte
 	return r.resultImage(data, supportedFormats), nil
 }
 
-func (r *resizerMock) Optimise(data []byte, imgId string, supportedFormats []string) (*img.Image, error) {
+func (r *resizerMock) Optimise(config *img.TransformationConfig) (*img.Image, error) {
+	data := config.Src.Data
+	supportedFormats := config.SupportedFormats
+
 	if string(data) != "321" && string(data) != "111" {
 		return nil, errors.New("optimise_error")
 	}

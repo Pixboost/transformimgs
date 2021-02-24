@@ -70,7 +70,15 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 	processor.Debug = false
 
 	for i := 0; i < b.N; i++ {
-		_, err = proc.Optimise(orig, f, formats)
+		_, err = proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   f,
+				Data: orig,
+			},
+			SupportedFormats: formats,
+			Quality:          0,
+			Config:           nil,
+		})
 		if err != nil {
 			b.Errorf("Can't transform file: %+v", err)
 		}
@@ -90,38 +98,84 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 
 	t.Run("optimise", func(t *testing.T) {
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return proc.Optimise(orig, imgId, []string{})
+			return proc.Optimise(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+			})
 		}, tests)
 
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return procWithArgs.Optimise(orig, imgId, []string{})
+			return procWithArgs.Optimise(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+			})
 		}, tests)
 	})
 
 	t.Run("resize", func(t *testing.T) {
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return proc.Resize(orig, "50", imgId, []string{})
+			return proc.Resize(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+				Config:           &img.ResizeConfig{Size: "50"},
+			})
 		}, tests)
 
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return procWithArgs.Resize(orig, "50", imgId, []string{})
+			return procWithArgs.Resize(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+				Config:           &img.ResizeConfig{Size: "50"},
+			})
 		}, tests)
 	})
 
 	t.Run("fit", func(t *testing.T) {
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return proc.FitToSize(orig, "50x50", imgId, []string{})
+			return proc.FitToSize(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+				Config:           &img.ResizeConfig{Size: "50x50"},
+			})
 		}, tests)
 
 		testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-			return procWithArgs.FitToSize(orig, "50x50", imgId, []string{})
+			return procWithArgs.FitToSize(&img.TransformationConfig{
+				Src: &img.Image{
+					Id:   imgId,
+					Data: orig,
+				},
+				SupportedFormats: []string{},
+				Config:           &img.ResizeConfig{Size: "50x50"},
+			})
 		}, tests)
 	})
 }
 
 func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(orig, imgId, []string{"image/webp"})
+		return proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/webp"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/webp"},
@@ -134,7 +188,14 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 
 func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Resize(orig, "50", imgId, []string{"image/webp"})
+		return proc.Resize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/webp"},
+			Config:           &img.ResizeConfig{Size: "50"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/webp"},
@@ -147,7 +208,14 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 
 func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.FitToSize(orig, "50x50", imgId, []string{"image/webp"})
+		return proc.FitToSize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/webp"},
+			Config:           &img.ResizeConfig{Size: "50x50"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/webp"},
@@ -160,7 +228,13 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 
 func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(orig, imgId, []string{"image/avif"})
+		return proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/avif"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", ""},
@@ -175,7 +249,13 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 
 func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(orig, imgId, []string{"image/avif", "image/webp"})
+		return proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/avif", "image/webp"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/webp"},
@@ -190,7 +270,14 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 
 func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Resize(orig, "50", imgId, []string{"image/avif"})
+		return proc.Resize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/avif"},
+			Config:           &img.ResizeConfig{Size: "50"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/avif"},
@@ -203,7 +290,14 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 
 func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.FitToSize(orig, "50x50", imgId, []string{"image/avif"})
+		return proc.FitToSize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/avif"},
+			Config:           &img.ResizeConfig{Size: "50x50"},
+		})
 	},
 		[]*test{
 			{"big-jpeg.jpg", "image/avif"},

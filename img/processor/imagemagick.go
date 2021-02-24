@@ -14,9 +14,9 @@ type ImageMagick struct {
 	// AdditionalArgs are static arguments that will be passed to ImageMagick "convert" command for all operations.
 	// Argument name and value should be in separate array elements.
 	AdditionalArgs []string
-	// GetAdditionalArgs could return additional argument to ImageMagick "convert" command.
+	// GetAdditionalArgs could return additional arguments for ImageMagick "convert" command.
 	// "op" is the name of the operation: "optimise", "resize" or "fit".
-	// Argument name and value should be in separate array elements.
+	// Argument name and value should be in a separate array elements.
 	GetAdditionalArgs func(op string, image []byte, imageInfo *img.Info) []string
 }
 
@@ -86,31 +86,31 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 // Resize resizes an image to the given size preserving aspect ratio. No cropping applies.
 //
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
-func (p *ImageMagick) Resize(input *img.TransformationConfig) (*img.Image, error) {
-	srcData := input.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), input.Src.Id)
+func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, error) {
+	srcData := config.Src.Data
+	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	resizeConfig, ok := input.Config.(*img.ResizeConfig)
+	resizeConfig, ok := config.Config.(*img.ResizeConfig)
 	if !ok {
 		return nil, fmt.Errorf("could not get resizeConfig")
 	}
 
-	size := resizeConfig.Size
+	targetSize := resizeConfig.Size
 	target := &img.Info{
 		Opaque: source.Opaque,
 	}
-	err = internal.CalculateTargetSizeForResize(source, target, size)
+	err = internal.CalculateTargetSizeForResize(source, target, targetSize)
 	if err != nil {
-		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", input.Src.Id, size)
+		img.Log.Errorf("could not calculate target size for [%s], targetSize: [%s]\n", config.Src.Id, targetSize)
 	}
-	outputFormatArg, mimeType := getOutputFormat(source, target, input.SupportedFormats)
+	outputFormatArg, mimeType := getOutputFormat(source, target, config.SupportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	args = append(args, "-resize", size)
+	args = append(args, "-resize", targetSize)
 	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
@@ -120,7 +120,7 @@ func (p *ImageMagick) Resize(input *img.TransformationConfig) (*img.Image, error
 	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
-	outputImageData, err := p.execImagemagick(bytes.NewReader(srcData), args, input.Src.Id)
+	outputImageData, err := p.execImagemagick(bytes.NewReader(srcData), args, config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -135,37 +135,44 @@ func (p *ImageMagick) Resize(input *img.TransformationConfig) (*img.Image, error
 // It doesn't respect the aspect ratio of the original image.
 //
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
-func (p *ImageMagick) FitToSize(input *img.TransformationConfig) (*img.Image, error) {
-	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, error) {
+	srcData := config.Src.Data
+	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
 
+	resizeConfig, ok := config.Config.(*img.ResizeConfig)
+	if !ok {
+		return nil, fmt.Errorf("could not get resizeConfig")
+	}
+
+	targetSize := resizeConfig.Size
 	target := &img.Info{
 		Opaque: source.Opaque,
 	}
-	err = internal.CalculateTargetSizeForFit(target, size)
+	err = internal.CalculateTargetSizeForFit(target, targetSize)
 	if err != nil {
-		img.Log.Errorf("could not calculate target size for [%s], size: [%s]\n", imgId, size)
+		img.Log.Errorf("could not calculate target size for [%s], targetSize: [%s]\n", config.Src.Id, targetSize)
 	}
-	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
+	outputFormatArg, mimeType := getOutputFormat(source, target, config.SupportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-	args = append(args, "-resize", size+"^")
+	args = append(args, "-resize", targetSize+"^")
 
 	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("fit", data, source)...)
+		args = append(args, p.GetAdditionalArgs("fit", srcData, source)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
-	args = append(args, "-extent", size)
+	args = append(args, "-extent", targetSize)
 	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
-	outputImageData, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
+	outputImageData, err := p.execImagemagick(bytes.NewReader(srcData), args, config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +183,9 @@ func (p *ImageMagick) FitToSize(input *img.TransformationConfig) (*img.Image, er
 	}, nil
 }
 
-func (p *ImageMagick) Optimise(input *img.TransformationConfig) (*img.Image, error) {
-	source, err := p.loadImageInfo(bytes.NewReader(data), imgId)
+func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, error) {
+	srcData := config.Src.Data
+	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +195,7 @@ func (p *ImageMagick) Optimise(input *img.TransformationConfig) (*img.Image, err
 		Width:  source.Width,
 		Height: source.Height,
 	}
-	outputFormatArg, mimeType := getOutputFormat(source, target, supportedFormats)
+	outputFormatArg, mimeType := getOutputFormat(source, target, config.SupportedFormats)
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
@@ -195,20 +203,20 @@ func (p *ImageMagick) Optimise(input *img.TransformationConfig) (*img.Image, err
 	args = append(args, getQualityOptions(source, target, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("optimise", data, source)...)
+		args = append(args, p.GetAdditionalArgs("optimise", srcData, source)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(source)...)
 	args = append(args, outputFormatArg) //Output
 
-	result, err := p.execImagemagick(bytes.NewReader(data), args, imgId)
+	result, err := p.execImagemagick(bytes.NewReader(srcData), args, config.Src.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(result) > len(data) {
-		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", imgId, len(result), len(data))
-		result = data
+	if len(result) > len(srcData) {
+		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", config.Src.Id, len(result), len(srcData))
+		result = srcData
 		mimeType = ""
 	}
 
