@@ -322,13 +322,20 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
+
+	quality := DEFAULT
+	if req.Header.Get("Save-Data") == "on" {
+		quality = LOW
+	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.FitToSize,
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
+			Quality:          quality,
 			Config:           &ResizeConfig{Size: size},
 		},
 		Resp: resp,
