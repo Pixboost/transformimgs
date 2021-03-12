@@ -16,11 +16,11 @@ import (
 // Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
 
-// Log writer that can be overrided. Should implement interface glogi.Logger.
+// Log is a logger that could be overridden. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-// Loaders is responsible for loading an original image for transformation
+// Loader is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.
 	//
@@ -93,9 +93,6 @@ type Service struct {
 
 type Cmd func(input *TransformationConfig) (*Image, error)
 
-//type OptimiseCmd func(input *TransformationConfig) (*Image, error)
-//type ResizeCmd func(input *TransformationConfig,size string) (*Image, error)
-
 type Command struct {
 	Transformation Cmd
 	Config         *TransformationConfig
@@ -152,7 +149,17 @@ func (r *Service) GetRouter() *mux.Router {
 //   required: true
 //   in: path
 //   type: string
-//   description: url of the original image
+//   description: Url of the original image
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 // responses:
 //   '200':
 //     description: Optimised image in the same format as original.
@@ -172,11 +179,6 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	quality := DEFAULT
-	if req.Header.Get("Save-Data") == "on" {
-		quality = LOW
-	}
-
 	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
@@ -184,7 +186,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
-			Quality:          quality,
+			Quality:          getQuality(req),
 		},
 		Resp: resp,
 	})
@@ -247,11 +249,6 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	quality := DEFAULT
-	if req.Header.Get("Save-Data") == "on" {
-		quality = LOW
-	}
-
 	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
@@ -259,7 +256,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
-			Quality:          quality,
+			Quality:          getQuality(req),
 			Config:           &ResizeConfig{Size: size},
 		},
 		Resp: resp,
@@ -323,11 +320,6 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	quality := DEFAULT
-	if req.Header.Get("Save-Data") == "on" {
-		quality = LOW
-	}
-
 	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
@@ -335,7 +327,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
-			Quality:          quality,
+			Quality:          getQuality(req),
 			Config:           &ResizeConfig{Size: size},
 		},
 		Resp: resp,
@@ -466,4 +458,15 @@ func writeResult(op *Command) {
 
 	addHeaders(op.Resp, op.Result)
 	op.Resp.Write(op.Result.Data)
+}
+
+func getQuality(req *http.Request) Quality {
+	saveDataParam := getQueryParam(req.URL, "save-data")
+	saveDataHeader := req.Header.Get("Save-Data")
+	quality := DEFAULT
+	if saveDataHeader == "on" && saveDataParam != "off" {
+		quality = LOW
+	}
+
+	return quality
 }
