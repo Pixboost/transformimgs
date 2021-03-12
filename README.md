@@ -6,12 +6,20 @@
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
 
 Open Source [Image CDN](https://web.dev/image-cdns/) that provides image transformation API and supports 
-the latest image formats, such as WebP, AVIF. 
+the latest image formats, such as WebP, AVIF and network client hints. 
 
 There are two ways of using the service:
 
 * Deploy on your own infrastructure using docker image
 * Use as SaaS at [pixboost.com](https://pixboost.com?source=github)
+
+Perks of SaaS version:
+* CDN with HTTP/3 support included
+* Dashboard with usage monitor
+* API Key support with domains allow list
+* AWS S3 integration
+* Elastic scaling based on load
+* Upgrades + Support
 
 ## Table of Contents
 
@@ -27,10 +35,10 @@ There are two ways of using the service:
 
 * Resize/optimises/crops raster (PNG and JPEG) images.
 * [AVIF](https://en.wikipedia.org/wiki/AV1)/[WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
+* Could be deployed behind CDN - sets "[Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44)" header to cache responses with the same URL.
 * Sets "[Cache-Control](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9)" header in a response. 
     Cache TTL is configurable through command line flag "-cache".
 * Execution queue that will create number of executors based on number of CPUs or can be configured through "-proc" flag.
-* Supports "[Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44)" header to cache responses based on the output format.
 
 ## Install
 
@@ -52,7 +60,7 @@ To test that application started successfully:
 
 You should get 'OK' string in the response.
 
-At the moment application provides 4 HTTP endpoints:
+The application provides 4 HTTP endpoints:
 
 * /img/{IMG_URL}/optimise - optimises image
 * /img/{IMG_URL}/resize - resizes image
@@ -64,15 +72,15 @@ Detailed API docs are here - https://pixboost.com/docs/api/
 ### Running the application locally from sources
 
 ```
-$ docker-compose up
+docker-compose up
 ```
 
 ### Building and Running from sources 
 
 Prerequisites:
 
-* Go with [modules support](https://golang.org/ref/mod)
-* Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support. Run script assumes that binaries are in `/usr/local/bin`
+* Go 1.15+ with [modules support](https://golang.org/ref/mod)
+* Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
 
 ```
 $ git clone git@github.com:Pixboost/transformimgs.git
@@ -86,11 +94,11 @@ Go modules have been introduced in v6.
 
 There is a [JMeter](https://jmeter.apache.org) performance test you can run against a service. To run tests:
 
-* Run performance test environment:
+* Start a performance test environment:
 ```
 $ docker-compose -f docker-compose-perf.yml up
 ```
-* Run JMeter test:
+* Run JMeter tests:
 ```
 $ jmeter -n -t perf-test.jmx -l ./results.jmx -e -o ./results
 ```
@@ -108,7 +116,7 @@ $ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 ## API
 
 You can go through [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
-API key `MTg4MjMxMzM3MA__` to transform any images from pixabay.com.
+API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com.
 
 [Go-swagger](https://goswagger.io) is used to generate swagger.json file from sources. To generate:
 
@@ -130,7 +138,7 @@ Shout out with any ideas. PRs are more than welcome.
 * ~~Add JpegXR support~~ (IE supports WEBP)
 * ~~Add Jpeg 2000 support~~ (Safari support WEBP)
 * [Client Hints](https://github.com/Pixboost/transformimgs/issues/26) - on hold due to browsers adoption
-* [Save-Data header](https://github.com/Pixboost/transformimgs/issues/27)
+* ~~[Save-Data header](https://github.com/Pixboost/transformimgs/issues/27)~~ (Added in version 7.0.0)
 * [SVG support](https://github.com/Pixboost/transformimgs/issues/12)
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
 * ~~GIF support~~ (Added in version 6.1.0)
