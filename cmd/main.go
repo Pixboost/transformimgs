@@ -1,10 +1,12 @@
-// Images transformations API
+// Image transformations API
 //
-// The purpose of this API is to provide a set of
-// endpoints that will transform and optimise images.
-// Then it becomes easy to use the API with <img> and <picture> tags in web development.
+// The main purpose of this is to help Web Developers to serve
+// images in the best possible way meaning balance between
+// quality and speed.
 //
-// Version: 2
+// Each endpoint could be used directly in `<img>` and `<picture>` HTML tags
+//
+// Version: 2.1
 // Schemes: https
 // Host: pixboost.com
 // BasePath: /api/2/
@@ -60,7 +62,7 @@ func main() {
 	router := srv.GetRouter()
 	router.HandleFunc("/health", health.Health)
 
-	img.Log.Printf("Running the applicaiton on port 8080...\n")
+	img.Log.Printf("Running the application on port 8080...\n")
 	err = http.ListenAndServe(":8080", router)
 
 	if err != nil {

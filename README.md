@@ -118,17 +118,12 @@ $ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 You can go through [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
 API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com.
 
-[Go-swagger](https://goswagger.io) is used to generate swagger.json file from sources. 
+[Go-swagger](https://goswagger.io) is used to generate swagger.json schema file from sources. 
 
-Install version 0.26.1
+To generate schema and api.md:
 
-To generate spec:
-
-```
-$ cd cmd/
-$ swagger generate spec -o ../swagger.json
-```
-
+* Install version 0.26.1
+* `./generate-api-docs.sh`
 
 
 ## Contribute

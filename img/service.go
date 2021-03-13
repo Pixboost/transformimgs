@@ -216,10 +216,19 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   description: |
 //    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
 //    Only width or height could be passed, e.g 200, x300.
-//
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 // responses:
 //   '200':
-//     description: Resized image in the same format as original.
+//     description: Resized image.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
@@ -288,10 +297,20 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   pattern: \d{1,4}x\d{1,4}
 //   description: |
 //    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 //
 // responses:
 //   '200':
-//     description: Resized image in the same format as original.
+//     description: Resized image
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
