@@ -103,6 +103,8 @@ type Command struct {
 	Err            error
 }
 
+var emptyGif = [...]byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x1, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x21, 0xf9, 0x4, 0x1, 0xa, 0x0, 0x1, 0x0, 0x2c, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x1, 0x0, 0x0, 0x2, 0x2, 0x4c, 0x1, 0x0, 0x3b}
+
 func NewService(r Loader, p Processor, procNum int) (*Service, error) {
 	if procNum <= 0 {
 		return nil, fmt.Errorf("procNum must be positive, but got [%d]", procNum)
@@ -248,6 +250,15 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
@@ -257,8 +268,6 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-
-	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.Resize,

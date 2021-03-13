@@ -2,6 +2,7 @@ package img_test
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"github.com/Pixboost/transformimgs/v6/img"
 	"github.com/dooman87/kolibri/test"
@@ -20,6 +21,8 @@ const (
 	ImgWebpOut       = "1234"
 	ImgPngOut        = "123"
 	ImgLowQualityOut = "12"
+
+	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
 
 type resizerMock struct{}
@@ -197,6 +200,22 @@ func TestService_ResizeUrl(t *testing.T) {
 				test.Error(t,
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+				)
+			},
+		},
+		{
+			Description: "Save-Data: hide",
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200&save-data=hide", t),
+				Header: map[string][]string{
+					"Save-Data": {"on"},
+				},
+			},
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
+					test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
 				)
 			},
 		},
