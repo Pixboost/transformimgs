@@ -67,7 +67,8 @@ The application provides 4 HTTP endpoints:
 * /img/{IMG_URL}/fit - resize image to the exact size by resizing and cropping it
 * /img/{IMG_URL}/asis - returns original image
 
-Detailed API docs are here - https://pixboost.com/docs/api/
+* [Detailed API Documentation](https://pixboost.com/docs/api/)
+* [Markdown API docs](api.md)
 
 ### Running the application locally from sources
 
@@ -125,14 +126,13 @@ To generate schema and api.md:
 * Install version 0.26.1
 * `./generate-api-docs.sh`
 
-## To watch browsers changes
+## Opened tickets for images related features
 
-TODO: Fill in the links
-* [Safari to support Save-Data]()
-* [Safari to support AVIF]()
-* [Firefox to support JPEG XL]()
-* [Chrome to support JPEG XL]()
-* [Safari to support JPEG XL]()
+* [Safari to support Save-Data](https://bugs.webkit.org/show_bug.cgi?id=199101)
+* [Safari to support AVIF](https://bugs.webkit.org/show_bug.cgi?id=207750)
+* [Firefox to support JPEG XL](https://bugzilla.mozilla.org/show_bug.cgi?id=1539075)
+* [Chrome to support JPEG XL](https://bugs.chromium.org/p/chromium/issues/detail?id=1178058)
+* [Safari to support JPEG XL](https://bugs.webkit.org/show_bug.cgi?id=208235)
 
 ## Contribute
 
