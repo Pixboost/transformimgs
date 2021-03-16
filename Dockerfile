@@ -1,4 +1,4 @@
-FROM golang:1.14-buster AS build
+FROM golang:1.15-buster AS build
 
 RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/

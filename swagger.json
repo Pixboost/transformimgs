@@ -88,10 +88,20 @@
         "parameters": [
           {
             "type": "string",
-            "description": "url of the original image",
+            "description": "Url of the original image",
             "name": "imgUrl",
             "in": "path",
             "required": true
+          },
+          {
+            "enum": [
+              "off",
+              "hide"
+            ],
+            "type": "string",
+            "description": "Sets an optional behaviour when Save-Data header is \"on\".\nWhen passing \"off\" value the result image won't use additional\ncompression when data saver mode is on.\nWhen passing \"hide\" value the result image will be an empty image.\n",
+            "name": "save-data",
+            "in": "query"
           }
         ],
         "responses": {

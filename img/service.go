@@ -16,19 +16,47 @@ import (
 // Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
 
-// Log writer that can be overrided. Should implement interface glogi.Logger.
+// Log is a logger that could be overridden. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
-// Loaders is responsible for loading an original image for transformation
+// Loader is responsible for loading an original image for transformation
 type Loader interface {
 	// Load loads an image from the given source.
 	//
 	// ctx is a context of the current transaction. Typically it's a context
-	// of an incoming HTTP request, so it's possible to pass values through middlewares.
+	// of an incoming HTTP request, so we make it possible to pass values through middlewares.
 	//
 	// Returns an image.
 	Load(src string, ctx context.Context) (*Image, error)
+}
+
+type Quality int
+
+const (
+	DEFAULT Quality = 1 + iota
+	LOW
+)
+
+type ResizeConfig struct {
+	// Size is a size of output images in the format WxH.
+	Size string
+}
+
+// TransformationConfig is a configuration passed to Processor
+// that used during transformations.
+type TransformationConfig struct {
+	// Src is a source image to transform.
+	// This field is required for transformations.
+	Src *Image
+	// SupportedFormats is a list of output formats supported by client.
+	// Processor will use one of those formats for result image. If list
+	// is empty the format of the source image will be used.
+	SupportedFormats []string
+	// Quality defines quality of output image
+	Quality Quality
+	// Config is a configuration for the specific transformation
+	Config interface{}
 }
 
 // Processor is an interface for transforming/optimising images.
@@ -45,14 +73,14 @@ type Processor interface {
 	//* 300x200
 	//* 300 - only width
 	//* x200 - only height
-	Resize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
+	Resize(input *TransformationConfig) (*Image, error)
 
 	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
 	// Format of the the size string is width'x'height, e.g. 300x400.
-	FitToSize(data []byte, size string, imageId string, supportedFormats []string) (*Image, error)
+	FitToSize(input *TransformationConfig) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
-	Optimise(data []byte, imageId string, supportedFormats []string) (*Image, error)
+	Optimise(input *TransformationConfig) (*Image, error)
 }
 
 type Service struct {
@@ -63,22 +91,19 @@ type Service struct {
 	currProcMux sync.Mutex
 }
 
-type OptimiseCmd func([]byte, string, []string) (*Image, error)
-type ResizeCmd func([]byte, string, string, []string) (*Image, error)
+type Cmd func(input *TransformationConfig) (*Image, error)
 
 type Command struct {
-	Optimise         OptimiseCmd
-	Resize           ResizeCmd
-	Image            []byte
-	ImgId            string
-	Size             string
-	Resp             http.ResponseWriter
-	SupportedFormats []string
-	Result           *Image
-	FinishedCond     *sync.Cond
-	Finished         bool
-	Err              error
+	Transformation Cmd
+	Config         *TransformationConfig
+	Resp           http.ResponseWriter
+	Result         *Image
+	FinishedCond   *sync.Cond
+	Finished       bool
+	Err            error
 }
+
+var emptyGif = [...]byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x1, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x21, 0xf9, 0x4, 0x1, 0xa, 0x0, 0x1, 0x0, 0x2c, 0x0, 0x0, 0x0, 0x0, 0x1, 0x0, 0x1, 0x0, 0x0, 0x2, 0x2, 0x4c, 0x1, 0x0, 0x3b}
 
 func NewService(r Loader, p Processor, procNum int) (*Service, error) {
 	if procNum <= 0 {
@@ -126,7 +151,17 @@ func (r *Service) GetRouter() *mux.Router {
 //   required: true
 //   in: path
 //   type: string
-//   description: url of the original image
+//   description: Url of the original image
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 // responses:
 //   '200':
 //     description: Optimised image in the same format as original.
@@ -136,6 +171,16 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
 	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Optimising image %s\n", imgUrl)
@@ -145,14 +190,15 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Optimise:         r.Processor.Optimise,
-		ImgId:            imgUrl,
-		Image:            srcImage.Data,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.Optimise,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Quality:          getQuality(req),
+		},
+		Resp: resp,
 	})
 }
 
@@ -180,10 +226,19 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   description: |
 //    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
 //    Only width or height could be passed, e.g 200, x300.
-//
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 // responses:
 //   '200':
-//     description: Resized image in the same format as original.
+//     description: Resized image.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
@@ -203,6 +258,15 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
@@ -212,15 +276,16 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize:           r.Processor.Resize,
-		Image:            srcImage.Data,
-		ImgId:            imgUrl,
-		Size:             size,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.Resize,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Quality:          getQuality(req),
+			Config:           &ResizeConfig{Size: size},
+		},
+		Resp: resp,
 	})
 }
 
@@ -249,10 +314,20 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   pattern: \d{1,4}x\d{1,4}
 //   description: |
 //    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+// - name: save-data
+//   required: false
+//   in: query
+//   type: string
+//   enum: ["off", hide]
+//   description: |
+//     Sets an optional behaviour when Save-Data header is "on".
+//     When passing "off" value the result image won't use additional
+//     compression when data saver mode is on.
+//     When passing "hide" value the result image will be an empty image.
 //
 // responses:
 //   '200':
-//     description: Resized image in the same format as original.
+//     description: Resized image
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
@@ -271,6 +346,16 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
@@ -280,15 +365,16 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	resp.Header().Add("Vary", "Accept")
 
 	r.execOp(&Command{
-		Resize:           r.Processor.FitToSize,
-		Image:            srcImage.Data,
-		ImgId:            imgUrl,
-		Size:             size,
-		Resp:             resp,
-		SupportedFormats: supportedFormats,
+		Transformation: r.Processor.FitToSize,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Quality:          getQuality(req),
+			Config:           &ResizeConfig{Size: size},
+		},
+		Resp: resp,
 	})
 }
 
@@ -332,8 +418,12 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 		}
 
 		r.execOp(&Command{
+			Config: &TransformationConfig{
+				Src: &Image{
+					Id: imgUrl,
+				},
+			},
 			Result: result,
-			ImgId:  imgUrl,
 			Resp:   resp,
 		})
 	}
@@ -412,4 +502,15 @@ func writeResult(op *Command) {
 
 	addHeaders(op.Resp, op.Result)
 	op.Resp.Write(op.Result.Data)
+}
+
+func getQuality(req *http.Request) Quality {
+	saveDataParam := getQueryParam(req.URL, "save-data")
+	saveDataHeader := req.Header.Get("Save-Data")
+	quality := DEFAULT
+	if saveDataHeader == "on" && saveDataParam != "off" {
+		quality = LOW
+	}
+
+	return quality
 }

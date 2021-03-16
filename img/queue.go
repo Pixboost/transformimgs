@@ -16,11 +16,7 @@ func NewQueue() *Queue {
 func (q *Queue) start() {
 	for op := range q.ops {
 		if op.Result == nil {
-			if op.Resize != nil {
-				op.Result, op.Err = op.Resize(op.Image, op.Size, op.ImgId, op.SupportedFormats)
-			} else if op.Optimise != nil {
-				op.Result, op.Err = op.Optimise(op.Image, op.ImgId, op.SupportedFormats)
-			}
+			op.Result, op.Err = op.Transformation(op.Config)
 		}
 		op.FinishedCond.L.Lock()
 		op.Finished = true
