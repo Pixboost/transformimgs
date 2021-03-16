@@ -171,6 +171,16 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
 		return
 	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Optimising image %s\n", imgUrl)
@@ -180,8 +190,6 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-
-	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.Optimise,
@@ -338,6 +346,16 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "size param should be in format WxH", http.StatusBadRequest)
 		return
 	}
+
+	resp.Header().Add("Vary", "Accept, Save-Data")
+
+	saveDataHeader := req.Header.Get("Save-Data")
+	saveDataQueryParam := getQueryParam(req.URL, "save-data")
+	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		_, _ = resp.Write(emptyGif[:])
+		return
+	}
+
 	supportedFormats := getSupportedFormats(req)
 
 	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
@@ -347,8 +365,6 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
-
-	resp.Header().Add("Vary", "Accept, Save-Data")
 
 	r.execOp(&Command{
 		Transformation: r.Processor.FitToSize,
