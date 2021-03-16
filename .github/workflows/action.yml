@@ -61,4 +61,4 @@ jobs:
       -
         name: Smoketest
         run: |
-          curl -f http://localhost:8080/img/fwfwekfwe/resize
+          curl -f http://localhost:8080/img/https://pixboost.com/img/homepage/hero.jpg/resize?size=x600
