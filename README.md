@@ -125,6 +125,14 @@ To generate schema and api.md:
 * Install version 0.26.1
 * `./generate-api-docs.sh`
 
+## To watch browsers changes
+
+TODO: Fill in the links
+* [Safari to support Save-Data]()
+* [Safari to support AVIF]()
+* [Firefox to support JPEG XL]()
+* [Chrome to support JPEG XL]()
+* [Safari to support JPEG XL]()
 
 ## Contribute
 

@@ -23,7 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
       -
-        name: Build an image
+        name: Build a dev image
         id: docker_build
         uses: docker/build-push-action@v2
         with:
@@ -31,14 +31,34 @@ jobs:
           file: ./Dockerfile.dev
           push: false
           load: true
-          tags: transformimgs
+          tags: transformimgs-dev
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       -
         name: Run tests
         run: |
-          docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs
+          docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs-dev
       -
         name: Code coverage
         run: |
           bash <(curl -s https://codecov.io/bash)
+      -
+        name: Build a prod image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: transformimgs
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+      -
+        name: Run the service
+        run: |
+          docker run -p 8080:8080 -d transformimgs
+      -
+        name: Smoketest
+        run: |
+          curl -f http://localhost:8080/img/fwfwekfwe/resize
