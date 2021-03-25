@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/Pixboost/transformimgs/v7/img"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
@@ -119,143 +120,261 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 	return nil, errors.New("read_error")
 }
 
+type transformTest struct {
+	name      string
+	urlSuffix string
+}
+
+func TestService_Transforms(t *testing.T) {
+	tests := []*transformTest{
+		{
+			name:      "Resize",
+			urlSuffix: "/resize?size=300x200&",
+		},
+		{
+			name:      "Fit",
+			urlSuffix: "/fit?size=300x200&",
+		},
+		{
+			name:      "Optimise",
+			urlSuffix: "/optimise?",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			test.Service = createService(t).GetRouter().ServeHTTP
+			test.T = t
+
+			testCases := []test.TestCase{
+				{
+					Description: "Success",
+					Url:         fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s", tt.urlSuffix),
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+							test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
+							test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
+						)
+					},
+				},
+				{
+					Description: "WEBP Support",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Accept": {"image/png, image/webp"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgWebpOut, w.Body.String(), "Resulted image"),
+							test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
+						)
+					},
+				},
+				{
+					Description: "AVIF Support",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Accept": {"image/png, image/webp, image/avif"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgAvifOut, w.Body.String(), "Resulted image"),
+							test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
+						)
+					},
+				},
+				{
+					Description: "Save-Data: on",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "Save-Data: off",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=off", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "Save-Data: hide",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=hide", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
+							test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "MIME Sniffing",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img2.png%s", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
+						)
+					},
+				},
+				{
+					Description: "Using protocol from X-Forwarded-Proto header to load source image",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/%%2F%%2Fsite.com/img.png%s", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"X-Forwarded-Proto": {"http"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+						)
+					},
+				},
+				{
+					Url:          fmt.Sprintf("http://localhost/img/NO_SUCH_IMAGE%s", tt.urlSuffix),
+					ExpectedCode: http.StatusInternalServerError,
+					Description:  "Read error",
+				},
+			}
+
+			test.RunRequests(testCases)
+		})
+	}
+}
+
+func TestService_Transforms_SaveDataDisabled(t *testing.T) {
+	img.SaveDataEnabled = false
+
+	tests := []*transformTest{
+		{
+			name:      "Resize",
+			urlSuffix: "/resize?size=300x200&",
+		},
+		{
+			name:      "Fit",
+			urlSuffix: "/fit?size=300x200&",
+		},
+		{
+			name:      "Optimise",
+			urlSuffix: "/optimise?",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			test.Service = createService(t).GetRouter().ServeHTTP
+			test.T = t
+
+			testCases := []test.TestCase{
+				{
+					Description: "Save-Data: on",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+							test.Equal("Accept", w.Header().Get("Vary"), "Vary response header"),
+						)
+					},
+				},
+				{
+					Description: "Save-Data: off",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=off", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+							test.Equal("Accept", w.Header().Get("Vary"), "Vary response header"),
+						)
+					},
+				},
+				{
+					Description: "Save-Data: hide",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=hide", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+							test.Equal("Accept", w.Header().Get("Vary"), "Vary response header"),
+						)
+					},
+				},
+			}
+
+			test.RunRequests(testCases)
+		})
+	}
+
+	img.SaveDataEnabled = true
+}
+
 func TestService_ResizeUrl(t *testing.T) {
 	test.Service = createService(t).GetRouter().ServeHTTP
 	test.T = t
 
 	testCases := []test.TestCase{
 		{
-			Description: "Success",
-			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200",
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-					test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
-					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "WEBP Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgWebpOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "AVIF Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp, image/avif"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgAvifOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: on",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: off",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200&save-data=off", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: hide",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=300x200&save-data=hide", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
-					test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "MIME Sniffing",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/resize?size=300x200", t),
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Using protocol from X-Forwarded-Proto header to load source image",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/resize?size=300x200", t),
-				Header: map[string][]string{
-					"X-Forwarded-Proto": {"http"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-				)
-			},
-		},
-		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/resize",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Param size is required",
-		},
-		{
-			Url:          "http://localhost/img/NO_SUCH_IMAGE/resize?size=300x200",
-			ExpectedCode: http.StatusInternalServerError,
-			Description:  "Read error",
 		},
 		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=BADSIZE",
@@ -288,137 +407,9 @@ func TestService_FitToSizeUrl(t *testing.T) {
 
 	testCases := []test.TestCase{
 		{
-			Description: "Success",
-			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200",
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "WebP Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgWebpOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "AVIF Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp, image/avif"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgAvifOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: on",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: off",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200&save-data=off", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: hide",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300x200&save-data=hide", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
-					test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "MIME Sniffing",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/fit?size=300x200", t),
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Using protocol from X-Forwarded-Proto header to load source image",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/fit?size=300x200", t),
-				Header: map[string][]string{
-					"X-Forwarded-Proto": {"http"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-				)
-			},
-		},
-		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Param size is required",
-		},
-		{
-			Url:          "http://localhost/img/NO_SUCH_IMAGE/fit?size=300x200",
-			ExpectedCode: http.StatusInternalServerError,
-			Description:  "Read error",
 		},
 		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=BADSIZE",
@@ -429,144 +420,6 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "2 - Size param should be in format WxH",
-		},
-	}
-
-	test.RunRequests(testCases)
-}
-
-func TestService_OptimiseUrl(t *testing.T) {
-	test.Service = createService(t).GetRouter().ServeHTTP
-	test.T = t
-
-	testCases := []test.TestCase{
-		{
-			Description: "Success",
-			Url:         "http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise",
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal("Accept, Save-Data", w.Header().Get("Vary"), "Vary header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Webp Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("4", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgWebpOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/webp", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "AVIF Support",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string{
-					"Accept": {"image/png, image/webp, image/avif"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("5", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgAvifOut, w.Body.String(), "Resulted image"),
-					test.Equal("image/avif", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: on",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: off",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise?save-data=off", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "Save-Data: hide",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.png/optimise?save-data=hide", t),
-				Header: map[string][]string{
-					"Save-Data": {"on"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
-					test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
-				)
-			},
-		},
-		{
-			Description: "MIME Sniffing",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img2.png/optimise", t),
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("text/plain; charset=utf-8", w.Header().Get("Content-Type"), "Content-Type header"),
-				)
-			},
-		},
-		{
-			Description: "Using protocol from X-Forwarded-Proto header to load source image",
-			Request: &http.Request{
-				Method: "GET",
-				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/optimise", t),
-				Header: map[string][]string{
-					"X-Forwarded-Proto": {"http"},
-				},
-			},
-			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
-				test.Error(t,
-					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
-					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-				)
-			},
-		},
-		{
-			Url:          "http://localhost/img/NO_SUCH_IMAGE/optimise",
-			ExpectedCode: http.StatusInternalServerError,
-			Description:  "Read error",
 		},
 	}
 
