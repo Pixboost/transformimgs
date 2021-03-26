@@ -33,16 +33,18 @@ import (
 
 func main() {
 	var (
-		im      string
-		imIdent string
-		cache   int
-		procNum int
+		im              string
+		imIdent         string
+		cache           int
+		procNum         int
+		disableSaveData bool
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
 	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
 	flag.IntVar(&cache, "cache", 86400,
 		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
+	flag.BoolVar(&disableSaveData, "disableSaveData", false, "If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary.")
 	flag.Parse()
 
 	p, err := processor.NewImageMagick(im, imIdent)
@@ -53,6 +55,7 @@ func main() {
 	}
 
 	img.CacheTTL = cache
+	img.SaveDataEnabled = !disableSaveData
 	srv, err := img.NewService(&loader.Http{}, p, procNum)
 	if err != nil {
 		img.Log.Errorf("Can't create image service: %+v", err)
