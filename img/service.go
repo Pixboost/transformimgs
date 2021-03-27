@@ -16,6 +16,11 @@ import (
 // Number of seconds that will be written to max-age HTTP header
 var CacheTTL int
 
+// SaveDataEnabled is flag to enable/disable Save-Data client hint.
+// Sometime CDN doesn't support Save-Data in Vary response header in which
+// case you would need to set this to false
+var SaveDataEnabled bool = true
+
 // Log is a logger that could be overridden. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
@@ -166,40 +171,7 @@ func (r *Service) GetRouter() *mux.Router {
 //   '200':
 //     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getImgUrl(req)
-	if len(imgUrl) == 0 {
-		http.Error(resp, "url param is required", http.StatusBadRequest)
-		return
-	}
-
-	resp.Header().Add("Vary", "Accept, Save-Data")
-
-	saveDataHeader := req.Header.Get("Save-Data")
-	saveDataQueryParam := getQueryParam(req.URL, "save-data")
-	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
-		_, _ = resp.Write(emptyGif[:])
-		return
-	}
-
-	supportedFormats := getSupportedFormats(req)
-
-	Log.Printf("Optimising image %s\n", imgUrl)
-
-	srcImage, err := r.Loader.Load(imgUrl, req.Context())
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.execOp(&Command{
-		Transformation: r.Processor.Optimise,
-		Config: &TransformationConfig{
-			Src:              srcImage,
-			SupportedFormats: supportedFormats,
-			Quality:          getQuality(req),
-		},
-		Resp: resp,
-	})
+	r.transformUrl(resp, req, r.Processor.Optimise, nil)
 }
 
 // swagger:operation GET /img/{imgUrl}/resize resizeImage
@@ -240,12 +212,8 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getImgUrl(req)
+
 	size := getQueryParam(req.URL, "size")
-	if len(imgUrl) == 0 {
-		http.Error(resp, "url param is required", http.StatusBadRequest)
-		return
-	}
 	if len(size) == 0 {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
@@ -258,35 +226,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resp.Header().Add("Vary", "Accept, Save-Data")
-
-	saveDataHeader := req.Header.Get("Save-Data")
-	saveDataQueryParam := getQueryParam(req.URL, "save-data")
-	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
-		_, _ = resp.Write(emptyGif[:])
-		return
-	}
-
-	supportedFormats := getSupportedFormats(req)
-
-	Log.Printf("Resizing image %s to %s\n", imgUrl, size)
-
-	srcImage, err := r.Loader.Load(imgUrl, req.Context())
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.execOp(&Command{
-		Transformation: r.Processor.Resize,
-		Config: &TransformationConfig{
-			Src:              srcImage,
-			SupportedFormats: supportedFormats,
-			Quality:          getQuality(req),
-			Config:           &ResizeConfig{Size: size},
-		},
-		Resp: resp,
-	})
+	r.transformUrl(resp, req, r.Processor.Resize, &ResizeConfig{Size: size})
 }
 
 // swagger:operation GET /img/{imgUrl}/fit fitImage
@@ -329,12 +269,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   '200':
 //     description: Resized image
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
-	imgUrl := getImgUrl(req)
 	size := getQueryParam(req.URL, "size")
-	if len(imgUrl) == 0 {
-		http.Error(resp, "url param is required", http.StatusBadRequest)
-		return
-	}
 	if len(size) == 0 {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
@@ -347,35 +282,7 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resp.Header().Add("Vary", "Accept, Save-Data")
-
-	saveDataHeader := req.Header.Get("Save-Data")
-	saveDataQueryParam := getQueryParam(req.URL, "save-data")
-	if saveDataHeader == "on" && saveDataQueryParam == "hide" {
-		_, _ = resp.Write(emptyGif[:])
-		return
-	}
-
-	supportedFormats := getSupportedFormats(req)
-
-	Log.Printf("Fit image %s to size %s\n", imgUrl, size)
-
-	srcImage, err := r.Loader.Load(imgUrl, req.Context())
-	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	r.execOp(&Command{
-		Transformation: r.Processor.FitToSize,
-		Config: &TransformationConfig{
-			Src:              srcImage,
-			SupportedFormats: supportedFormats,
-			Quality:          getQuality(req),
-			Config:           &ResizeConfig{Size: size},
-		},
-		Resp: resp,
-	})
+	r.transformUrl(resp, req, r.Processor.FitToSize, &ResizeConfig{Size: size})
 }
 
 // swagger:operation GET /img/{imgUrl}/asis asisImage
@@ -504,12 +411,58 @@ func writeResult(op *Command) {
 	op.Resp.Write(op.Result.Data)
 }
 
+func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, transformation Cmd, config interface{}) {
+	imgUrl := getImgUrl(req)
+	if len(imgUrl) == 0 {
+		http.Error(resp, "url param is required", http.StatusBadRequest)
+		return
+	}
+
+	if SaveDataEnabled {
+		resp.Header().Add("Vary", "Accept, Save-Data")
+
+		saveDataHeader := req.Header.Get("Save-Data")
+		saveDataQueryParam := getQueryParam(req.URL, "save-data")
+		if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+			_, _ = resp.Write(emptyGif[:])
+			return
+		}
+	} else {
+		resp.Header().Add("Vary", "Accept")
+	}
+
+	supportedFormats := getSupportedFormats(req)
+
+	Log.Printf("Transforming image %s using config %+v\n", imgUrl, config)
+
+	srcImage, err := r.Loader.Load(imgUrl, req.Context())
+	if err != nil {
+		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	r.execOp(&Command{
+		Transformation: transformation,
+		Config: &TransformationConfig{
+			Src:              srcImage,
+			SupportedFormats: supportedFormats,
+			Quality:          getQuality(req),
+			Config:           config,
+		},
+		Resp: resp,
+	})
+}
+
 func getQuality(req *http.Request) Quality {
-	saveDataParam := getQueryParam(req.URL, "save-data")
-	saveDataHeader := req.Header.Get("Save-Data")
 	quality := DEFAULT
-	if saveDataHeader == "on" && saveDataParam != "off" {
-		quality = LOW
+
+	if SaveDataEnabled {
+		saveDataParam := getQueryParam(req.URL, "save-data")
+		saveDataHeader := req.Header.Get("Save-Data")
+
+		if saveDataHeader == "on" && saveDataParam != "off" {
+			quality = LOW
+		}
 	}
 
 	return quality

@@ -51,7 +51,7 @@ $ docker pull pixboost/transformimgs
 ## Usage
 
 ```
-$ docker run -p 8080:8080 pixboost/transformimgs
+$ docker run -p 8080:8080 pixboost/transformimgs [OPTIONS]
 ```
 
 To test that application started successfully:
@@ -60,7 +60,7 @@ To test that application started successfully:
 
 You should get 'OK' string in the response.
 
-The application provides 4 HTTP endpoints:
+The API has 4 HTTP endpoints:
 
 * /img/{IMG_URL}/optimise - optimises image
 * /img/{IMG_URL}/resize - resizes image
@@ -69,6 +69,14 @@ The application provides 4 HTTP endpoints:
 
 * [Detailed API Documentation](https://pixboost.com/docs/api/)
 * [Markdown API docs](api.md)
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| cache  | Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day) |
+| proc   | Number of images processors to run. Defaults to number of CPUs |
+| disableSaveData | If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary. |
 
 ### Running the application locally from sources
 
