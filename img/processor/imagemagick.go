@@ -51,6 +51,10 @@ const (
 	// * Encoding to AVIF consumes a lot of memory
 	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
 	MaxAVIFTargetSize = 1000 * 1000
+
+	// Images less than 20Kb are usually logos with text.
+	// Webp is usually do a better job with those.
+	MinAVIFSize = 20 * 1024
 )
 
 // NewImageMagick creates a new ImageMagick processor. It does require
@@ -289,7 +293,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Size > 20*1024 && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
