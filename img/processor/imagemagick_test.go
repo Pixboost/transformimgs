@@ -6,6 +6,7 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -85,6 +86,62 @@ func benchmarkWithFormats(b *testing.B, formats []string) {
 	}
 
 	processor.Debug = true
+}
+
+func TestImageMagick_GetAdditionalArgs(t *testing.T) {
+	var (
+		aOp     string
+		aImage  []byte
+		aSource *img.Info
+		aTarget *img.Info
+	)
+	proc.GetAdditionalArgs = func(op string, image []byte, source *img.Info, target *img.Info) []string {
+		aOp = op
+		aImage = image
+		aSource = source
+		aTarget = target
+		return []string{}
+	}
+
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return proc.Resize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{},
+			Config:           &img.ResizeConfig{Size: "50"},
+		})
+	}, []*test{{"opaque-png.png", ""}})
+
+	if aOp != "resize" {
+		t.Errorf("Expected op to be resize, but got [%s]", aOp)
+	}
+	if len(aImage) != 201318 {
+		t.Errorf("Expected source image to be 201318 bytes, but got [%d]", len(aImage))
+	}
+	if !reflect.DeepEqual(aSource, &img.Info{
+		Format:  "PNG",
+		Quality: 92,
+		Opaque:  true,
+		Width:   400,
+		Height:  400,
+		Size:    201318,
+	}) {
+		t.Errorf("Source image error: %+v", aSource)
+	}
+	if !reflect.DeepEqual(aTarget, &img.Info{
+		Format:  "",
+		Quality: 0,
+		Opaque:  true,
+		Width:   50,
+		Height:  50,
+		Size:    0,
+	}) {
+		t.Errorf("Target image error: %+v", aTarget)
+	}
+
+	proc.GetAdditionalArgs = nil
 }
 
 func TestImageMagickProcessor_NoAccept(t *testing.T) {
