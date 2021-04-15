@@ -2,8 +2,8 @@ package processor_test
 
 import (
 	"fmt"
-	"github.com/Pixboost/transformimgs/v7/img"
-	"github.com/Pixboost/transformimgs/v7/img/processor"
+	"github.com/Pixboost/transformimgs/v8/img"
+	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"io/ioutil"
 	"os"
 	"testing"

@@ -1,4 +1,4 @@
-module github.com/Pixboost/transformimgs/v7
+module github.com/Pixboost/transformimgs/v8
 
 go 1.15
 

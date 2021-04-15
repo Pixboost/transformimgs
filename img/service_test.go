@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/Pixboost/transformimgs/v7/img"
+	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
 	"net/http/httptest"

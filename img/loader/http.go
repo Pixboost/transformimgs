@@ -3,7 +3,7 @@ package loader
 import (
 	"context"
 	"fmt"
-	"github.com/Pixboost/transformimgs/v7/img"
+	"github.com/Pixboost/transformimgs/v8/img"
 	"io/ioutil"
 	"net/http"
 )

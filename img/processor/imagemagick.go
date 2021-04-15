@@ -3,8 +3,8 @@ package processor
 import (
 	"bytes"
 	"fmt"
-	"github.com/Pixboost/transformimgs/v7/img"
-	"github.com/Pixboost/transformimgs/v7/img/processor/internal"
+	"github.com/Pixboost/transformimgs/v8/img"
+	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
 	"os/exec"
 	"strconv"
 )
@@ -17,8 +17,9 @@ type ImageMagick struct {
 	AdditionalArgs []string
 	// GetAdditionalArgs could return additional arguments for ImageMagick "convert" command.
 	// "op" is the name of the operation: "optimise", "resize" or "fit".
+	// Some of the fields in the target info might not be filled, so you need to check on them!
 	// Argument name and value should be in a separate array elements.
-	GetAdditionalArgs func(op string, image []byte, imageInfo *img.Info) []string
+	GetAdditionalArgs func(op string, image []byte, source *img.Info, target *img.Info) []string
 }
 
 var convertOpts = []string{
@@ -119,7 +120,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("resize", srcData, source)...)
+		args = append(args, p.GetAdditionalArgs("resize", srcData, source, target)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(source)...)
@@ -169,7 +170,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("fit", srcData, source)...)
+		args = append(args, p.GetAdditionalArgs("fit", srcData, source, target)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, cutToFitOpts...)
@@ -208,7 +209,7 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
-		args = append(args, p.GetAdditionalArgs("optimise", srcData, source)...)
+		args = append(args, p.GetAdditionalArgs("optimise", srcData, source, target)...)
 	}
 	args = append(args, convertOpts...)
 	args = append(args, getConvertFormatOptions(source)...)
