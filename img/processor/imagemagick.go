@@ -25,7 +25,6 @@ type ImageMagick struct {
 var convertOpts = []string{
 	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
-	"-posterize", "136",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",
 	"-define", "png:compression-level=9",
