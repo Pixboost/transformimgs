@@ -341,6 +341,7 @@ func (r *Service) execOp(op *Command) {
 
 	queue := r.getQueue()
 	queue.AddAndWait(op, func() {
+		Log.Printf("Image [%s] transformed successfully, writing to the response", op.Config.Src.Id)
 		writeResult(op)
 	})
 }
@@ -418,6 +419,8 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		return
 	}
 
+	Log.Printf("Transforming image %s using config %+v\n", imgUrl, config)
+
 	if SaveDataEnabled {
 		resp.Header().Add("Vary", "Accept, Save-Data")
 
@@ -433,13 +436,12 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 
 	supportedFormats := getSupportedFormats(req)
 
-	Log.Printf("Transforming image %s using config %+v\n", imgUrl, config)
-
 	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	Log.Printf("Source image [%s] loaded successfully, adding to the queue\n", imgUrl)
 
 	r.execOp(&Command{
 		Transformation: transformation,

@@ -16,7 +16,9 @@ func NewQueue() *Queue {
 func (q *Queue) start() {
 	for op := range q.ops {
 		if op.Result == nil {
+			Log.Printf("Starting transformation for [%s]", op.Config.Src.Id)
 			op.Result, op.Err = op.Transformation(op.Config)
+			Log.Printf("Finished transformation for [%s]", op.Config.Src.Id)
 		}
 		op.FinishedCond.L.Lock()
 		op.Finished = true
