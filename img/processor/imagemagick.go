@@ -40,19 +40,21 @@ var cutToFitOpts = []string{
 	"-gravity", "center",
 }
 
-//If set then will print all commands to stdout.
+//Debug is a flag that if set then will echo all ImageMagick commands to stdout.
 var Debug bool = true
 
 const (
 	MaxWebpWidth  = 16383
 	MaxWebpHeight = 16383
 
+	// MaxAVIFTargetSize is a maximum resolution, in pixels, for the image to be encoded to AVIF.
 	// There are two aspects to this:
 	// * Encoding to AVIF consumes a lot of memory
 	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
 	MaxAVIFTargetSize = 1000 * 1000
 
-	// Images less than 20Kb are usually logos with text.
+	// MinAVIFSize is a minimum size, in bytes, of the original image to encode into AVIF.
+	// Small Images less than 20Kb are usually logos with text and
 	// Webp is usually do a better job with those.
 	MinAVIFSize = 20 * 1024
 )
@@ -219,8 +221,8 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 		return nil, err
 	}
 
-	if len(result) > len(srcData) {
-		img.Log.Printf("[%s] WARNING: Optimised size [%d] is more than original [%d], fallback to original", config.Src.Id, len(result), len(srcData))
+	if len(result) > len(srcData) && source.Format != "TIFF" {
+		img.Log.Printf("[%s] WARNING: Optimised size [%d] is greater than original [%d] hence fallback to original", config.Src.Id, len(result), len(srcData))
 		result = srcData
 		mimeType = ""
 	}
@@ -298,14 +300,17 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 	}
 
-	if avif {
+	switch {
+	case avif:
 		return "avif:-", "image/avif"
-	}
-	if webP {
+	case webP:
 		return "webp:-", "image/webp"
-	}
+	case src.Format == "TIFF":
+		return "jpeg:-", "image/jpeg"
+	default:
+		return "-", ""
 
-	return "-", ""
+	}
 }
 
 func getConvertFormatOptions(source *img.Info) []string {

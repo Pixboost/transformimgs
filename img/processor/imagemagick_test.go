@@ -151,6 +151,7 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 		{"transparent-png-use-original.png", ""},
 		{"small-transparent-png.png", ""},
 		{"animated.gif", ""},
+		{"image.tiff", "image/jpeg"},
 	}
 
 	t.Run("optimise", func(t *testing.T) {
@@ -240,6 +241,7 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"image.tiff", "image/webp"},
 		})
 }
 
@@ -260,6 +262,7 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"image.tiff", "image/webp"},
 		})
 }
 
@@ -280,6 +283,7 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"image.tiff", "image/webp"},
 		})
 }
 
@@ -301,6 +305,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"transparent-png.png", "image/avif"},
 			{"small-transparent-png.png", ""},
 			{"transparent-png-use-original.png", ""},
+			{"image.tiff", "image/avif"},
 		})
 }
 
@@ -322,6 +327,7 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 			{"transparent-png.png", "image/avif"},
 			{"small-transparent-png.png", "image/webp"},
 			{"transparent-png-use-original.png", ""},
+			{"image.tiff", "image/avif"},
 		})
 }
 
@@ -342,6 +348,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", "image/avif"},
+			{"image.tiff", "image/avif"},
 		})
 }
 
@@ -362,6 +369,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", "image/avif"},
+			{"image.tiff", "image/avif"},
 		})
 }
 
