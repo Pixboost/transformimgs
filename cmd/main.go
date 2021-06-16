@@ -41,8 +41,8 @@ func main() {
 	)
 	flag.StringVar(&im, "imConvert", "", "Imagemagick convert command")
 	flag.StringVar(&imIdent, "imIdentify", "", "Imagemagick identify command")
-	flag.IntVar(&cache, "cache", 86400,
-		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day)")
+	flag.IntVar(&cache, "cache", 2592000,
+		"Number of seconds to cache image after transformation (0 to disable cache). Default value is 2592000 (30 days)")
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.BoolVar(&disableSaveData, "disableSaveData", false, "If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary.")
 	flag.Parse()

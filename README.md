@@ -74,7 +74,7 @@ The API has 4 HTTP endpoints:
 
 | Option | Description |
 |--------|-------------|
-| cache  | Number of seconds to cache image after transformation (0 to disable cache). Default value is 86400 (one day) |
+| cache  | Number of seconds to cache image after transformation (0 to disable cache). Default value is 2592000 (30 days) |
 | proc   | Number of images processors to run. Defaults to number of CPUs |
 | disableSaveData | If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary. |
 
