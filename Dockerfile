@@ -1,4 +1,4 @@
-FROM golang:1.15-buster AS build
+FROM golang:1.16.7-buster AS build
 
 RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/
@@ -11,7 +11,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.0.11-13
+FROM dpokidov/imagemagick:7.1.0-6-buster
 
 ENV IM_HOME /usr/local/bin
 

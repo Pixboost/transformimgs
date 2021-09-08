@@ -293,7 +293,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
