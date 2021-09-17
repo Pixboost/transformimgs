@@ -141,6 +141,9 @@ To generate schema and api.md:
 * [Firefox to support JPEG XL](https://bugzilla.mozilla.org/show_bug.cgi?id=1539075)
 * [Chrome to support JPEG XL](https://bugs.chromium.org/p/chromium/issues/detail?id=1178058)
 * [Safari to support JPEG XL](https://bugs.webkit.org/show_bug.cgi?id=208235)
+* Safari to support native lazy loading
+  * [Implementation](https://bugs.webkit.org/show_bug.cgi?id=196698)
+  * [Enabled by default](https://bugs.webkit.org/show_bug.cgi?id=208094)
 
 ## Contribute
 
