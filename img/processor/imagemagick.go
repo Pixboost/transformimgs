@@ -23,7 +23,6 @@ type ImageMagick struct {
 }
 
 var convertOpts = []string{
-	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",
@@ -312,10 +311,6 @@ func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
 	if source.Format == "PNG" {
 		opts = append(opts, "-define", "webp:lossless=true")
-		if source.Opaque {
-			opts = append(opts, "-colors", "256")
-		}
-
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
