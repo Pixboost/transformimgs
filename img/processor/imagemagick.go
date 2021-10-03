@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
+	"io"
 	"os/exec"
+	"sort"
 	"strconv"
 )
 
@@ -281,6 +283,65 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 	}
 
 	return imageInfo, nil
+}
+
+// IsIllustration return true if image is cartoon like, including
+// icons, illustrations. However, banners are not included.
+//
+// The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
+func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
+	h, err := p.execImagemagick(bytes.NewReader(src.Data), []string{"-", "-format", "%c", "histogram:info:"}, src.Id)
+	if err != nil {
+		return false, err
+	}
+
+	totalPixelsCount := 0
+	pixelsCountForColor := make([]int, 0)
+	histogram := bytes.NewReader(h)
+	for {
+		var (
+			pixelsCnt int
+			rgbaCode  string
+			hexCode   string
+			colorName string
+		)
+		_, err := fmt.Fscanf(histogram, "%d: %s %s %s\n", &pixelsCnt, &rgbaCode, &hexCode, &colorName)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return false, err
+		}
+
+		totalPixelsCount += pixelsCnt
+		pixelsCountForColor = append(pixelsCountForColor, pixelsCnt)
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(pixelsCountForColor)))
+
+	var colorIdx, c int
+	background := 0
+	pixels := 0
+	tenPercent := int(float32(totalPixelsCount) * 0.1)
+	fiftyPercent := int(float32(totalPixelsCount) * 0.5)
+
+	for colorIdx, c = range pixelsCountForColor {
+		if colorIdx == 0 && c >= tenPercent {
+			background = c
+			fiftyPercent = int((float32(totalPixelsCount) - float32(background)) * 0.5)
+			continue
+		}
+
+		if pixels > fiftyPercent {
+			break
+		}
+
+		pixels += c
+	}
+
+	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(pixelsCountForColor), fiftyPercent)
+
+	return colorIdx*500 < fiftyPercent, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
