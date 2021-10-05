@@ -305,8 +305,6 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	imageHeight := int(mw.GetImageHeight())
 	colorsByName := make(map[string]int32, imageWidth*imageHeight)
 
-	//var pixel *imagick.PixelWand
-	//var lock = sync.RWMutex{}
 	var writeWg sync.WaitGroup
 	var readWg sync.WaitGroup
 	var numThreads = 8
@@ -344,22 +342,9 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 				pixels := pi.GetNextIteratorRow()
 				for x := 0; x < imageWidth; x++ {
 					pixel := pixels[x]
-					//pixel.GetRed()
 					h, s, l := pixel.GetHSL()
-					//pixel.GetColorAsNormalizedString()
 					colorName := strconv.FormatFloat(h, 'f', -1, 64) + strconv.FormatFloat(s, 'f', -1, 64) + strconv.FormatFloat(l, 'f', -1, 64)
-					//pixel.GetHSL()
 					pixelsCh <- colorName
-
-					//lock.Lock()
-					//count, ok := colorsByName[colorName]
-					//
-					//if !ok {
-					//	colorsByName[colorName] = 1
-					//} else {
-					//	colorsByName[colorName] = count + 1
-					//}
-					//lock.Unlock()
 				}
 			}
 		}()
