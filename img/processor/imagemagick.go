@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
-	"io"
+	"github.com/gographics/imagick/imagick"
 	"os/exec"
 	"sort"
 	"strconv"
+	"sync"
+	"time"
 )
 
 type ImageMagick struct {
@@ -290,34 +292,92 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
-	h, err := p.execImagemagick(bytes.NewReader(src.Data), []string{"-", "-format", "%c", "histogram:info:"}, src.Id)
+	start := time.Now()
+
+	mw := imagick.NewMagickWand()
+	err := mw.ReadImageBlob(src.Data)
 	if err != nil {
 		return false, err
 	}
+	fmt.Printf("Read image: %d\n", time.Since(start).Milliseconds())
 
-	totalPixelsCount := 0
-	pixelsCountForColor := make([]int, 0)
-	histogram := bytes.NewReader(h)
-	for {
-		var (
-			pixelsCnt int
-			rgbaCode  string
-			hexCode   string
-			colorName string
-		)
-		_, err := fmt.Fscanf(histogram, "%d: %s %s %s\n", &pixelsCnt, &rgbaCode, &hexCode, &colorName)
-		if err == io.EOF {
-			break
+	imageWidth := int(mw.GetImageWidth())
+	imageHeight := int(mw.GetImageHeight())
+	colorsByName := make(map[string]int32, imageWidth*imageHeight)
+
+	var pixel *imagick.PixelWand
+	//var lock = sync.RWMutex{}
+	var writeWg sync.WaitGroup
+	var readWg sync.WaitGroup
+	var numThreads = 8
+	var rowsPerThread = imageHeight / numThreads
+	pixelsCh := make(chan string, 1000)
+
+	readWg.Add(1)
+	go func() {
+		defer readWg.Done()
+
+		for p := range pixelsCh {
+			count, ok := colorsByName[p]
+
+			if !ok {
+				colorsByName[p] = 1
+			} else {
+				colorsByName[p] = count + 1
+			}
 		}
-		if err != nil {
-			return false, err
+	}()
+
+	for i := 0; i < numThreads; i++ {
+		startRow := rowsPerThread * i
+		regionHeight := rowsPerThread
+		if startRow+regionHeight > imageHeight {
+			regionHeight = imageHeight - startRow
 		}
 
-		totalPixelsCount += pixelsCnt
-		pixelsCountForColor = append(pixelsCountForColor, pixelsCnt)
+		fmt.Printf("Processing [%d] rows from [%d]\n", regionHeight, startRow)
+		pi := mw.NewPixelRegionIterator(0, startRow, uint(imageWidth), uint(regionHeight))
+		writeWg.Add(1)
+		go func() {
+			defer writeWg.Done()
+			for y := 0; y < regionHeight; y++ {
+				pixels := pi.GetNextIteratorRow()
+				for x := 0; x < imageWidth; x++ {
+					pixel = pixels[x]
+					//h, s, l := pixel.GetHSL()
+					pixel.GetHSL()
+					//pixel.GetColorAsNormalizedString()
+					//_ = strconv.FormatFloat(h,'f', -1, 64) + strconv.FormatFloat(s,'f', -1, 64) + strconv.FormatFloat(l,'f', -1, 64)
+					//pixel.GetHSL()
+					//pixelsCh <- colorName
+
+					//lock.Lock()
+					//count, ok := colorsByName[colorName]
+					//
+					//if !ok {
+					//	colorsByName[colorName] = 1
+					//} else {
+					//	colorsByName[colorName] = count + 1
+					//}
+					//lock.Unlock()
+				}
+			}
+		}()
 	}
+	writeWg.Wait()
+	close(pixelsCh)
+	readWg.Wait()
+	fmt.Printf("Get Colors: %d\n", time.Since(start).Milliseconds())
 
-	sort.Sort(sort.Reverse(sort.IntSlice(pixelsCountForColor)))
+	totalPixelsCount := imageWidth * imageHeight
+	colorsCount := make([]int, len(colorsByName))
+	for _, v := range colorsByName {
+		colorsCount = append(colorsCount, int(v))
+	}
+	fmt.Printf("Build colors count: %d\n", time.Since(start).Milliseconds())
+
+	sort.Sort(sort.Reverse(sort.IntSlice(colorsCount)))
+	fmt.Printf("Sort: %d\n", time.Since(start).Milliseconds())
 
 	var colorIdx, c int
 	background := 0
@@ -325,7 +385,7 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	tenPercent := int(float32(totalPixelsCount) * 0.1)
 	fiftyPercent := int(float32(totalPixelsCount) * 0.5)
 
-	for colorIdx, c = range pixelsCountForColor {
+	for colorIdx, c = range colorsCount {
 		if colorIdx == 0 && c >= tenPercent {
 			background = c
 			fiftyPercent = int((float32(totalPixelsCount) - float32(background)) * 0.5)
@@ -338,8 +398,9 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 		pixels += c
 	}
+	fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
 
-	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(pixelsCountForColor), fiftyPercent)
+	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(colorsCount), fiftyPercent)
 
 	return colorIdx*500 < fiftyPercent, nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
+	"github.com/gographics/imagick/imagick"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -34,6 +35,9 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	imagick.Initialize()
+	defer imagick.Terminate()
+
 	var err error
 
 	proc, err = processor.NewImageMagick(os.ExpandEnv("${IM_HOME}/convert"), os.ExpandEnv("${IM_HOME}/identify"))
@@ -371,15 +375,15 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 }
 
 var isIllustrationTests = []*testIsIllustration{
-	{"image-api.png", true},
-	{"images-source.png", true},
+	//{"image-api.png", true},
+	//{"images-source.png", true},
 	{"people.png", true},
-	{"l-carnitine-shaker-banner.png", false},
-	{"snippet-generator-screenshot.png", true},
-	{"WFH_alternative2.2.png", false},
-	{"markers.png", false},
-	{"print-make.png", false},
-	{"shaker.png", false},
+	//{"l-carnitine-shaker-banner.png", false},
+	//{"snippet-generator-screenshot.png", true},
+	//{"WFH_alternative2.2.png", false},
+	//{"markers.png", false},
+	//{"print-make.png", false},
+	//{"shaker.png", false},
 }
 
 func TestImageMagick_IsIllustration(t *testing.T) {
