@@ -71,7 +71,7 @@ func BenchmarkImageMagickProcessor_Optimise_Avif(b *testing.B) {
 }
 
 func benchmarkWithFormats(b *testing.B, formats []string) {
-	f := fmt.Sprintf("%s/%s", "./test_files", "medium-jpeg.jpg")
+	f := fmt.Sprintf("%s/%s", "./test_files/transformations", "medium-jpeg.jpg")
 
 	orig, err := ioutil.ReadFile(f)
 	if err != nil {
