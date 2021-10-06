@@ -287,7 +287,11 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 }
 
 // IsIllustration return true if image is cartoon like, including
-// icons, illustrations. However, banners are not included.
+// icons, logos, illustrations.
+//
+// It returns false for banners, product images.
+//
+// The known issue is screenshots which are usually get recognised as illustration.
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
@@ -307,36 +311,35 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		return colors[i].GetColorCount() > colors[j].GetColorCount()
 	})
 
-	imageWidth := int(mw.GetImageWidth())
-	imageHeight := int(mw.GetImageHeight())
-	totalPixelsCount := imageHeight * imageWidth
+	var (
+		colorIdx         int
+		color            *imagick.PixelWand
+		imageWidth            = mw.GetImageWidth()
+		imageHeight           = mw.GetImageHeight()
+		pixelsCount      uint = 0
+		totalPixelsCount      = float32(imageHeight * imageWidth)
+		tenPercent            = uint(totalPixelsCount * 0.1)
+		fiftyPercent          = uint(totalPixelsCount * 0.5)
+	)
 
-	var colorIdx int
-	var c *imagick.PixelWand
-	background := 0
-	pixels := 0
-	tenPercent := int(float32(totalPixelsCount) * 0.1)
-	fiftyPercent := int(float32(totalPixelsCount) * 0.5)
-
-	for colorIdx, c = range colors {
-		count := int(c.GetColorCount())
+	for colorIdx, color = range colors {
+		count := color.GetColorCount()
 		if colorIdx == 0 && count >= tenPercent {
-			background = count
-			fiftyPercent = int((float32(totalPixelsCount) - float32(background)) * 0.5)
+			fiftyPercent = uint((totalPixelsCount - float32(count)) * 0.5)
 			continue
 		}
 
-		if pixels > fiftyPercent {
+		if pixelsCount > fiftyPercent {
 			break
 		}
 
-		pixels += count
+		pixelsCount += count
 	}
 	fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
 
-	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(colors), fiftyPercent)
+	fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
 
-	return colorIdx*500 < fiftyPercent, nil
+	return uint(colorIdx*500) < fiftyPercent, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
