@@ -375,15 +375,17 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 }
 
 var isIllustrationTests = []*testIsIllustration{
-	//{"image-api.png", true},
-	//{"images-source.png", true},
+	{"image-api.png", true},
+	{"images-source.png", true},
 	{"people.png", true},
-	//{"l-carnitine-shaker-banner.png", false},
-	//{"snippet-generator-screenshot.png", true},
-	//{"WFH_alternative2.2.png", false},
-	//{"markers.png", false},
-	//{"print-make.png", false},
-	//{"shaker.png", false},
+	{"l-carnitine-shaker-banner.png", false},
+	{"snippet-generator-screenshot.png", true},
+	{"WFH_alternative2.2.png", false},
+	{"markers.png", false},
+	{"print-make.png", false},
+	{"shaker.png", false},
+	{"logo.png", true},
+	{"logo-2.png", true},
 }
 
 func TestImageMagick_IsIllustration(t *testing.T) {

@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -299,80 +298,30 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("Read image: %d\n", time.Since(start).Milliseconds())
+	fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
+
+	_, colors := mw.GetImageHistogram()
+	fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
+
+	sort.Slice(colors, func(i, j int) bool {
+		return colors[i].GetColorCount() > colors[j].GetColorCount()
+	})
 
 	imageWidth := int(mw.GetImageWidth())
 	imageHeight := int(mw.GetImageHeight())
-	colorsByName := make(map[string]int32, imageWidth*imageHeight)
+	totalPixelsCount := imageHeight * imageWidth
 
-	var writeWg sync.WaitGroup
-	var readWg sync.WaitGroup
-	var numThreads = 8
-	var rowsPerThread = imageHeight / numThreads
-	pixelsCh := make(chan string, 10000)
-
-	readWg.Add(1)
-	go func() {
-		defer readWg.Done()
-
-		for p := range pixelsCh {
-			count, ok := colorsByName[p]
-
-			if !ok {
-				colorsByName[p] = 1
-			} else {
-				colorsByName[p] = count + 1
-			}
-		}
-	}()
-
-	for i := 0; i < numThreads; i++ {
-		startRow := rowsPerThread * i
-		regionHeight := rowsPerThread
-		if startRow+regionHeight > imageHeight {
-			regionHeight = imageHeight - startRow
-		}
-
-		fmt.Printf("Processing [%d] rows from [%d]\n", regionHeight, startRow)
-		pi := mw.NewPixelRegionIterator(0, startRow, uint(imageWidth), uint(regionHeight))
-		writeWg.Add(1)
-		go func() {
-			defer writeWg.Done()
-			for y := 0; y < regionHeight; y++ {
-				pixels := pi.GetNextIteratorRow()
-				for x := 0; x < imageWidth; x++ {
-					pixel := pixels[x]
-					h, s, l := pixel.GetHSL()
-					colorName := strconv.FormatFloat(h, 'f', -1, 64) + strconv.FormatFloat(s, 'f', -1, 64) + strconv.FormatFloat(l, 'f', -1, 64)
-					pixelsCh <- colorName
-				}
-			}
-		}()
-	}
-	writeWg.Wait()
-	close(pixelsCh)
-	readWg.Wait()
-	fmt.Printf("Get Colors: %d\n", time.Since(start).Milliseconds())
-
-	totalPixelsCount := imageWidth * imageHeight
-	colorsCount := make([]int, len(colorsByName))
-	for _, v := range colorsByName {
-		colorsCount = append(colorsCount, int(v))
-	}
-	fmt.Printf("Build colors count: %d\n", time.Since(start).Milliseconds())
-
-	sort.Sort(sort.Reverse(sort.IntSlice(colorsCount)))
-	fmt.Printf("Sort: %d\n", time.Since(start).Milliseconds())
-
-	var colorIdx, c int
+	var colorIdx int
+	var c *imagick.PixelWand
 	background := 0
 	pixels := 0
 	tenPercent := int(float32(totalPixelsCount) * 0.1)
 	fiftyPercent := int(float32(totalPixelsCount) * 0.5)
 
-	for colorIdx, c = range colorsCount {
-		if colorIdx == 0 && c >= tenPercent {
-			background = c
+	for colorIdx, c = range colors {
+		count := int(c.GetColorCount())
+		if colorIdx == 0 && count >= tenPercent {
+			background = count
 			fiftyPercent = int((float32(totalPixelsCount) - float32(background)) * 0.5)
 			continue
 		}
@@ -381,11 +330,11 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 			break
 		}
 
-		pixels += c
+		pixels += count
 	}
 	fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
 
-	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(colorsCount), fiftyPercent)
+	fmt.Printf("[%d] of [%d] with pixels = [%d]\n", colorIdx, len(colors), fiftyPercent)
 
 	return colorIdx*500 < fiftyPercent, nil
 }
