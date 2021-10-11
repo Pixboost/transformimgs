@@ -160,6 +160,7 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 		{"transparent-png-use-original.png", ""},
 		{"small-transparent-png.png", ""},
 		{"animated.gif", ""},
+		{"logo.png", ""},
 	}
 
 	t.Run("optimise", func(t *testing.T) {
@@ -249,6 +250,7 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -269,6 +271,7 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -289,6 +292,7 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -305,11 +309,12 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", ""},
+			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
-			{"transparent-png.png", ""},
+			{"transparent-png.png", "image/avif"},
 			{"small-transparent-png.png", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
@@ -326,11 +331,12 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/webp"},
+			{"opaque-png.png", "image/avif"},
 			{"animated.gif", "image/webp"},
-			{"transparent-png.png", "image/webp"},
+			{"transparent-png.png", "image/avif"},
 			{"small-transparent-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -348,9 +354,10 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", ""},
+			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
@@ -368,9 +375,10 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", ""},
+			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
@@ -414,32 +422,32 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 	}
 }
 
-func TestImageMagick_IsIllustration_2(t *testing.T) {
-	for i := 0; i < 312; i++ {
-		f := fmt.Sprintf("%s/%d.png", "./test_files/is_illustration", i)
-
-		orig, err := ioutil.ReadFile(f)
-		if err != nil {
-			t.Errorf("Can't read file %s: %+v", f, err)
-		}
-
-		if len(orig) <= processor.MinAVIFSize {
-			continue
-		}
-
-		isIllustration, err := proc.IsIllustration(&img.Image{
-			Id:       f,
-			Data:     orig,
-			MimeType: "",
-		})
-
-		fmt.Printf("<tr><td>%d</td>  <td>%t</td> <td><img src=\"./%d.png\"></td></tr>\n", i, isIllustration, i)
-
-		if err != nil {
-			t.Errorf("Unexpected error [%s]: %s", f, err)
-		}
-	}
-}
+//func TestImageMagick_IsIllustration_2(t *testing.T) {
+//	for i := 0; i < 312; i++ {
+//		f := fmt.Sprintf("%s/%d.png", "./test_files/is_illustration", i)
+//
+//		orig, err := ioutil.ReadFile(f)
+//		if err != nil {
+//			t.Errorf("Can't read file %s: %+v", f, err)
+//		}
+//
+//		if len(orig) <= processor.MinAVIFSize {
+//			continue
+//		}
+//
+//		isIllustration, err := proc.IsIllustration(&img.Image{
+//			Id:       f,
+//			Data:     orig,
+//			MimeType: "",
+//		})
+//
+//		fmt.Printf("<tr><td>%d</td>  <td>%t</td> <td><img src=\"./%d.png\"></td></tr>\n", i, isIllustration, i)
+//
+//		if err != nil {
+//			t.Errorf("Unexpected error [%s]: %s", f, err)
+//		}
+//	}
+//}
 
 func testImages(t *testing.T, fn transform, files []*testTransformation) {
 	results := make([]*result, 0)

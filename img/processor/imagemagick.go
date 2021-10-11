@@ -94,7 +94,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
 func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.loadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
 func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.loadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 
 func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.loadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -255,8 +255,10 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, error) {
+func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
+	imgId := src.Id
+	in := bytes.NewReader(src.Data)
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
 
@@ -275,11 +277,19 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 	}
 
 	imageInfo := &img.Info{
-		Size: in.Size(),
+		Size:         in.Size(),
+		Illustration: false,
 	}
 	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
+	}
+
+	if imageInfo.Format == "PNG" {
+		imageInfo.Illustration, err = p.IsIllustration(src)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return imageInfo, nil
@@ -367,7 +377,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && !src.Illustration && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -384,7 +394,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
-	if source.Format == "PNG" {
+	if source.Illustration {
 		opts = append(opts, "-define", "webp:lossless=true")
 	}
 	if source.Format != "GIF" {
