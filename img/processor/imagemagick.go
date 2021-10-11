@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
-	"time"
 )
 
 type ImageMagick struct {
@@ -295,17 +294,26 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
-	start := time.Now()
+	//start := time.Now()
 
 	mw := imagick.NewMagickWand()
+
 	err := mw.ReadImageBlob(src.Data)
 	if err != nil {
 		return false, err
 	}
-	fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
+
+	if len(src.Data) < MinAVIFSize {
+		return true, nil
+	}
+	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
 	_, colors := mw.GetImageHistogram()
-	fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
+	//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
+
+	if len(colors) > 30000 {
+		return false, nil
+	}
 
 	sort.Slice(colors, func(i, j int) bool {
 		return colors[i].GetColorCount() > colors[j].GetColorCount()
@@ -320,11 +328,13 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		totalPixelsCount      = float32(imageHeight * imageWidth)
 		tenPercent            = uint(totalPixelsCount * 0.1)
 		fiftyPercent          = uint(totalPixelsCount * 0.5)
+		hasBackground         = false
 	)
 
 	for colorIdx, color = range colors {
 		count := color.GetColorCount()
 		if colorIdx == 0 && count >= tenPercent {
+			hasBackground = true
 			fiftyPercent = uint((totalPixelsCount - float32(count)) * 0.5)
 			continue
 		}
@@ -335,11 +345,17 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 		pixelsCount += count
 	}
-	fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
+	//fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
 
-	fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
+	//fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
 
-	return uint(colorIdx*500) < fiftyPercent, nil
+	numColors := colorIdx + 1
+	if hasBackground {
+		numColors--
+	}
+
+	return numColors < 10 || (float32(numColors)/float32(len(colors))) <= 0.02, nil
+	//return uint(colorIdx*500) < fiftyPercent, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {

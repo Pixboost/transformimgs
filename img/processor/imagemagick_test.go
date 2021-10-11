@@ -414,6 +414,33 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 	}
 }
 
+func TestImageMagick_IsIllustration_2(t *testing.T) {
+	for i := 0; i < 312; i++ {
+		f := fmt.Sprintf("%s/%d.png", "./test_files/is_illustration", i)
+
+		orig, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Errorf("Can't read file %s: %+v", f, err)
+		}
+
+		if len(orig) <= processor.MinAVIFSize {
+			continue
+		}
+
+		isIllustration, err := proc.IsIllustration(&img.Image{
+			Id:       f,
+			Data:     orig,
+			MimeType: "",
+		})
+
+		fmt.Printf("<tr><td>%d</td>  <td>%t</td> <td><img src=\"./%d.png\"></td></tr>\n", i, isIllustration, i)
+
+		if err != nil {
+			t.Errorf("Unexpected error [%s]: %s", f, err)
+		}
+	}
+}
+
 func testImages(t *testing.T, fn transform, files []*testTransformation) {
 	results := make([]*result, 0)
 	for _, tt := range files {
