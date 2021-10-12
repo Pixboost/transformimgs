@@ -2,9 +2,6 @@ github.com/dooman87/glogi v0.0.0-20171229170332-1a9ee96f1380 h1:OC9HJVXdYvuq5z4t
 github.com/dooman87/glogi v0.0.0-20171229170332-1a9ee96f1380/go.mod h1:uWlPVNZ0PJcbKCdXMJL/MGta7m/H+wg0nzy6ZKYvEGw=
 github.com/dooman87/kolibri v0.0.0-20170117194222-c194ff118b67 h1:5zx4LUSP0iPn0KL6ciINexzNAw4imx4Db7B+LHCIP3s=
 github.com/dooman87/kolibri v0.0.0-20170117194222-c194ff118b67/go.mod h1:IGXOwI2+tWhVzcLeKONI0eXxxFVC4+A5ZFCup6fuQqE=
-github.com/gographics/imagick v1.1.2 h1:WO5Wp5zYw6a9wYz9JoDKMIReggWyxtSaoL467pvCfIc=
-github.com/gographics/imagick v3.2.0+incompatible h1:KeoHcmV7bVRKnj6tXTIcEGnyDg8kO0vPNUTC/5HzwOI=
-github.com/gographics/imagick v3.2.0+incompatible/go.mod h1:gk55mrttmUSR+Vt6dxnxuD7EKU/3e5Ehe8HRGVCI8mw=
 github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f h1:9oNbS1z4rVpbnkHBdPZU4jo9bSmrLpII768arSyMFgk=
 github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/mux v1.3.0 h1:HwSEKGN6U5T2aAQTfu5pW8fiwjSp3IgwdRbkICydk/c=

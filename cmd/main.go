@@ -26,6 +26,7 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img/loader"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"github.com/dooman87/kolibri/health"
+	"gopkg.in/gographics/imagick.v3/imagick"
 	"net/http"
 	"os"
 	"runtime"
@@ -46,6 +47,9 @@ func main() {
 	flag.IntVar(&procNum, "proc", runtime.NumCPU(), "Number of images processors to run. Defaults to number of CPUs")
 	flag.BoolVar(&disableSaveData, "disableSaveData", false, "If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary.")
 	flag.Parse()
+
+	imagick.Initialize()
+	defer imagick.Terminate()
 
 	p, err := processor.NewImageMagick(im, imIdent)
 

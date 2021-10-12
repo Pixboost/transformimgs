@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
-	"github.com/gographics/imagick/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
 	"os"
 	"reflect"

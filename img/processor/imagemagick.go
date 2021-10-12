@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
-	"github.com/gographics/imagick/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 	"os/exec"
 	"sort"
 	"strconv"
@@ -57,6 +57,10 @@ const (
 	// Webp is usually do a better job with those.
 	MinAVIFSize = 20 * 1024
 )
+
+func init() {
+
+}
 
 // NewImageMagick creates a new ImageMagick processor. It does require
 // ImageMagick binaries to be installed on the local machine.
