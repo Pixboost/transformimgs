@@ -312,7 +312,13 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 	mw := imagick.NewMagickWand()
 
-	err := mw.ReadImageBlob(src.Data)
+	// resource limit is static and doesn't work with long-running processes, hence disabling it
+	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
+	if err != nil {
+		return false, err
+	}
+
+	err = mw.ReadImageBlob(src.Data)
 	if err != nil {
 		return false, err
 	}
