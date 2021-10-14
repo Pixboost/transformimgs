@@ -309,9 +309,9 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/avif"},
+			{"opaque-png.png", ""},
 			{"animated.gif", ""},
-			{"transparent-png.png", "image/avif"},
+			{"transparent-png.png", ""},
 			{"small-transparent-png.png", ""},
 			{"transparent-png-use-original.png", ""},
 			{"logo.png", ""},
@@ -331,9 +331,9 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/avif"},
+			{"opaque-png.png", "image/webp"},
 			{"animated.gif", "image/webp"},
-			{"transparent-png.png", "image/avif"},
+			{"transparent-png.png", "image/webp"},
 			{"small-transparent-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"logo.png", "image/webp"},
@@ -354,7 +354,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/avif"},
+			{"opaque-png.png", ""},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
 			{"logo.png", ""},
@@ -375,7 +375,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/avif"},
+			{"opaque-png.png", ""},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
 			{"logo.png", ""},

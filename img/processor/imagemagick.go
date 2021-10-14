@@ -387,7 +387,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && !src.Illustration && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && !src.Illustration && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -417,10 +417,7 @@ func getConvertFormatOptions(source *img.Info) []string {
 func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
 	var quality int
 
-	// Lossless compression for PNG -> AVIF
-	if source.Format == "PNG" && outputMimeType == "image/avif" {
-		quality = 100
-	} else if source.Quality == 100 {
+	if source.Quality == 100 {
 		quality = 82
 	} else if outputMimeType == "image/avif" {
 		if source.Quality > 85 {
