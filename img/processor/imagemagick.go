@@ -309,8 +309,20 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	//start := time.Now()
+	var (
+		colors    []*imagick.PixelWand
+		colorsCnt uint
+	)
 
 	mw := imagick.NewMagickWand()
+	defer func() {
+		mw.Destroy()
+		if len(colors) > 0 {
+			for _, c := range colors {
+				c.Destroy()
+			}
+		}
+	}()
 
 	// resource limit is static and doesn't work with long-running processes, hence disabling it
 	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
@@ -328,10 +340,10 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	}
 	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
-	_, colors := mw.GetImageHistogram()
+	colorsCnt, colors = mw.GetImageHistogram()
 	//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
 
-	if len(colors) > 30000 {
+	if colorsCnt > 30000 {
 		return false, nil
 	}
 
@@ -369,12 +381,12 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 	//fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
 
-	numColors := colorIdx + 1
+	colorsCntIn50Pct := colorIdx + 1
 	if hasBackground {
-		numColors--
+		colorsCntIn50Pct--
 	}
 
-	return numColors < 10 || (float32(numColors)/float32(len(colors))) <= 0.02, nil
+	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 	//return uint(colorIdx*500) < fiftyPercent, nil
 }
 
