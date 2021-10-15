@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
+	"sync"
 )
 
 type ImageMagick struct {
@@ -299,7 +300,13 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 	return imageInfo, nil
 }
 
-// IsIllustration return true if image is cartoon like, including
+var magicWandPool = sync.Pool{
+	New: func() interface{} {
+		return imagick.NewMagickWand()
+	},
+}
+
+// IsIllustration returns true if image is cartoon like, including
 // icons, logos, illustrations.
 //
 // It returns false for banners, product images.
@@ -314,14 +321,10 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		colorsCnt uint
 	)
 
-	mw := imagick.NewMagickWand()
+	mw := magicWandPool.Get().(*imagick.MagickWand)
 	defer func() {
-		mw.Destroy()
-		if len(colors) > 0 {
-			for _, c := range colors {
-				c.Destroy()
-			}
-		}
+		mw.Clear()
+		magicWandPool.Put(mw)
 	}()
 
 	// resource limit is static and doesn't work with long-running processes, hence disabling it
