@@ -351,7 +351,7 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	}
 
 	imageDataCopy := make([]byte, len(src.Data))
-	copy(src.Data, imageDataCopy)
+	copy(imageDataCopy, src.Data)
 	err = mw.ReadImageBlob(imageDataCopy)
 	if err != nil {
 		return false, err
