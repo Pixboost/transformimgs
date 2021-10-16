@@ -333,9 +333,11 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 	mw := magicWandPool.Get().(*imagick.MagickWand)
 	defer func() {
+		fmt.Printf("Clearing up\n")
 		mw.Clear()
 		magicWandPool.Put(mw)
 		if len(colors) > 0 {
+			fmt.Printf("Clearing up %d colors\n", len(colors))
 			for _, c := range colors {
 				c.Destroy()
 			}
@@ -348,7 +350,9 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		return false, err
 	}
 
-	err = mw.ReadImageBlob(src.Data)
+	imageDataCopy := make([]byte, len(src.Data))
+	copy(src.Data, imageDataCopy)
+	err = mw.ReadImageBlob(imageDataCopy)
 	if err != nil {
 		return false, err
 	}
