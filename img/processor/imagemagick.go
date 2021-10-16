@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"sort"
 	"strconv"
 	"sync"
 )
@@ -324,84 +323,85 @@ var magicWandPool = sync.Pool{
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
-	//start := time.Now()
-	var (
-		colors    []*imagick.PixelWand
-		colorsCnt uint
-	)
+	/*
+		//start := time.Now()
+		var (
+			colors    []*imagick.PixelWand
+			colorsCnt uint
+		)
 
-	mw := magicWandPool.Get().(*imagick.MagickWand)
-	defer func() {
-		mw.Clear()
-		magicWandPool.Put(mw)
-	}()
+		mw := magicWandPool.Get().(*imagick.MagickWand)
+		defer func() {
+			mw.Clear()
+			magicWandPool.Put(mw)
+		}()
 
-	// resource limit is static and doesn't work with long-running processes, hence disabling it
-	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
-	if err != nil {
-		return false, err
-	}
-
-	err = mw.ReadImageBlob(src.Data)
-	if err != nil {
-		return false, err
-	}
-
-	if len(src.Data) < MinAVIFSize {
-		return true, nil
-	}
-	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
-
-	colorsCnt, colors = mw.GetImageHistogram()
-	//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
-
-	if colorsCnt > 30000 {
-		return false, nil
-	}
-
-	sort.Slice(colors, func(i, j int) bool {
-		return colors[i].GetColorCount() > colors[j].GetColorCount()
-	})
-
-	var (
-		colorIdx         int
-		color            *imagick.PixelWand
-		imageWidth            = mw.GetImageWidth()
-		imageHeight           = mw.GetImageHeight()
-		pixelsCount      uint = 0
-		totalPixelsCount      = float32(imageHeight * imageWidth)
-		tenPercent            = uint(totalPixelsCount * 0.1)
-		fiftyPercent          = uint(totalPixelsCount * 0.5)
-		hasBackground         = false
-	)
-
-	for colorIdx, color = range colors {
-		count := color.GetColorCount()
-		if colorIdx == 0 && count >= tenPercent {
-			hasBackground = true
-			fiftyPercent = uint((totalPixelsCount - float32(count)) * 0.5)
-			continue
+		// resource limit is static and doesn't work with long-running processes, hence disabling it
+		err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
+		if err != nil {
+			return false, err
 		}
 
-		if pixelsCount > fiftyPercent {
-			break
+		err = mw.ReadImageBlob(src.Data)
+		if err != nil {
+			return false, err
 		}
 
-		pixelsCount += count
-	}
-	//fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
+		if len(src.Data) < MinAVIFSize {
+			return true, nil
+		}
+		//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
-	//fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
+		colorsCnt, colors = mw.GetImageHistogram()
+		//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
 
-	colorsCntIn50Pct := colorIdx + 1
-	if hasBackground {
-		colorsCntIn50Pct--
-	}
+		if colorsCnt > 30000 {
+			return false, nil
+		}
 
-	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
-	//return uint(colorIdx*500) < fiftyPercent, nil
+		sort.Slice(colors, func(i, j int) bool {
+			return colors[i].GetColorCount() > colors[j].GetColorCount()
+		})
 
-	//return false, nil
+		var (
+			colorIdx         int
+			color            *imagick.PixelWand
+			imageWidth            = mw.GetImageWidth()
+			imageHeight           = mw.GetImageHeight()
+			pixelsCount      uint = 0
+			totalPixelsCount      = float32(imageHeight * imageWidth)
+			tenPercent            = uint(totalPixelsCount * 0.1)
+			fiftyPercent          = uint(totalPixelsCount * 0.5)
+			hasBackground         = false
+		)
+
+		for colorIdx, color = range colors {
+			count := color.GetColorCount()
+			if colorIdx == 0 && count >= tenPercent {
+				hasBackground = true
+				fiftyPercent = uint((totalPixelsCount - float32(count)) * 0.5)
+				continue
+			}
+
+			if pixelsCount > fiftyPercent {
+				break
+			}
+
+			pixelsCount += count
+		}
+		//fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
+
+		//fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
+
+		colorsCntIn50Pct := colorIdx + 1
+		if hasBackground {
+			colorsCntIn50Pct--
+		}
+
+		return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
+		//return uint(colorIdx*500) < fiftyPercent, nil
+	*/
+	return false, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {

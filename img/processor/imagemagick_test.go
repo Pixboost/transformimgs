@@ -378,6 +378,7 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 		})
 }
 
+/*
 var isIllustrationTests = []*testIsIllustration{
 	{"image-api.png", true},
 	{"images-source.png", true},
@@ -417,7 +418,7 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 		}
 	}
 }
-
+*/
 //func TestImageMagick_IsIllustration_2(t *testing.T) {
 //	err := writeMemProfile("-1.prof")
 //	if err != nil {
