@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
-	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -35,9 +34,6 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	imagick.Initialize()
-	defer imagick.Terminate()
-
 	var err error
 
 	proc, err = processor.NewImageMagick(os.ExpandEnv("${IM_HOME}/convert"), os.ExpandEnv("${IM_HOME}/identify"))
@@ -423,16 +419,17 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 }
 
 //func TestImageMagick_IsIllustration_2(t *testing.T) {
-//	for i := 0; i < 312; i++ {
+//	err := writeMemProfile("-1.prof")
+//	if err != nil {
+//		t.Errorf("Unexpected error: %s", err)
+//	}
+//
+//	for i := 0; i < 50; i++ {
 //		f := fmt.Sprintf("%s/%d.png", "./test_files/is_illustration", i)
 //
 //		orig, err := ioutil.ReadFile(f)
 //		if err != nil {
 //			t.Errorf("Can't read file %s: %+v", f, err)
-//		}
-//
-//		if len(orig) <= processor.MinAVIFSize {
-//			continue
 //		}
 //
 //		isIllustration, err := proc.IsIllustration(&img.Image{
@@ -446,7 +443,28 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 //		if err != nil {
 //			t.Errorf("Unexpected error [%s]: %s", f, err)
 //		}
+//
+//		if (i + 1) % 10 == 0 {
+//			err = writeMemProfile(fmt.Sprintf("%d.prof", i + 1))
+//			if err != nil {
+//				t.Errorf("Unexpected error [%s]: %s", f, err)
+//			}
+//		}
 //	}
+//}
+//
+//func writeMemProfile(fileName string) error {
+//	f, err := os.Create(fileName)
+//	if err != nil {
+//		return err
+//	}
+//	defer f.Close() // error handling omitted for example
+//	runtime.GC() // get up-to-date statistics
+//	if err := pprof.WriteHeapProfile(f); err != nil {
+//		return err
+//	}
+//
+//	return nil
 //}
 
 func testImages(t *testing.T, fn transform, files []*testTransformation) {

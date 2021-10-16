@@ -26,8 +26,8 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img/loader"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"github.com/dooman87/kolibri/health"
-	"gopkg.in/gographics/imagick.v3/imagick"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"runtime"
 )
@@ -48,9 +48,6 @@ func main() {
 	flag.BoolVar(&disableSaveData, "disableSaveData", false, "If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary.")
 	flag.Parse()
 
-	imagick.Initialize()
-	defer imagick.Terminate()
-
 	p, err := processor.NewImageMagick(im, imIdent)
 
 	if err != nil {
@@ -68,6 +65,7 @@ func main() {
 
 	router := srv.GetRouter()
 	router.HandleFunc("/health", health.Health)
+	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 
 	img.Log.Printf("Running the application on port 8080...\n")
 	err = http.ListenAndServe(":8080", router)

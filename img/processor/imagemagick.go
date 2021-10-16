@@ -6,7 +6,9 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"os"
 	"os/exec"
+	"os/signal"
 	"sort"
 	"strconv"
 	"sync"
@@ -60,7 +62,14 @@ const (
 )
 
 func init() {
-
+	imagick.Initialize()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		fmt.Printf("Terminating imagick\n")
+		imagick.Terminate()
+	}()
 }
 
 // NewImageMagick creates a new ImageMagick processor. It does require
@@ -391,6 +400,8 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 	//return uint(colorIdx*500) < fiftyPercent, nil
+
+	//return false, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
