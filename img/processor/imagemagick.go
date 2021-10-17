@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"sort"
 	"strconv"
-	"sync"
 )
 
 type ImageMagick struct {
@@ -309,12 +308,6 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 	return imageInfo, nil
 }
 
-var magicWandPool = sync.Pool{
-	New: func() interface{} {
-		return imagick.NewMagickWand()
-	},
-}
-
 // IsIllustration returns true if image is cartoon like, including
 // icons, logos, illustrations.
 //
@@ -331,11 +324,10 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		colorsCnt uint
 	)
 
-	mw := magicWandPool.Get().(*imagick.MagickWand)
+	mw := imagick.NewMagickWand()
 	defer func() {
 		fmt.Printf("Clearing up\n")
-		mw.Clear()
-		magicWandPool.Put(mw)
+		mw.Destroy()
 		if len(colors) > 0 {
 			fmt.Printf("Clearing up %d colors\n", len(colors))
 			for _, c := range colors {
