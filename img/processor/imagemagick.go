@@ -6,6 +6,7 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -62,6 +63,15 @@ const (
 
 func init() {
 	imagick.Initialize()
+
+	mw := imagick.NewMagickWand()
+	// resource limit is static and doesn't work with long-running processes, hence disabling it
+	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
+	if err != nil {
+		log.Fatalf("could not set resource limit: %s", err)
+	}
+	mw.Destroy()
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -325,26 +335,24 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	)
 
 	mw := imagick.NewMagickWand()
-	defer func() {
-		fmt.Printf("Clearing up\n")
-		mw.Destroy()
-		if len(colors) > 0 {
-			fmt.Printf("Clearing up %d colors\n", len(colors))
-			for _, c := range colors {
-				c.Destroy()
-			}
-		}
-	}()
+	//defer func() {
+	//	fmt.Printf("Clearing up\n")
+	//	mw.Destroy()
+	//	if len(colors) > 0 {
+	//		fmt.Printf("Clearing up %d colors\n", len(colors))
+	//		for _, c := range colors {
+	//			c.Destroy()
+	//		}
+	//	}
+	//}()
 
 	// resource limit is static and doesn't work with long-running processes, hence disabling it
-	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
-	if err != nil {
-		return false, err
-	}
+	//err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
+	//if err != nil {
+	//	return false, err
+	//}
 
-	imageDataCopy := make([]byte, len(src.Data))
-	copy(imageDataCopy, src.Data)
-	err = mw.ReadImageBlob(imageDataCopy)
+	err := mw.ReadImageBlob(src.Data)
 	if err != nil {
 		return false, err
 	}
