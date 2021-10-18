@@ -392,27 +392,29 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		return false, nil
 	}
 
-	sort.Slice(colors, func(i, j int) bool {
-		return colors[i].GetColorCount() > colors[j].GetColorCount()
-	})
+	colorsCounts := make([]int, colorsCnt)
+	for i, c := range colors {
+		colorsCounts[i] = int(c.GetColorCount())
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(colorsCounts)))
 
 	var (
 		colorIdx         int
-		color            *imagick.PixelWand
-		imageWidth            = mw.GetImageWidth()
-		imageHeight           = mw.GetImageHeight()
-		pixelsCount      uint = 0
-		totalPixelsCount      = float32(imageHeight * imageWidth)
-		tenPercent            = uint(totalPixelsCount * 0.1)
-		fiftyPercent          = uint(totalPixelsCount * 0.5)
-		hasBackground         = false
+		count            int
+		imageWidth       = mw.GetImageWidth()
+		imageHeight      = mw.GetImageHeight()
+		pixelsCount      = 0
+		totalPixelsCount = float32(imageHeight * imageWidth)
+		tenPercent       = int(totalPixelsCount * 0.1)
+		fiftyPercent     = int(totalPixelsCount * 0.5)
+		hasBackground    = false
 	)
 
-	for colorIdx, color = range colors {
-		count := color.GetColorCount()
+	for colorIdx, count = range colorsCounts {
 		if colorIdx == 0 && count >= tenPercent {
 			hasBackground = true
-			fiftyPercent = uint((totalPixelsCount - float32(count)) * 0.5)
+			fiftyPercent = int((totalPixelsCount - float32(count)) * 0.5)
 			continue
 		}
 
