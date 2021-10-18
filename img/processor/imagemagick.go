@@ -393,7 +393,10 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	}
 	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
-	_, _ = mw.GetImageHistogram()
+	_, cc := mw.GetImageHistogram()
+	for _, c := range cc {
+		c.Destroy()
+	}
 
 	/*
 		colorsCnt, colors = mw.GetImageHistogram()
