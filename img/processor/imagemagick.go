@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"sort"
 	"strconv"
+	"sync"
+	"time"
 )
 
 type ImageMagick struct {
@@ -61,21 +63,40 @@ const (
 	MinAVIFSize = 20 * 1024
 )
 
+var imagickLock sync.RWMutex
+
 func init() {
 	imagick.Initialize()
 
 	mw := imagick.NewMagickWand()
-	// resource limit is static and doesn't work with long-running processes, hence disabling it
+	// time resource limit is static and doesn't work with long-running processes, hence disabling it
 	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
 	if err != nil {
 		log.Fatalf("could not set resource limit: %s", err)
 	}
 	mw.Destroy()
 
+	var timer *time.Timer
+
+	timer = time.AfterFunc(time.Duration(30)*time.Second, func() {
+		defer timer.Reset(time.Duration(30) * time.Second)
+		imagickLock.Lock()
+		defer imagickLock.Unlock()
+
+		initStart := time.Now()
+		imagick.Terminate()
+		imagick.Initialize()
+		fmt.Printf("Reinitilize took %d msec\n", time.Now().Sub(initStart).Milliseconds())
+	})
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
+		imagickLock.Lock()
+		defer imagickLock.Unlock()
+
+		timer.Stop()
 		fmt.Printf("Terminating imagick\n")
 		imagick.Terminate()
 	}()
@@ -327,6 +348,8 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
+	imagickLock.RLock()
+	defer imagickLock.RUnlock()
 
 	//start := time.Now()
 	var (
