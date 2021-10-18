@@ -74,6 +74,14 @@ func init() {
 	if err != nil {
 		log.Fatalf("could not set resource limit: %s", err)
 	}
+	err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 100)
+	if err != nil {
+		log.Fatalf("could not set resource limit: %s", err)
+	}
+	err = mw.SetResourceLimit(imagick.RESOURCE_MAP, 100)
+	if err != nil {
+		log.Fatalf("could not set resource limit: %s", err)
+	}
 	mw.Destroy()
 
 	var timer *time.Timer
