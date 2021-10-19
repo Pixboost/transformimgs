@@ -86,8 +86,8 @@ func init() {
 
 	var timer *time.Timer
 
-	timer = time.AfterFunc(time.Duration(30)*time.Second, func() {
-		defer timer.Reset(time.Duration(30) * time.Second)
+	timer = time.AfterFunc(time.Duration(10)*time.Second, func() {
+		defer timer.Reset(time.Duration(10) * time.Second)
 		imagickLock.Lock()
 		defer imagickLock.Unlock()
 
@@ -361,6 +361,8 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 
 	memstat(src.Id, "Init")
 
+	var colors []*imagick.PixelWand
+
 	//start := time.Now()
 
 	//var (
@@ -369,6 +371,15 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	//)
 
 	mw := imagick.NewMagickWand()
+
+	defer func() {
+		for _, c := range colors {
+			c.Destroy()
+		}
+		mw.Destroy()
+
+		memstat(src.Id, "After Clean")
+	}()
 	//defer func() {
 	//	fmt.Printf("Clearing up\n")
 	//	mw.Destroy()
@@ -397,16 +408,10 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
 	memstat(src.Id, "Before")
-	_, cc := mw.GetImageHistogram()
+	_, colors = mw.GetImageHistogram()
 
 	memstat(src.Id, "After")
 
-	for _, c := range cc {
-		c.Destroy()
-	}
-	mw.Destroy()
-
-	memstat(src.Id, "After Clean")
 	/*
 		colorsCnt, colors = mw.GetImageHistogram()
 		//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
