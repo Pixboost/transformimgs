@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -358,6 +359,8 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	imagickLock.RLock()
 	defer imagickLock.RUnlock()
 
+	memstat(src.Id, "Init")
+
 	//start := time.Now()
 
 	//var (
@@ -393,11 +396,17 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 	}
 	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
+	memstat(src.Id, "Before")
 	_, cc := mw.GetImageHistogram()
+
+	memstat(src.Id, "After")
+
 	for _, c := range cc {
 		c.Destroy()
 	}
+	mw.Destroy()
 
+	memstat(src.Id, "After Clean")
 	/*
 		colorsCnt, colors = mw.GetImageHistogram()
 		//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
@@ -450,6 +459,14 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 	*/
 	return false, nil
+}
+
+func memstat(imgId, desc string) {
+	memstats := &runtime.MemStats{}
+	runtime.GC()
+	runtime.ReadMemStats(memstats)
+	fmt.Printf("Mem %s (%s): %d %d %d %d %d\n", desc, imgId, memstats.Mallocs, memstats.Frees, memstats.Mallocs-memstats.Frees, memstats.StackInuse, memstats.HeapInuse)
+	fmt.Printf("Go routines (%s): %d\n", imgId, runtime.NumGoroutine())
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
