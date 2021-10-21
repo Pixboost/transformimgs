@@ -312,7 +312,7 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 	imgId := src.Id
 	in := bytes.NewReader(src.Data)
 	cmd := exec.Command(p.identifyCmd)
-	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
+	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h %k", "-")
 
 	cmd.Stdin = in
 	cmd.Stdout = &out
@@ -332,13 +332,13 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 		Size:         in.Size(),
 		Illustration: false,
 	}
-	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
+	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height, &imageInfo.NumColors)
 	if err != nil {
 		return nil, err
 	}
 
 	if imageInfo.Format == "PNG" {
-		imageInfo.Illustration, err = p.IsIllustration(src)
+		imageInfo.Illustration, err = p.IsIllustration(src, imageInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -355,7 +355,14 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 // The known issue is screenshots which are usually get recognised as illustration.
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
-func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
+func (p *ImageMagick) IsIllustration(src *img.Image, info *img.Info) (bool, error) {
+	if info.NumColors > 50000 {
+		return false, nil
+	}
+	if len(src.Data) < MinAVIFSize {
+		return true, nil
+	}
+
 	imagickLock.RLock()
 	defer imagickLock.RUnlock()
 
@@ -402,9 +409,6 @@ func (p *ImageMagick) IsIllustration(src *img.Image) (bool, error) {
 		return false, err
 	}
 
-	if len(src.Data) < MinAVIFSize {
-		return true, nil
-	}
 	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
 
 	memstat(src.Id, "Before")

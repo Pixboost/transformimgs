@@ -14,6 +14,7 @@ type Info struct {
 	Opaque       bool
 	Width        int
 	Height       int
+	NumColors    uint
 	Illustration bool
 	// Size is the size of the image in bytes
 	Size int64
