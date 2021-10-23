@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"runtime"
+	"runtime/pprof"
 	"testing"
 )
 
@@ -127,7 +129,7 @@ func TestImageMagick_GetAdditionalArgs(t *testing.T) {
 	}
 	if !reflect.DeepEqual(aSource, &img.Info{
 		Format:  "PNG",
-		Quality: 92,
+		Quality: 100,
 		Opaque:  true,
 		Width:   400,
 		Height:  400,
@@ -378,19 +380,19 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 		})
 }
 
-/*
 var isIllustrationTests = []*testIsIllustration{
 	{"image-api.png", true},
 	{"images-source.png", true},
 	{"people.png", true},
 	{"l-carnitine-shaker-banner.png", false},
-	{"snippet-generator-screenshot.png", true},
+	{"snippet-generator-screenshot.png", false},
 	{"WFH_alternative2.2.png", false},
 	{"markers.png", false},
 	{"print-make.png", false},
 	{"shaker.png", false},
 	{"logo.png", true},
 	{"logo-2.png", true},
+	{"photo.png", false},
 }
 
 func TestImageMagick_IsIllustration(t *testing.T) {
@@ -404,29 +406,28 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 			t.Errorf("Can't read file %s: %+v", f, err)
 		}
 
-		isIllustration, err := proc.IsIllustration(&img.Image{
+		image := &img.Image{
 			Id:       imgFile,
 			Data:     orig,
 			MimeType: "",
-		})
+		}
+		info, err := proc.LoadImageInfo(image)
+		if err != nil {
+			t.Errorf("could not load image info %s: %s", imgFile, err)
+		}
 
 		if err != nil {
 			t.Errorf("Unexpected error [%s]: %s", imgFile, err)
 		}
-		if isIllustration != tt.isIllustration {
-			t.Errorf("Expected [%t] for [%s], but got [%t]", tt.isIllustration, imgFile, isIllustration)
+		if info.Illustration != tt.isIllustration {
+			t.Errorf("Expected [%t] for [%s], but got [%t]", tt.isIllustration, imgFile, info.Illustration)
 		}
 	}
 }
-*/
 
 //func TestImageMagick_IsIllustration_2(t *testing.T) {
-//	err := writeMemProfile("-1.prof")
-//	if err != nil {
-//		t.Errorf("Unexpected error: %s", err)
-//	}
-//
-//	for i := 0; i < 50; i++ {
+//	processor.Debug = false
+//	for i := 0; i < 311; i++ {
 //		f := fmt.Sprintf("%s/%d.png", "./test_files/is_illustration", i)
 //
 //		orig, err := ioutil.ReadFile(f)
@@ -434,40 +435,38 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 //			t.Errorf("Can't read file %s: %+v", f, err)
 //		}
 //
-//		isIllustration, err := proc.IsIllustration(&img.Image{
+//		image := &img.Image{
 //			Id:       f,
 //			Data:     orig,
 //			MimeType: "",
-//		})
-//
-//		fmt.Printf("<tr><td>%d</td>  <td>%t</td> <td><img src=\"./%d.png\"></td></tr>\n", i, isIllustration, i)
+//		}
+//		startTime := time.Now()
+//		info, err := proc.LoadImageInfo(image)
+//		if err != nil {
+//			t.Errorf("could not load image info: %s", err)
+//		} else {
+//			fmt.Printf("<tr><td>%d</td>  <td>%t</td> <td><img src=\"./%d.png\"></td><td>%4f</td></tr>\n", i, info.Illustration, i, time.Now().Sub(startTime).Seconds())
+//		}
 //
 //		if err != nil {
 //			t.Errorf("Unexpected error [%s]: %s", f, err)
 //		}
-//
-//		if (i + 1) % 10 == 0 {
-//			err = writeMemProfile(fmt.Sprintf("%d.prof", i + 1))
-//			if err != nil {
-//				t.Errorf("Unexpected error [%s]: %s", f, err)
-//			}
-//		}
 //	}
 //}
-//
-//func writeMemProfile(fileName string) error {
-//	f, err := os.Create(fileName)
-//	if err != nil {
-//		return err
-//	}
-//	defer f.Close() // error handling omitted for example
-//	runtime.GC() // get up-to-date statistics
-//	if err := pprof.WriteHeapProfile(f); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
+
+func writeMemProfile(fileName string) error {
+	f, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close() // error handling omitted for example
+	runtime.GC()    // get up-to-date statistics
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func testImages(t *testing.T, fn transform, files []*testTransformation) {
 	results := make([]*result, 0)

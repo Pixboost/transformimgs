@@ -10,10 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
+	"sort"
 	"strconv"
-	"sync"
-	"time"
 )
 
 type ImageMagick struct {
@@ -63,8 +61,6 @@ const (
 	MinAVIFSize = 20 * 1024
 )
 
-var imagickLock sync.RWMutex
-
 func init() {
 	imagick.Initialize()
 
@@ -74,37 +70,12 @@ func init() {
 	if err != nil {
 		log.Fatalf("could not set resource limit: %s", err)
 	}
-	err = mw.SetResourceLimit(imagick.RESOURCE_MEMORY, 100)
-	if err != nil {
-		log.Fatalf("could not set resource limit: %s", err)
-	}
-	err = mw.SetResourceLimit(imagick.RESOURCE_MAP, 100)
-	if err != nil {
-		log.Fatalf("could not set resource limit: %s", err)
-	}
 	mw.Destroy()
-
-	var timer *time.Timer
-
-	timer = time.AfterFunc(time.Duration(10)*time.Second, func() {
-		defer timer.Reset(time.Duration(10) * time.Second)
-		imagickLock.Lock()
-		defer imagickLock.Unlock()
-
-		initStart := time.Now()
-		imagick.Terminate()
-		imagick.Initialize()
-		fmt.Printf("Reinitilize took %d msec\n", time.Now().Sub(initStart).Milliseconds())
-	})
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		imagickLock.Lock()
-		defer imagickLock.Unlock()
-
-		timer.Stop()
 		fmt.Printf("Terminating imagick\n")
 		imagick.Terminate()
 	}()
@@ -146,7 +117,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
 func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(config.Src)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +166,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
 func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(config.Src)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +214,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 
 func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(config.Src)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -307,12 +278,12 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
+func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
 	imgId := src.Id
 	in := bytes.NewReader(src.Data)
 	cmd := exec.Command(p.identifyCmd)
-	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h %k", "-")
+	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
 
 	cmd.Stdin = in
 	cmd.Stdout = &out
@@ -332,12 +303,14 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 		Size:         in.Size(),
 		Illustration: false,
 	}
-	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height, &imageInfo.NumColors)
+	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
 	}
 
 	if imageInfo.Format == "PNG" {
+		// IM outputs quality as 92 if no quality specified
+		imageInfo.Quality = 100
 		imageInfo.Illustration, err = p.IsIllustration(src, imageInfo)
 		if err != nil {
 			return nil, err
@@ -356,126 +329,82 @@ func (p *ImageMagick) loadImageInfo(src *img.Image) (*img.Info, error) {
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) IsIllustration(src *img.Image, info *img.Info) (bool, error) {
-	if info.NumColors > 50000 {
-		return false, nil
-	}
-	if len(src.Data) < MinAVIFSize {
+	if len(src.Data) < 20*1024 {
 		return true, nil
 	}
 
-	imagickLock.RLock()
-	defer imagickLock.RUnlock()
+	if float32(len(src.Data))/float32(info.Width*info.Height) > 1.0 {
+		return false, nil
+	}
 
-	memstat(src.Id, "Init")
+	if len(src.Data) > 1024*1024 {
+		return false, nil
+	}
 
-	var colors []*imagick.PixelWand
-
-	//start := time.Now()
-
-	//var (
-	//	colors    []*imagick.PixelWand
-	//	colorsCnt uint
-	//)
+	var (
+		colors    []*imagick.PixelWand
+		colorsCnt uint
+	)
 
 	mw := imagick.NewMagickWand()
-
-	defer func() {
-		for _, c := range colors {
-			c.Destroy()
-		}
-		mw.Destroy()
-
-		memstat(src.Id, "After Clean")
-	}()
-	//defer func() {
-	//	fmt.Printf("Clearing up\n")
-	//	mw.Destroy()
-	//	if len(colors) > 0 {
-	//		fmt.Printf("Clearing up %d colors\n", len(colors))
-	//		for _, c := range colors {
-	//			c.Destroy()
-	//		}
-	//	}
-	//}()
-
-	// resource limit is static and doesn't work with long-running processes, hence disabling it
-	//err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
-	//if err != nil {
-	//	return false, err
-	//}
 
 	err := mw.ReadImageBlob(src.Data)
 	if err != nil {
 		return false, err
 	}
 
-	//fmt.Printf("[%s] Read image: %d\n", src.Id, time.Since(start).Milliseconds())
+	if info.Width*info.Height > 500*500 {
+		aspectRatio := float32(info.Width) / float32(info.Height)
+		err = mw.ScaleImage(500, uint(500/aspectRatio))
+		if err != nil {
+			return false, err
+		}
+	}
 
-	memstat(src.Id, "Before")
-	_, colors = mw.GetImageHistogram()
+	colorsCnt, colors = mw.GetImageHistogram()
+	if colorsCnt > 30000 {
+		return false, nil
+	}
 
-	memstat(src.Id, "After")
+	colorsCounts := make([]int, colorsCnt)
+	for i, c := range colors {
+		colorsCounts[i] = int(c.GetColorCount())
+	}
 
-	/*
-		colorsCnt, colors = mw.GetImageHistogram()
-		//fmt.Printf("Get histogram: %d\n", time.Since(start).Milliseconds())
+	sort.Sort(sort.Reverse(sort.IntSlice(colorsCounts)))
 
-		if colorsCnt > 30000 {
-			return false, nil
+	var (
+		colorIdx         int
+		count            int
+		imageWidth       = mw.GetImageWidth()
+		imageHeight      = mw.GetImageHeight()
+		pixelsCount      = 0
+		totalPixelsCount = float32(imageHeight * imageWidth)
+		tenPercent       = int(totalPixelsCount * 0.1)
+		fiftyPercent     = int(totalPixelsCount * 0.5)
+		hasBackground    = false
+	)
+
+	for colorIdx, count = range colorsCounts {
+		if colorIdx == 0 && count >= tenPercent {
+			hasBackground = true
+			fiftyPercent = int((totalPixelsCount - float32(count)) * 0.5)
+			continue
 		}
 
-		colorsCounts := make([]int, colorsCnt)
-		for i, c := range colors {
-			colorsCounts[i] = int(c.GetColorCount())
+		if pixelsCount > fiftyPercent {
+			break
 		}
 
-		sort.Sort(sort.Reverse(sort.IntSlice(colorsCounts)))
+		pixelsCount += count
+	}
 
-		var (
-			colorIdx         int
-			count            int
-			imageWidth       = mw.GetImageWidth()
-			imageHeight      = mw.GetImageHeight()
-			pixelsCount      = 0
-			totalPixelsCount = float32(imageHeight * imageWidth)
-			tenPercent       = int(totalPixelsCount * 0.1)
-			fiftyPercent     = int(totalPixelsCount * 0.5)
-			hasBackground    = false
-		)
+	colorsCntIn50Pct := colorIdx + 1
+	if hasBackground {
+		colorsCntIn50Pct--
+	}
 
-		for colorIdx, count = range colorsCounts {
-			if colorIdx == 0 && count >= tenPercent {
-				hasBackground = true
-				fiftyPercent = int((totalPixelsCount - float32(count)) * 0.5)
-				continue
-			}
-
-			if pixelsCount > fiftyPercent {
-				break
-			}
-
-			pixelsCount += count
-		}
-		//fmt.Printf("Colors Iteration: %d\n", time.Since(start).Milliseconds())
-
-		//fmt.Printf("[%d] of [%d] with pixelsCount = [%d]\n", colorIdx, len(colors), fiftyPercent)
-
-		colorsCntIn50Pct := colorIdx + 1
-		if hasBackground {
-			colorsCntIn50Pct--
-		}
-
-		return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
-	*/
-	return false, nil
-}
-
-func memstat(imgId, desc string) {
-	memstats := &runtime.MemStats{}
-	runtime.GC()
-	runtime.ReadMemStats(memstats)
-	fmt.Printf("Mem %s (%s): %d %d %d %d %d\n", desc, imgId, memstats.Mallocs, memstats.Frees, memstats.Mallocs-memstats.Frees, memstats.StackInuse, memstats.HeapInuse)
-	fmt.Printf("Go routines (%s): %d\n", imgId, runtime.NumGoroutine())
+	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
