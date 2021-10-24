@@ -22,7 +22,7 @@ type ImageMagick struct {
 	AdditionalArgs []string
 	// GetAdditionalArgs could return additional arguments for ImageMagick "convert" command.
 	// "op" is the name of the operation: "optimise", "resize" or "fit".
-	// Some of the fields in the target info might not be filled, so you need to check on them!
+	// Some fields in the target info might not be filled, so you need to check on them!
 	// Argument name and value should be in a separate array elements.
 	GetAdditionalArgs func(op string, image []byte, source *img.Info, target *img.Info) []string
 }
@@ -44,21 +44,21 @@ var cutToFitOpts = []string{
 	"-gravity", "center",
 }
 
-//If set then will print all commands to stdout.
+// Debug is a flag for logging.
+// When true, all IM commands will be printed to stdout.
 var Debug bool = true
 
 const (
 	MaxWebpWidth  = 16383
 	MaxWebpHeight = 16383
 
+	// MaxAVIFTargetSize is a maximum size in pixels of the result image
+	// that could be converted to AVIF.
+	//
 	// There are two aspects to this:
 	// * Encoding to AVIF consumes a lot of memory
 	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
 	MaxAVIFTargetSize = 1000 * 1000
-
-	// Images less than 20Kb are usually logos with text.
-	// Webp is usually do a better job with those.
-	MinAVIFSize = 20 * 1024
 )
 
 func init() {
@@ -76,7 +76,6 @@ func init() {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		fmt.Printf("Terminating imagick\n")
 		imagick.Terminate()
 	}()
 }
@@ -311,7 +310,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	if imageInfo.Format == "PNG" {
 		// IM outputs quality as 92 if no quality specified
 		imageInfo.Quality = 100
-		imageInfo.Illustration, err = p.IsIllustration(src, imageInfo)
+		imageInfo.Illustration, err = p.isIllustration(src, imageInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -320,24 +319,25 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	return imageInfo, nil
 }
 
-// IsIllustration returns true if image is cartoon like, including
+// isIllustration returns true if image is cartoon like, including
 // icons, logos, illustrations.
 //
-// It returns false for banners, product images.
+// It returns false for banners, product images, photos.
 //
-// The known issue is screenshots which are usually get recognised as illustration.
+// We use this function to decide on lossy or lossless conversion for PNG when converting
+// to the next generation format.
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
-func (p *ImageMagick) IsIllustration(src *img.Image, info *img.Info) (bool, error) {
+func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, error) {
 	if len(src.Data) < 20*1024 {
 		return true, nil
 	}
 
-	if float32(len(src.Data))/float32(info.Width*info.Height) > 1.0 {
+	if len(src.Data) > 1024*1024 {
 		return false, nil
 	}
 
-	if len(src.Data) > 1024*1024 {
+	if float32(len(src.Data))/float32(info.Width*info.Height) > 1.0 {
 		return false, nil
 	}
 
@@ -416,7 +416,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && !src.Illustration && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
