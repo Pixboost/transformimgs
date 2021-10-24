@@ -27,7 +27,6 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"github.com/dooman87/kolibri/health"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"runtime"
 )
@@ -65,7 +64,6 @@ func main() {
 
 	router := srv.GetRouter()
 	router.HandleFunc("/health", health.Health)
-	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 
 	img.Log.Printf("Running the application on port 8080...\n")
 	err = http.ListenAndServe(":8080", router)
