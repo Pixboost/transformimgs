@@ -58,15 +58,16 @@ $ docker pull pixboost/transformimgs
 
 ## Usage
 
+Run it:
+
 ```
 $ docker run -p 8080:8080 pixboost/transformimgs [OPTIONS]
 ```
 
-To test that application started successfully:
+Test it:
 
-`$ curl http://localhost:8080/health`
-
-You should get 'OK' string in the response.
+* Health check: `curl http://localhost:8080/health`
+* Transformation: `open http://localhost:8080/img/https://images.unsplash.com/photo-1591769225440-811ad7d6eab3/resize?size=600`
 
 The API has 4 HTTP endpoints:
 
@@ -132,7 +133,7 @@ $ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 
 ## API
 
-You can go through [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
+You can go through Swagger [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
 API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com.
 
 [Go-swagger](https://goswagger.io) is used to generate swagger.json schema file from sources. 
