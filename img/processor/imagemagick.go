@@ -6,7 +6,6 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
 	"gopkg.in/gographics/imagick.v3/imagick"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -46,7 +45,7 @@ var cutToFitOpts = []string{
 
 // Debug is a flag for logging.
 // When true, all IM commands will be printed to stdout.
-var Debug bool = true
+var Debug = true
 
 const (
 	MaxWebpWidth  = 16383
@@ -68,7 +67,8 @@ func init() {
 	// time resource limit is static and doesn't work with long-running processes, hence disabling it
 	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
 	if err != nil {
-		log.Fatalf("could not set resource limit: %s", err)
+		img.Log.Errorf("failed to init ImageMagick, could not set resource limit: %s, exiting...", err)
+		os.Exit(1)
 	}
 	mw.Destroy()
 
