@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
+	"gopkg.in/gographics/imagick.v3/imagick"
+	"os"
 	"os/exec"
+	"os/signal"
+	"sort"
 	"strconv"
 )
 
@@ -17,13 +21,12 @@ type ImageMagick struct {
 	AdditionalArgs []string
 	// GetAdditionalArgs could return additional arguments for ImageMagick "convert" command.
 	// "op" is the name of the operation: "optimise", "resize" or "fit".
-	// Some of the fields in the target info might not be filled, so you need to check on them!
+	// Some fields in the target info might not be filled, so you need to check on them!
 	// Argument name and value should be in a separate array elements.
 	GetAdditionalArgs func(op string, image []byte, source *img.Info, target *img.Info) []string
 }
 
 var convertOpts = []string{
-	"-unsharp", "0.25x0.08+8.3+0.045",
 	"-dither", "None",
 	"-define", "jpeg:fancy-upsampling=off",
 	"-define", "png:compression-filter=5",
@@ -40,22 +43,42 @@ var cutToFitOpts = []string{
 	"-gravity", "center",
 }
 
-//If set then will print all commands to stdout.
-var Debug bool = true
+// Debug is a flag for logging.
+// When true, all IM commands will be printed to stdout.
+var Debug = true
 
 const (
 	MaxWebpWidth  = 16383
 	MaxWebpHeight = 16383
 
+	// MaxAVIFTargetSize is a maximum size in pixels of the result image
+	// that could be converted to AVIF.
+	//
 	// There are two aspects to this:
 	// * Encoding to AVIF consumes a lot of memory
 	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
 	MaxAVIFTargetSize = 1000 * 1000
-
-	// Images less than 20Kb are usually logos with text.
-	// Webp is usually do a better job with those.
-	MinAVIFSize = 20 * 1024
 )
+
+func init() {
+	imagick.Initialize()
+
+	mw := imagick.NewMagickWand()
+	// time resource limit is static and doesn't work with long-running processes, hence disabling it
+	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
+	if err != nil {
+		img.Log.Errorf("failed to init ImageMagick, could not set resource limit: %s, exiting...", err)
+		os.Exit(1)
+	}
+	mw.Destroy()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		imagick.Terminate()
+	}()
+}
 
 // NewImageMagick creates a new ImageMagick processor. It does require
 // ImageMagick binaries to be installed on the local machine.
@@ -93,7 +116,7 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 // Format of the size argument is WIDTHxHEIGHT with any of the dimension could be dropped, e.g. 300, x200, 300x200.
 func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +165,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 // Format of the size argument is WIDTHxHEIGHT, e.g. 300x200. Both dimensions must be included.
 func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +213,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 
 func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, error) {
 	srcData := config.Src.Data
-	source, err := p.loadImageInfo(bytes.NewReader(srcData), config.Src.Id)
+	source, err := p.LoadImageInfo(config.Src)
 	if err != nil {
 		return nil, err
 	}
@@ -254,8 +277,10 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
-func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, error) {
+func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
+	imgId := src.Id
+	in := bytes.NewReader(src.Data)
 	cmd := exec.Command(p.identifyCmd)
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
 
@@ -274,14 +299,112 @@ func (p *ImageMagick) loadImageInfo(in *bytes.Reader, imgId string) (*img.Info, 
 	}
 
 	imageInfo := &img.Info{
-		Size: in.Size(),
+		Size:         in.Size(),
+		Illustration: false,
 	}
 	_, err = fmt.Sscanf(out.String(), "%s %d %t %d %d", &imageInfo.Format, &imageInfo.Quality, &imageInfo.Opaque, &imageInfo.Width, &imageInfo.Height)
 	if err != nil {
 		return nil, err
 	}
 
+	if imageInfo.Format == "PNG" {
+		// IM outputs quality as 92 if no quality specified
+		imageInfo.Quality = 100
+		imageInfo.Illustration, err = p.isIllustration(src, imageInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return imageInfo, nil
+}
+
+// isIllustration returns true if image is cartoon like, including
+// icons, logos, illustrations.
+//
+// It returns false for banners, product images, photos.
+//
+// We use this function to decide on lossy or lossless conversion for PNG when converting
+// to the next generation format.
+//
+// The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
+func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, error) {
+	if len(src.Data) < 20*1024 {
+		return true, nil
+	}
+
+	if len(src.Data) > 1024*1024 {
+		return false, nil
+	}
+
+	if float32(len(src.Data))/float32(info.Width*info.Height) > 1.0 {
+		return false, nil
+	}
+
+	var (
+		colors    []*imagick.PixelWand
+		colorsCnt uint
+	)
+
+	mw := imagick.NewMagickWand()
+
+	err := mw.ReadImageBlob(src.Data)
+	if err != nil {
+		return false, err
+	}
+
+	if info.Width*info.Height > 500*500 {
+		aspectRatio := float32(info.Width) / float32(info.Height)
+		err = mw.ScaleImage(500, uint(500/aspectRatio))
+		if err != nil {
+			return false, err
+		}
+	}
+
+	colorsCnt, colors = mw.GetImageHistogram()
+	if colorsCnt > 30000 {
+		return false, nil
+	}
+
+	colorsCounts := make([]int, colorsCnt)
+	for i, c := range colors {
+		colorsCounts[i] = int(c.GetColorCount())
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(colorsCounts)))
+
+	var (
+		colorIdx         int
+		count            int
+		imageWidth       = mw.GetImageWidth()
+		imageHeight      = mw.GetImageHeight()
+		pixelsCount      = 0
+		totalPixelsCount = float32(imageHeight * imageWidth)
+		tenPercent       = int(totalPixelsCount * 0.1)
+		fiftyPercent     = int(totalPixelsCount * 0.5)
+		hasBackground    = false
+	)
+
+	for colorIdx, count = range colorsCounts {
+		if colorIdx == 0 && count >= tenPercent {
+			hasBackground = true
+			fiftyPercent = int((totalPixelsCount - float32(count)) * 0.5)
+			continue
+		}
+
+		if pixelsCount > fiftyPercent {
+			break
+		}
+
+		pixelsCount += count
+	}
+
+	colorsCntIn50Pct := colorIdx + 1
+	if hasBackground {
+		colorsCntIn50Pct--
+	}
+
+	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
@@ -293,7 +416,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && src.Size > MinAVIFSize && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -310,12 +433,8 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
-	if source.Format == "PNG" {
+	if source.Illustration {
 		opts = append(opts, "-define", "webp:lossless=true")
-		if source.Opaque {
-			opts = append(opts, "-colors", "256")
-		}
-
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
@@ -327,10 +446,7 @@ func getConvertFormatOptions(source *img.Info) []string {
 func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
 	var quality int
 
-	// Lossless compression for PNG -> AVIF
-	if source.Format == "PNG" && outputMimeType == "image/avif" {
-		quality = 100
-	} else if source.Quality == 100 {
+	if source.Quality == 100 {
 		quality = 82
 	} else if outputMimeType == "image/avif" {
 		if source.Quality > 85 {

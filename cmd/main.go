@@ -53,9 +53,6 @@ func main() {
 		img.Log.Errorf("Can't create image magic processor: %+v", err)
 		os.Exit(1)
 	}
-	p.AdditionalArgs = []string{
-		"-posterize", "136",
-	}
 
 	img.CacheTTL = cache
 	img.SaveDataEnabled = !disableSaveData

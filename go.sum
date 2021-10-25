@@ -6,3 +6,5 @@ github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f h1:9oNbS1z4rVpbnkH
 github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/mux v1.3.0 h1:HwSEKGN6U5T2aAQTfu5pW8fiwjSp3IgwdRbkICydk/c=
 github.com/gorilla/mux v1.3.0/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
+gopkg.in/gographics/imagick.v3 v3.4.0 h1:kSnbsXOWofo81VJEn/Hw8w3qqoOrfTyWwjAQzSdtPlg=
+gopkg.in/gographics/imagick.v3 v3.4.0/go.mod h1:+Q9nyA2xRZXrDyTtJ/eko+8V/5E7bWYs08ndkZp8UmA=

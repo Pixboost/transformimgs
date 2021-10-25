@@ -10,9 +10,14 @@ import (
 	"testing"
 )
 
-type test struct {
+type testTransformation struct {
 	file                   string
 	expectedOutputMimeType string
+}
+
+type testIsIllustration struct {
+	file           string
+	isIllustration bool
 }
 
 type result struct {
@@ -62,7 +67,7 @@ func BenchmarkImageMagickProcessor_Optimise_Avif(b *testing.B) {
 }
 
 func benchmarkWithFormats(b *testing.B, formats []string) {
-	f := fmt.Sprintf("%s/%s", "./test_files", "medium-jpeg.jpg")
+	f := fmt.Sprintf("%s/%s", "./test_files/transformations", "medium-jpeg.jpg")
 
 	orig, err := ioutil.ReadFile(f)
 	if err != nil {
@@ -112,7 +117,7 @@ func TestImageMagick_GetAdditionalArgs(t *testing.T) {
 			SupportedFormats: []string{},
 			Config:           &img.ResizeConfig{Size: "50"},
 		})
-	}, []*test{{"opaque-png.png", ""}})
+	}, []*testTransformation{{"opaque-png.png", ""}})
 
 	if aOp != "resize" {
 		t.Errorf("Expected op to be resize, but got [%s]", aOp)
@@ -122,7 +127,7 @@ func TestImageMagick_GetAdditionalArgs(t *testing.T) {
 	}
 	if !reflect.DeepEqual(aSource, &img.Info{
 		Format:  "PNG",
-		Quality: 92,
+		Quality: 100,
 		Opaque:  true,
 		Width:   400,
 		Height:  400,
@@ -145,12 +150,13 @@ func TestImageMagick_GetAdditionalArgs(t *testing.T) {
 }
 
 func TestImageMagickProcessor_NoAccept(t *testing.T) {
-	tests := []*test{
+	tests := []*testTransformation{
 		{"big-jpeg.jpg", ""},
 		{"opaque-png.png", ""},
 		{"transparent-png-use-original.png", ""},
 		{"small-transparent-png.png", ""},
 		{"animated.gif", ""},
+		{"logo.png", ""},
 	}
 
 	t.Run("optimise", func(t *testing.T) {
@@ -234,12 +240,13 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 			SupportedFormats: []string{"image/webp"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -254,12 +261,13 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 			Config:           &img.ResizeConfig{Size: "50"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -274,12 +282,13 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 			Config:           &img.ResizeConfig{Size: "50x50"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -293,7 +302,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			SupportedFormats: []string{"image/avif"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", ""},
@@ -301,6 +310,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"transparent-png.png", ""},
 			{"small-transparent-png.png", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
@@ -314,7 +324,7 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 			SupportedFormats: []string{"image/avif", "image/webp"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/webp"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/webp"},
@@ -322,6 +332,7 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 			{"transparent-png.png", "image/webp"},
 			{"small-transparent-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
+			{"logo.png", "image/webp"},
 		})
 }
 
@@ -336,12 +347,13 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 			Config:           &img.ResizeConfig{Size: "50"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", ""},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
@@ -356,21 +368,67 @@ func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
 			Config:           &img.ResizeConfig{Size: "50x50"},
 		})
 	},
-		[]*test{
+		[]*testTransformation{
 			{"big-jpeg.jpg", "image/avif"},
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", ""},
 			{"animated.gif", ""},
 			{"transparent-png-use-original.png", ""},
+			{"logo.png", ""},
 		})
 }
 
-func testImages(t *testing.T, fn transform, files []*test) {
+var isIllustrationTests = []*testIsIllustration{
+	{"illustration-1.png", true},
+	{"illustration-2.png", true},
+	{"illustration-3.png", true},
+	{"logo-1.png", true},
+	{"logo-2.png", true},
+	{"banner-1.png", false},
+	{"screenshot-1.png", false},
+	{"photo-1.png", false},
+	{"photo-2.png", false},
+	{"photo-3.png", false},
+	{"product-1.png", false},
+	{"product-2.png", false},
+}
+
+func TestImageMagick_IsIllustration(t *testing.T) {
+	for _, tt := range isIllustrationTests {
+		imgFile := tt.file
+
+		f := fmt.Sprintf("%s/%s", "./test_files/is_illustration", imgFile)
+
+		orig, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Errorf("Can't read file %s: %+v", f, err)
+		}
+
+		image := &img.Image{
+			Id:       imgFile,
+			Data:     orig,
+			MimeType: "",
+		}
+		info, err := proc.LoadImageInfo(image)
+		if err != nil {
+			t.Errorf("could not load image info %s: %s", imgFile, err)
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected error [%s]: %s", imgFile, err)
+		}
+		if info.Illustration != tt.isIllustration {
+			t.Errorf("Expected [%t] for [%s], but got [%t]", tt.isIllustration, imgFile, info.Illustration)
+		}
+	}
+}
+
+func testImages(t *testing.T, fn transform, files []*testTransformation) {
 	results := make([]*result, 0)
 	for _, tt := range files {
 		imgFile := tt.file
 
-		f := fmt.Sprintf("%s/%s", "./test_files", imgFile)
+		f := fmt.Sprintf("%s/%s", "./test_files/transformations", imgFile)
 
 		orig, err := ioutil.ReadFile(f)
 		if err != nil {

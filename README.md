@@ -23,6 +23,7 @@ Perks of SaaS version:
 
 ## Table of Contents
 
+- [Why?](#why)
 - [Features](#features)
 - [Install](#install)
 - [Usage](#usage)
@@ -31,14 +32,21 @@ Perks of SaaS version:
 - [License](#license)
 - [TODO](#todo)
 
+## Why?
+
+[We wrote a big blog on this](https://pixboost.com/blog/why-pixboost-is-the-best-image-cdn/), and here is TLDR:
+
+Transformimgs is an image CDN for Web, so API must cover typical use cases, like
+thumbnails, zoom in product images, etc. Any new API endpoints must directly
+solve the above problem.
+
+The goal is to have zero-config API that makes decisions based on the input, so the user doesn't need to provide additional parameters like quality, output format, type of compression, etc.
+
 ## Features
 
 * Resize/optimises/crops raster (PNG and JPEG) images.
-* [AVIF](https://en.wikipedia.org/wiki/AV1)/[WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
-* Could be deployed behind CDN - sets "[Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44)" header to cache responses with the same URL.
-* Sets "[Cache-Control](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9)" header in a response. 
-    Cache TTL is configurable through command line flag "-cache".
-* Execution queue that will create number of executors based on number of CPUs or can be configured through "-proc" flag.
+* [AVIF](https://en.wikipedia.org/wiki/AV1) / [WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
+* [Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44) header support - deploy behind any CDN. 
 
 ## Install
 
