@@ -34,13 +34,13 @@ Perks of SaaS version:
 
 ## Why?
 
-[We wrote many letter on this](https://pixboost.com/blog/why-pixboost-is-the-best-image-cdn/), but here is TLDR:
+[We wrote a big blog on this](https://pixboost.com/blog/why-pixboost-is-the-best-image-cdn/), and here is TLDR:
 
-Transformimgs is an image CDN for web, so API must cover typical use cases, like
+Transformimgs is an image CDN for Web, so API must cover typical use cases, like
 thumbnails, zoom in product images, etc. Any new API endpoints must directly
 solve the above problem.
 
-The goal is to have zero-config API that makes decisions based on the input, so the user never needs to provide additional parameters like quality, output format, type of compression, etc.
+The goal is to have zero-config API that makes decisions based on the input, so the user doesn't need to provide additional parameters like quality, output format, type of compression, etc.
 
 ## Features
 
