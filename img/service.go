@@ -151,33 +151,67 @@ func (r *Service) GetRouter() *mux.Router {
 // produces:
 // - image/png
 // - image/jpeg
+// - image/webp
+// - image/avif
 // parameters:
 // - name: imgUrl
 //   required: true
 //   in: path
 //   type: string
-//   description: Url of the original image
+//   description: >
+//     Url of the original image including schema. Note that query parameters
+//     need to be properly encoded
+//   examples:
+//     simple:
+//       value: https://yoursite.com/image.png
+//     with-query-params:
+//       value: https://yoursite.com/image.png%3Fv%3D123
+//       summary: URL with encoded query parameters, replaced ? with %3F, and = with %3D
 // - name: save-data
 //   required: false
 //   in: query
 //   type: string
 //   enum: ["off", hide]
-//   description: |
+//   description: >
 //     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
+//     When passing "off" value the result image won't use extra
 //     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
+//     When passing "hide" value the result image will be an empty 1x1 image.
+//     When absent the API will use reduced quality for result images.
+// - name: dppx
+//   required: false
+//   default: 1
+//   in: query
+//   type: number
+//   format: float
+//   description: >
+//     Number of dots per pixel defines the ratio between device and CSS pixels.
+//     The query parameter is a hint that enables extra optimisations for high
+//     density screens. The format is a float number that's the same format as window.devicePixelRatio.
+//   examples:
+//     desktop:
+//       value: 1
+//       summary: Most desktop monitors
+//     iphonese:
+//       value: 2
+//       summary: IPhone SE
+//     galaxy51:
+//       value: 2.625
+//       summary: Samsung Galaxy A51
+//     galaxy8:
+//       value: 4
+//       summary: Samsung Galaxy S8
 // responses:
 //   '200':
-//     description: Optimised image in the same format as original.
+//     description: Optimised image.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	r.transformUrl(resp, req, r.Processor.Optimise, nil)
 }
 
 // swagger:operation GET /img/{imgUrl}/resize resizeImage
 //
-// Resize image with preserving aspect ratio and optimizes it.
-// If you need the exact size then use /fit operation.
+// Resizes, optimises image and preserve aspect ratio.
+// Use /fit operation for resizing to the exact size.
 //
 // ---
 // tags:
@@ -185,29 +219,70 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 // produces:
 // - image/png
 // - image/jpeg
+// - image/webp
+// - image/avif
 // parameters:
 // - name: imgUrl
 //   required: true
 //   in: path
 //   type: string
-//   description: url of the original image
+//   description: >
+//     Url of the original image including schema. Note that query parameters
+//     need to be properly encoded
+//   examples:
+//     simple:
+//       value: https://yoursite.com/image.png
+//     with-query-params:
+//       value: https://yoursite.com/image.png%3Fv%3D123
+//       summary: URL with encoded query parameters, replaced ? with %3F, and = with %3D
 // - name: size
 //   required: true
 //   in: query
 //   type: string
 //   description: |
-//    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
+//    Size of the result image. Should be in the format 'width'x'height', e.g. 200x300
 //    Only width or height could be passed, e.g 200, x300.
+//   examples:
+//     width-and-height:
+//       value: 200x300
+//     only-width:
+//       value: 200
+//     only-height:
+//       value: 300
 // - name: save-data
 //   required: false
 //   in: query
 //   type: string
 //   enum: ["off", hide]
-//   description: |
+//   description: >
 //     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
+//     When passing "off" value the result image won't use extra
 //     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
+//     When passing "hide" value the result image will be an empty 1x1 image.
+//     When absent the API will use reduced quality for result images.
+// - name: dppx
+//   required: false
+//   default: 1
+//   in: query
+//   type: number
+//   format: float
+//   description: >
+//     Number of dots per pixel defines the ratio between device and CSS pixels.
+//     The query parameter is a hint that enables extra optimisations for high
+//     density screens. The format is a float number that's the same format as window.devicePixelRatio.
+//   examples:
+//     desktop:
+//       value: 1
+//       summary: Most desktop monitors
+//     iphonese:
+//       value: 2
+//       summary: IPhone SE
+//     galaxy51:
+//       value: 2.625
+//       summary: Samsung Galaxy A51
+//     galaxy8:
+//       value: 4
+//       summary: Samsung Galaxy S8
 // responses:
 //   '200':
 //     description: Resized image.
@@ -231,9 +306,8 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 // swagger:operation GET /img/{imgUrl}/fit fitImage
 //
-// Resize image to the exact size and optimizes it.
-// Will resize image and crop it to the size.
-// If you need to resize image with preserved aspect ratio then use /img/resize endpoint.
+// Resizes, crops, and optimises an image to the exact size.
+// If you need to resize image with preserved aspect ratio then use /resize endpoint.
 //
 // ---
 // tags:
@@ -241,30 +315,66 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 // produces:
 // - image/png
 // - image/jpeg
+// - image/webp
+// - image/avif
 // parameters:
 // - name: imgUrl
 //   required: true
 //   in: path
 //   type: string
-//   description: url of the original image
+//   description: >
+//     Url of the original image including schema. Note that query parameters
+//     need to be properly encoded
+//   examples:
+//     simple:
+//       value: https://yoursite.com/image.png
+//     with-query-params:
+//       value: https://yoursite.com/image.png%3Fv%3D123
+//       summary: URL with encoded query parameters, replaced ? with %3F, and = with %3D
 // - name: size
 //   required: true
 //   in: query
 //   type: string
 //   pattern: \d{1,4}x\d{1,4}
-//   description: |
+//   description: >
 //    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+//   examples:
+//     size:
+//       value: 200x300
 // - name: save-data
 //   required: false
 //   in: query
 //   type: string
 //   enum: ["off", hide]
-//   description: |
+//   description: >
 //     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
+//     When passing "off" value the result image won't use extra
 //     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
-//
+//     When passing "hide" value the result image will be an empty 1x1 image.
+//     When absent the API will use reduced quality for result images.
+// - name: dppx
+//   required: false
+//   default: 1
+//   in: query
+//   type: number
+//   format: float
+//   description: >
+//     Number of dots per pixel defines the ratio between device and CSS pixels.
+//     The query parameter is a hint that enables extra optimisations for high
+//     density screens. The format is a float number that's the same format as window.devicePixelRatio.
+//   examples:
+//     desktop:
+//       value: 1
+//       summary: Most desktop monitors
+//     iphonese:
+//       value: 2
+//       summary: IPhone SE
+//     galaxy51:
+//       value: 2.625
+//       summary: Samsung Galaxy A51
+//     galaxy8:
+//       value: 4
+//       summary: Samsung Galaxy S8
 // responses:
 //   '200':
 //     description: Resized image
@@ -300,8 +410,15 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 //   required: true
 //   in: path
 //   type: string
-//   description: url of the image
-//
+//   description: >
+//     Url of the original image including schema. Note that query parameters
+//     need to be properly encoded
+//   examples:
+//     simple:
+//       value: https://yoursite.com/image.png
+//     with-query-params:
+//       value: https://yoursite.com/image.png%3Fv%3D123
+//       summary: URL with encoded query parameters, replaced ? with %3F, and = with %3D
 // responses:
 //   '200':
 //     description: Requested image.

@@ -1,17 +1,19 @@
 
 
 
-# Images transformations API
-The purpose of this API is to provide a set of
-endpoints that will transform and optimise images.
-Then it becomes easy to use the API with <img> and <picture> tags in web development.
+# Image transformations API
+The main purpose of this is to help Web Developers to serve
+images in the best possible way meaning balance between
+quality and speed.
+
+Each endpoint could be used directly in `<img>` and `<picture>` HTML tags
   
 
 ## Informations
 
 ### Version
 
-2
+2.1
 
 ## Content negotiation
 
@@ -22,8 +24,10 @@ Then it becomes easy to use the API with <img> and <picture> tags in web develop
   * application/json
 
 ### Produces
+  * image/avif
   * image/jpeg
   * image/png
+  * image/webp
 
 ## Access control
 
@@ -45,9 +49,9 @@ Then it becomes easy to use the API with <img> and <picture> tags in web develop
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
 | GET | /api/2/img/{imgUrl}/asis | [asis image](#asis-image) |  |
-| GET | /api/2/img/{imgUrl}/fit | [fit image](#fit-image) | Resize image to the exact size and optimizes it. |
+| GET | /api/2/img/{imgUrl}/fit | [fit image](#fit-image) | Resizes, crops, and optimises an image to the exact size. |
 | GET | /api/2/img/{imgUrl}/optimise | [optimise image](#optimise-image) | Optimises image from the given url. |
-| GET | /api/2/img/{imgUrl}/resize | [resize image](#resize-image) | Resize image with preserving aspect ratio and optimizes it. |
+| GET | /api/2/img/{imgUrl}/resize | [resize image](#resize-image) | Resizes, optimises image and preserve aspect ratio. |
   
 
 
@@ -69,7 +73,7 @@ Respond with original image without any modifications
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| imgUrl | `path` | string | `string` |  | ✓ |  | url of the image |
+| imgUrl | `path` | string | `string` |  | ✓ |  | Url of the original image including schema. Note that query parameters need to be properly encoded |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
@@ -84,35 +88,38 @@ Status: OK
 
 ###### <span id="asis-image-200-schema"></span> Schema
 
-### <span id="fit-image"></span> Resize image to the exact size and optimizes it. (*fitImage*)
+### <span id="fit-image"></span> Resizes, crops, and optimises an image to the exact size. (*fitImage*)
 
 ```
 GET /api/2/img/{imgUrl}/fit
 ```
 
-Will resize image and crop it to the size.
-If you need to resize image with preserved aspect ratio then use /img/resize endpoint.
+If you need to resize image with preserved aspect ratio then use /resize endpoint.
 
 #### Produces
+  * image/avif
   * image/jpeg
   * image/png
+  * image/webp
 
 #### Parameters
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| imgUrl | `path` | string | `string` |  | ✓ |  | url of the original image |
+| imgUrl | `path` | string | `string` |  | ✓ |  | Url of the original image including schema. Note that query parameters need to be properly encoded |
+| dppx | `query` | float (formatted number) | `float32` |  |  | `1` | Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio. |
+| save-data | `query` | string | `string` |  |  |  | Sets an optional behaviour when Save-Data header is "on". When passing "off" value the result image won't use extra compression when data saver mode is on. When passing "hide" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images. |
 | size | `query` | string | `string` |  | ✓ |  | size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300 |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#fit-image-200) | OK | Resized image in the same format as original. |  | [schema](#fit-image-200-schema) |
+| [200](#fit-image-200) | OK | Resized image |  | [schema](#fit-image-200-schema) |
 
 #### Responses
 
 
-##### <span id="fit-image-200"></span> 200 - Resized image in the same format as original.
+##### <span id="fit-image-200"></span> 200 - Resized image
 Status: OK
 
 ###### <span id="fit-image-200-schema"></span> Schema
@@ -124,61 +131,65 @@ GET /api/2/img/{imgUrl}/optimise
 ```
 
 #### Produces
+  * image/avif
   * image/jpeg
   * image/png
+  * image/webp
 
 #### Parameters
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| imgUrl | `path` | string | `string` |  | ✓ |  | Url of the original image |
-| save-data | `query` | string | `string` |  |  |  | Sets an optional behaviour when Save-Data header is "on".
-When passing "off" value the result image won't use additional
-compression when data saver mode is on.
-When passing "hide" value the result image will be an empty image. |
+| imgUrl | `path` | string | `string` |  | ✓ |  | Url of the original image including schema. Note that query parameters need to be properly encoded |
+| dppx | `query` | float (formatted number) | `float32` |  |  | `1` | Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio. |
+| save-data | `query` | string | `string` |  |  |  | Sets an optional behaviour when Save-Data header is "on". When passing "off" value the result image won't use extra compression when data saver mode is on. When passing "hide" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images. |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#optimise-image-200) | OK | Optimised image in the same format as original. |  | [schema](#optimise-image-200-schema) |
+| [200](#optimise-image-200) | OK | Optimised image. |  | [schema](#optimise-image-200-schema) |
 
 #### Responses
 
 
-##### <span id="optimise-image-200"></span> 200 - Optimised image in the same format as original.
+##### <span id="optimise-image-200"></span> 200 - Optimised image.
 Status: OK
 
 ###### <span id="optimise-image-200-schema"></span> Schema
 
-### <span id="resize-image"></span> Resize image with preserving aspect ratio and optimizes it. (*resizeImage*)
+### <span id="resize-image"></span> Resizes, optimises image and preserve aspect ratio. (*resizeImage*)
 
 ```
 GET /api/2/img/{imgUrl}/resize
 ```
 
-If you need the exact size then use /fit operation.
+Use /fit operation for resizing to the exact size.
 
 #### Produces
+  * image/avif
   * image/jpeg
   * image/png
+  * image/webp
 
 #### Parameters
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| imgUrl | `path` | string | `string` |  | ✓ |  | url of the original image |
-| size | `query` | string | `string` |  | ✓ |  | size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
+| imgUrl | `path` | string | `string` |  | ✓ |  | Url of the original image including schema. Note that query parameters need to be properly encoded |
+| dppx | `query` | float (formatted number) | `float32` |  |  | `1` | Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio. |
+| save-data | `query` | string | `string` |  |  |  | Sets an optional behaviour when Save-Data header is "on". When passing "off" value the result image won't use extra compression when data saver mode is on. When passing "hide" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images. |
+| size | `query` | string | `string` |  | ✓ |  | Size of the result image. Should be in the format 'width'x'height', e.g. 200x300
 Only width or height could be passed, e.g 200, x300. |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#resize-image-200) | OK | Resized image in the same format as original. |  | [schema](#resize-image-200-schema) |
+| [200](#resize-image-200) | OK | Resized image. |  | [schema](#resize-image-200-schema) |
 
 #### Responses
 
 
-##### <span id="resize-image-200"></span> 200 - Resized image in the same format as original.
+##### <span id="resize-image-200"></span> 200 - Resized image.
 Status: OK
 
 ###### <span id="resize-image-200-schema"></span> Schema

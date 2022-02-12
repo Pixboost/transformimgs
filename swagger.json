@@ -4,9 +4,9 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "The purpose of this API is to provide a set of\nendpoints that will transform and optimise images.\nThen it becomes easy to use the API with \u003cimg\u003e and \u003cpicture\u003e tags in web development.",
-    "title": "Images transformations API",
-    "version": "2"
+    "description": "The main purpose of this is to help Web Developers to serve\nimages in the best possible way meaning balance between\nquality and speed.\n\nEach endpoint could be used directly in `\u003cimg\u003e` and `\u003cpicture\u003e` HTML tags",
+    "title": "Image transformations API",
+    "version": "2.1"
   },
   "host": "pixboost.com",
   "basePath": "/api/2/",
@@ -25,7 +25,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "url of the image",
+            "description": "Url of the original image including schema. Note that query parameters need to be properly encoded\n",
             "name": "imgUrl",
             "in": "path",
             "required": true
@@ -40,20 +40,22 @@
     },
     "/img/{imgUrl}/fit": {
       "get": {
-        "description": "Will resize image and crop it to the size.\nIf you need to resize image with preserved aspect ratio then use /img/resize endpoint.",
+        "description": "If you need to resize image with preserved aspect ratio then use /resize endpoint.",
         "produces": [
           "image/png",
-          "image/jpeg"
+          "image/jpeg",
+          "image/webp",
+          "image/avif"
         ],
         "tags": [
           "images"
         ],
-        "summary": "Resize image to the exact size and optimizes it.",
+        "summary": "Resizes, crops, and optimises an image to the exact size.",
         "operationId": "fitImage",
         "parameters": [
           {
             "type": "string",
-            "description": "url of the original image",
+            "description": "Url of the original image including schema. Note that query parameters need to be properly encoded\n",
             "name": "imgUrl",
             "in": "path",
             "required": true
@@ -65,11 +67,29 @@
             "name": "size",
             "in": "query",
             "required": true
+          },
+          {
+            "enum": [
+              "off",
+              "hide"
+            ],
+            "type": "string",
+            "description": "Sets an optional behaviour when Save-Data header is \"on\". When passing \"off\" value the result image won't use extra compression when data saver mode is on. When passing \"hide\" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images.\n",
+            "name": "save-data",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "float",
+            "default": 1,
+            "description": "Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio.\n",
+            "name": "dppx",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Resized image in the same format as original."
+            "description": "Resized image"
           }
         }
       }
@@ -78,7 +98,9 @@
       "get": {
         "produces": [
           "image/png",
-          "image/jpeg"
+          "image/jpeg",
+          "image/webp",
+          "image/avif"
         ],
         "tags": [
           "images"
@@ -88,7 +110,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Url of the original image",
+            "description": "Url of the original image including schema. Note that query parameters need to be properly encoded\n",
             "name": "imgUrl",
             "in": "path",
             "required": true
@@ -99,49 +121,77 @@
               "hide"
             ],
             "type": "string",
-            "description": "Sets an optional behaviour when Save-Data header is \"on\".\nWhen passing \"off\" value the result image won't use additional\ncompression when data saver mode is on.\nWhen passing \"hide\" value the result image will be an empty image.\n",
+            "description": "Sets an optional behaviour when Save-Data header is \"on\". When passing \"off\" value the result image won't use extra compression when data saver mode is on. When passing \"hide\" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images.\n",
             "name": "save-data",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "float",
+            "default": 1,
+            "description": "Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio.\n",
+            "name": "dppx",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Optimised image in the same format as original."
+            "description": "Optimised image."
           }
         }
       }
     },
     "/img/{imgUrl}/resize": {
       "get": {
-        "description": "If you need the exact size then use /fit operation.",
+        "description": "Use /fit operation for resizing to the exact size.",
         "produces": [
           "image/png",
-          "image/jpeg"
+          "image/jpeg",
+          "image/webp",
+          "image/avif"
         ],
         "tags": [
           "images"
         ],
-        "summary": "Resize image with preserving aspect ratio and optimizes it.",
+        "summary": "Resizes, optimises image and preserve aspect ratio.",
         "operationId": "resizeImage",
         "parameters": [
           {
             "type": "string",
-            "description": "url of the original image",
+            "description": "Url of the original image including schema. Note that query parameters need to be properly encoded\n",
             "name": "imgUrl",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "description": "size of the image in the response. Should be in format 'width'x'height', e.g. 200x300\nOnly width or height could be passed, e.g 200, x300.\n",
+            "description": "Size of the result image. Should be in the format 'width'x'height', e.g. 200x300\nOnly width or height could be passed, e.g 200, x300.\n",
             "name": "size",
             "in": "query",
             "required": true
+          },
+          {
+            "enum": [
+              "off",
+              "hide"
+            ],
+            "type": "string",
+            "description": "Sets an optional behaviour when Save-Data header is \"on\". When passing \"off\" value the result image won't use extra compression when data saver mode is on. When passing \"hide\" value the result image will be an empty 1x1 image. When absent the API will use reduced quality for result images.\n",
+            "name": "save-data",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "float",
+            "default": 1,
+            "description": "Number of dots per pixel defines the ratio between device and CSS pixels. The query parameter is a hint that enables extra optimisations for high density screens. The format is a float number that's the same format as window.devicePixelRatio.\n",
+            "name": "dppx",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Resized image in the same format as original."
+            "description": "Resized image."
           }
         }
       }

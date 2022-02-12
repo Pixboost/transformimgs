@@ -2,5 +2,5 @@
 
 set -e
 
-swagger generate spec -w cmd/ -o ../swagger.json
+swagger generate spec -w cmd/ -o ./swagger.json
 swagger generate markdown --output=api.md
