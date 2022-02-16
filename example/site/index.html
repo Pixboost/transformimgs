@@ -9,11 +9,20 @@
       *,::after,::before{box-sizing:border-box}html{-moz-tab-size:4;tab-size:4}html{line-height:1.15;-webkit-text-size-adjust:100%}body{margin:0}body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji'}hr{height:0;color:inherit}abbr[title]{text-decoration:underline dotted}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}button,select{text-transform:none}[type=button],[type=reset],[type=submit],button{-webkit-appearance:button}::-moz-focus-inner{border-style:none;padding:0}:-moz-focusring{outline:1px dotted ButtonText}:-moz-ui-invalid{box-shadow:none}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}
     </style>
     <style>
+      body {
+        padding: 1rem;
+      }
       figure img {
         max-width: 100%;
       }
       img {
         height: auto;
+      }
+
+      @media (max-width: 767.98px) {
+        .mobile-100 {
+          max-width: 100%;
+        }
       }
     </style>
   </head>
@@ -46,25 +55,25 @@
       <source
           media="(-webkit-min-device-pixel-ratio: 2) and (-webkit-max-device-pixel-ratio: 3)"
           srcset="
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dpi=2 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dpi=2 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dpi=2 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dpi=2 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dpi=2 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dpi=2 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dpi=2 2400w"
+                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dppx=2 300w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dppx=2 400w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dppx=2 500w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dppx=2 600w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dppx=2 1200w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dppx=2 1800w,
+                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=2 2400w"
           sizes="(min-width: 768px) 600px, 100vw"
       >
       <source
           media="(-webkit-min-device-pixel-ratio: 3)"
           srcset="
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dpi=3 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dpi=3 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dpi=3 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dpi=3 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dpi=3 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dpi=3 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dpi=3 2400w"
+                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dppx=3 300w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dppx=3 400w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dppx=3 500w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dppx=3 600w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dppx=3 1200w,
+                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dppx=3 1800w,
+                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=3 2400w"
           sizes="(min-width: 768px) 600px, 100vw"
       >
       <img
@@ -79,6 +88,7 @@
                 /cdn/http://webserver/img/parrot.jpg/optimise 2400w"
           alt="image"
           sizes="(min-width: 768px) 600px, 100vw"
+          class="mobile-100"
       >
     </picture>
   </body>

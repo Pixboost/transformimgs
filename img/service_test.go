@@ -109,12 +109,14 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 		return &img.Image{
 			Data:     []byte(ImgSrc),
 			MimeType: "image/png",
+			Id:       url,
 		}, nil
 	}
 	if url == "http://site.com/img2.png" {
 		return &img.Image{
 			Data:     []byte(NoContentTypeImgSrc),
 			MimeType: "image/png",
+			Id:       url,
 		}, nil
 	}
 	return nil, errors.New("read_error")
@@ -239,6 +241,32 @@ func TestService_Transforms(t *testing.T) {
 						test.Error(t,
 							test.Equal("image/gif", w.Header().Get("Content-Type"), "Content-Type header"),
 							test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "DPPX > 2",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=2.625", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "DPPX < 2",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=1", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
 						)
 					},
 				},

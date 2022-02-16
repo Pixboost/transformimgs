@@ -72,7 +72,7 @@ type TransformationConfig struct {
 // of those formats.
 type Processor interface {
 	// Resize resizes given image preserving aspect ratio.
-	// Format of the the size argument is width'x'height.
+	// Format of the size argument is width'x'height.
 	// Any dimension could be skipped.
 	// For example:
 	//* 300x200
@@ -536,7 +536,7 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		return
 	}
 
-	Log.Printf("Transforming image %s using config %+v\n", imgUrl, config)
+	Log.Printf("[%s]: Transforming image %s using config %+v\n", req.URL.String(), imgUrl, config)
 
 	if SaveDataEnabled {
 		resp.Header().Add("Vary", "Accept, Save-Data")
@@ -580,6 +580,18 @@ func getQuality(req *http.Request) Quality {
 		saveDataHeader := req.Header.Get("Save-Data")
 
 		if saveDataHeader == "on" && saveDataParam != "off" {
+			quality = LOW
+		}
+	}
+
+	dppxQueryParam := req.URL.Query().Get("dppx")
+	if len(dppxQueryParam) > 0 {
+		dppx, err := strconv.ParseFloat(dppxQueryParam, 32)
+		if err != nil {
+			//TODO:
+		}
+
+		if dppx >= 2.0 {
 			quality = LOW
 		}
 	}
