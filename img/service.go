@@ -599,7 +599,7 @@ func getQuality(saveDataHeader string, saveDataParam string, dppx float64) Quali
 		quality = LOW
 	}
 
-	if dppx > 2.0 {
+	if dppx >= 2.0 {
 		quality = LOW
 	}
 
