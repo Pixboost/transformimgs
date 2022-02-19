@@ -245,6 +245,17 @@ func TestService_Transforms(t *testing.T) {
 					},
 				},
 				{
+					Description: "Invalid save-data param",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=hello", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					ExpectedCode: http.StatusBadRequest,
+				},
+				{
 					Description: "DPPX > 2",
 					Request: &http.Request{
 						Method: "GET",
@@ -269,6 +280,14 @@ func TestService_Transforms(t *testing.T) {
 							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
 						)
 					},
+				},
+				{
+					Description: "Invalid dppx",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=abc", tt.urlSuffix), t),
+					},
+					ExpectedCode: http.StatusBadRequest,
 				},
 				{
 					Description: "MIME Sniffing",

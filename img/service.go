@@ -536,14 +536,34 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		return
 	}
 
+	var dppx float64 = 0
+	dppxParam := getQueryParam(req.URL, "dppx")
+	if len(dppxParam) != 0 {
+		var err error
+		dppx, err = strconv.ParseFloat(dppxParam, 32)
+		if err != nil {
+			http.Error(resp, "dppx query param must be a number", http.StatusBadRequest)
+			return
+		}
+	}
+
+	var saveDataParam = ""
+	if SaveDataEnabled {
+		saveDataParam = getQueryParam(req.URL, "save-data")
+		if len(saveDataParam) > 0 && saveDataParam != "off" && saveDataParam != "hide" {
+			http.Error(resp, "save-data query param must be one of 'off', 'hide'", http.StatusBadRequest)
+			return
+		}
+	}
+
+	saveDataHeader := req.Header.Get("Save-Data")
+
 	Log.Printf("[%s]: Transforming image %s using config %+v\n", req.URL.String(), imgUrl, config)
 
 	if SaveDataEnabled {
 		resp.Header().Add("Vary", "Accept, Save-Data")
 
-		saveDataHeader := req.Header.Get("Save-Data")
-		saveDataQueryParam := getQueryParam(req.URL, "save-data")
-		if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		if saveDataHeader == "on" && saveDataParam == "hide" {
 			_, _ = resp.Write(emptyGif[:])
 			return
 		}
@@ -565,35 +585,22 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
-			Quality:          getQuality(req),
+			Quality:          getQuality(saveDataHeader, saveDataParam, dppx),
 			Config:           config,
 		},
 		Resp: resp,
 	})
 }
 
-func getQuality(req *http.Request) Quality {
+func getQuality(saveDataHeader string, saveDataParam string, dppx float64) Quality {
 	quality := DEFAULT
 
-	if SaveDataEnabled {
-		saveDataParam := getQueryParam(req.URL, "save-data")
-		saveDataHeader := req.Header.Get("Save-Data")
-
-		if saveDataHeader == "on" && saveDataParam != "off" {
-			quality = LOW
-		}
+	if SaveDataEnabled && saveDataHeader == "on" && saveDataParam != "off" {
+		quality = LOW
 	}
 
-	dppxQueryParam := req.URL.Query().Get("dppx")
-	if len(dppxQueryParam) > 0 {
-		dppx, err := strconv.ParseFloat(dppxQueryParam, 32)
-		if err != nil {
-			//TODO:
-		}
-
-		if dppx >= 2.0 {
-			quality = LOW
-		}
+	if dppx > 2.0 {
+		quality = LOW
 	}
 
 	return quality
