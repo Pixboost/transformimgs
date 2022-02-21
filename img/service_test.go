@@ -17,11 +17,12 @@ const (
 	NoContentTypeImgSrc = "111"
 	NoContentTypeImgOut = "222"
 
-	ImgSrc           = "321"
-	ImgAvifOut       = "12345"
-	ImgWebpOut       = "1234"
-	ImgPngOut        = "123"
-	ImgLowQualityOut = "12"
+	ImgSrc             = "321"
+	ImgAvifOut         = "12345"
+	ImgWebpOut         = "1234"
+	ImgPngOut          = "123"
+	ImgLowQualityOut   = "12"
+	ImgLowerQualityOut = "1"
 
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
@@ -79,6 +80,12 @@ func (r *resizerMock) resultImage(config *img.TransformationConfig) *img.Image {
 	if config.Quality == img.LOW {
 		return &img.Image{
 			Data: []byte(ImgLowQualityOut),
+		}
+	}
+
+	if config.Quality == img.LOWER {
+		return &img.Image{
+			Data: []byte(ImgLowerQualityOut),
 		}
 	}
 
@@ -263,8 +270,8 @@ func TestService_Transforms(t *testing.T) {
 					},
 					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
 						test.Error(t,
-							test.Equal("2", w.Header().Get("Content-Length"), "Content-Length header"),
-							test.Equal(ImgLowQualityOut, w.Body.String(), "Resulted image"),
+							test.Equal("1", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgLowerQualityOut, w.Body.String(), "Resulted image"),
 						)
 					},
 				},
