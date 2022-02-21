@@ -41,6 +41,7 @@ type Quality int
 const (
 	DEFAULT Quality = 1 + iota
 	LOW
+	LOWER
 )
 
 type ResizeConfig struct {
@@ -593,15 +594,13 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 }
 
 func getQuality(saveDataHeader string, saveDataParam string, dppx float64) Quality {
-	quality := DEFAULT
+	if dppx >= 2.0 {
+		return LOWER
+	}
 
 	if SaveDataEnabled && saveDataHeader == "on" && saveDataParam != "off" {
-		quality = LOW
+		return LOW
 	}
 
-	if dppx >= 2.0 {
-		quality = LOW
-	}
-
-	return quality
+	return DEFAULT
 }
