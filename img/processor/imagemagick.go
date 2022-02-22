@@ -465,7 +465,7 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 	if quality == 0 {
 		return []string{}
 	}
-	if quality != 100 && config.Quality == img.LOW {
+	if quality != 100 {
 		switch config.Quality {
 		case img.LOW:
 			quality -= 10
