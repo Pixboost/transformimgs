@@ -8,57 +8,74 @@
 Open Source [Image CDN](https://web.dev/image-cdns/) that provides image transformation API and supports 
 the latest image formats, such as WebP, AVIF and network client hints. 
 
-There are two ways of using the service:
-
-* Deploy on your own infrastructure using docker image
-* Use as SaaS at [pixboost.com](https://pixboost.com?source=github)
-
-Perks of SaaS version:
-* CDN with HTTP/3 support included
-* Dashboard with usage monitor
-* API Key support with domains allow list
-* AWS S3 integration
-* Elastic scaling based on load
-* Upgrades + Support
-
 ## Table of Contents
 
+<!-- TOC start -->
 - [Why?](#why)
 - [Features](#features)
-- [Install](#install)
-- [Usage](#usage)
+- [Quickstart](#quickstart)
 - [API](#api)
+- [Running](#running)
+  * [Options](#options)
+- [SaaS](#saas)
+- [Building from sources ](#building-from-sources)
+- [Performance tests](#performance-tests)
+- [Opened tickets for images related features](#opened-tickets-for-images-related-features)
 - [Contribute](#contribute)
 - [License](#license)
-- [TODO](#todo)
+- [Todo](#todo)
+<!-- TOC end -->
 
 ## Why?
 
 [We wrote a big blog on this](https://pixboost.com/blog/why-pixboost-is-the-best-image-cdn/), and here is TLDR:
 
 Transformimgs is an image CDN for Web, so API must cover typical use cases, like
-thumbnails, zoom in product images, etc. Any new API endpoints must directly
-solve the above problem.
+thumbnails, zoom in product images, etc. Any new API endpoints must 
+solve the above problems.
 
-The goal is to have zero-config API that makes decisions based on the input, so the user doesn't need to provide additional parameters like quality, output format, type of compression, etc.
+The goal is to have zero-config API that makes decisions based on the input, so you don't need to provide additional parameters like quality, output format, type of compression, etc.
+
+Therefore, this allows you to configure the integration once and new features, like new image formats, will work
+with your front end without any changes.
 
 ## Features
 
 * Resize/optimises/crops raster (PNG and JPEG) images.
 * [AVIF](https://en.wikipedia.org/wiki/AV1) / [WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
-* [Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44) header support - deploy behind any CDN. 
+* [Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44) header support - ready to deploy behind any CDN.
+* Responsive images support including high DPI (retina) displays 
 
-## Install
+## Quickstart
 
-Using docker:
+There is an example of running API behind reverse proxy with integration example in `quickstart/` folder.
+
+To run:
 
 ```
-$ docker pull pixboost/transformimgs
+cd quickstart
+docker-compose up
+open https://localhost
 ```
 
-## Usage
+## API
 
-Run it:
+The API has 4 HTTP endpoints:
+
+* /img/{IMG_URL}/optimise - optimises image
+* /img/{IMG_URL}/resize - resizes image
+* /img/{IMG_URL}/fit - resize image to the exact size by resizing and cropping it
+* /img/{IMG_URL}/asis - returns original image
+
+Docs:
+* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com
+* [Markdown API docs](api.md)
+
+## Running
+
+The latest docker image published on [Docker hub](https://hub.docker.com/r/pixboost/transformimgs)
+
+Running the server:
 
 ```
 $ docker run -p 8080:8080 pixboost/transformimgs [OPTIONS]
@@ -69,31 +86,30 @@ Test it:
 * Health check: `curl http://localhost:8080/health`
 * Transformation: `open http://localhost:8080/img/https://images.unsplash.com/photo-1591769225440-811ad7d6eab3/resize?size=600`
 
-The API has 4 HTTP endpoints:
-
-* /img/{IMG_URL}/optimise - optimises image
-* /img/{IMG_URL}/resize - resizes image
-* /img/{IMG_URL}/fit - resize image to the exact size by resizing and cropping it
-* /img/{IMG_URL}/asis - returns original image
-
-* [Detailed API Documentation](https://pixboost.com/docs/api/)
-* [Markdown API docs](api.md)
-
 ### Options
+
+Everything below is optional and have sensible defaults.
 
 | Option | Description |
 |--------|-------------|
-| cache  | Number of seconds to cache image after transformation (0 to disable cache). Default value is 2592000 (30 days) |
+| cache  | Number of seconds to cache image(0 to disable cache). Default value is 2592000 (30 days) |
 | proc   | Number of images processors to run. Defaults to number of CPUs |
 | disableSaveData | If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary. |
 
-### Running the application locally from sources
 
-```
-docker-compose up
-```
+## SaaS
 
-### Building and Running from sources 
+We run SaaS version at [pixboost.com](https://pixboost.com?source=github) with generous free tier.
+
+Perks of SaaS version:
+* CDN with HTTP/3 support included
+* Dashboard with usage monitor
+* API Key support with domains allow list
+* AWS S3 integration
+* API workflows for cache busting and warmup
+* Version upgrades
+
+## Building from sources 
 
 Prerequisites:
 
@@ -108,7 +124,7 @@ $ ./run.sh
 
 Go modules have been introduced in v6.
 
-### Performance tests
+## Performance tests
 
 There is a [JMeter](https://jmeter.apache.org) performance test you can run against a service. To run tests:
 
@@ -131,17 +147,6 @@ $ jmeter -n -t perf-test-webp.jmx -l ./results-webp.jmx -e -o ./results-webp
 $ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 ```
 
-## API
-
-You can go through Swagger [API docs](https://pixboost.com/docs/api/index.html) and try it out there as well. Use 
-API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com.
-
-[Go-swagger](https://goswagger.io) is used to generate swagger.json schema file from sources. 
-
-To generate schema and api.md:
-
-* Install version 0.26.1
-* `./generate-api-docs.sh`
 
 ## Opened tickets for images related features
 
