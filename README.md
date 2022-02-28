@@ -68,7 +68,8 @@ The API has 4 HTTP endpoints:
 * /img/{IMG_URL}/asis - returns original image
 
 Docs:
-* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MTg4MjMxMzM3MA__` which allows to transform any images from pixabay.com
+* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any images from pixabay.com
+* [OpenAPI spec](swagger.yaml)
 * [Markdown API docs](api.md)
 
 ## Running
@@ -81,7 +82,7 @@ Running the server:
 $ docker run -p 8080:8080 pixboost/transformimgs [OPTIONS]
 ```
 
-Test it:
+To test:
 
 * Health check: `curl http://localhost:8080/health`
 * Transformation: `open http://localhost:8080/img/https://images.unsplash.com/photo-1591769225440-811ad7d6eab3/resize?size=600`
@@ -90,11 +91,11 @@ Test it:
 
 Everything below is optional and have sensible defaults.
 
-| Option | Description |
-|--------|-------------|
-| cache  | Number of seconds to cache image(0 to disable cache). Default value is 2592000 (30 days) |
-| proc   | Number of images processors to run. Defaults to number of CPUs |
-| disableSaveData | If set to true then will disable Save-Data client hint. Could be useful for CDNs that don't support Save-Data header in Vary. |
+| Option | Description | Default |
+|--------|-------------| ------- |
+| cache  | Number of seconds to cache image(0 to disable cache). Used in max-age HTTP response. | 2592000 (30 days) |
+| proc   | Number of images processors to run. | Number of CPUs (cores) |
+| disableSaveData | If set to true then will disable Save-Data client hint. Should be disabled on CDNs that don't support Save-Data header in Vary. | false |
 
 
 ## SaaS
