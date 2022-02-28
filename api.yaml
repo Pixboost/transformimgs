@@ -1,0 +1,192 @@
+openapi: 3.0.0
+info:
+  title: Image Transformation API for Web
+  description: |
+    The main purpose of the API is to help Web Developers to serve
+    images in the best possible way meaning balance between
+    quality and speed.
+    
+    The API could be easily integrated with <img> or <picture> tags.
+
+    Use API key "MjUyMTM3OTQyNw__" to try out API with any images from pixabay.com.
+  version: 2.2.0
+servers:
+  - url: https://pixboost.com/api/2
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: query
+      name: auth
+  parameters:
+    imgUrl:
+      description: |
+        Url of the original image including schema.
+        Note that query parameters need to be properly encoded
+      in: path
+      name: imgUrl
+      required: true
+      schema:
+        type: string
+      examples:
+        simple:
+          value: https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg
+        with-query-param:
+          value: https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg%3Fv%3D123
+          description: will fetch https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg?v=123
+    save-data:
+      description: >
+         Sets an optional behaviour when Save-Data header is "on".
+         When passing "off" value the result image won't use extra
+         compression when data saver mode is on.
+         When passing "hide" value the result image will be an empty 1x1 image.
+         When absent the API will use reduced quality for result images.
+      required: true
+      in: query
+      name: save-data
+      schema:
+        type: string
+        enum: [ "off", hide ]
+    dppx:
+      description: >
+        Number of dots per pixel defines the ratio between device and CSS pixels.
+        The query parameter is a hint that enables extra optimisations for high
+        density screens. The format is a float number that's the same format as window.devicePixelRatio.
+      required: true
+      in: query
+      name: dppx
+      schema:
+        type: number
+        format: float
+        default: 1
+      examples:
+       desktop:
+         value: 1
+         summary: Most desktop monitors
+       iphonese:
+         value: 2
+         summary: IPhone SE
+       galaxy51:
+         value: 2.625
+         summary: Samsung Galaxy A51
+       galaxy8:
+         value: 4
+         summary: Samsung Galaxy S8
+
+security:
+  - ApiKey: []
+
+paths:
+  /img/{imgUrl}/asis:
+    get:
+      summary: Respond with original image without any modifications
+      description: |
+        This could be useful when your Image API is behind CDN, so any /asis requests
+        will be cached there. The Content-Type preserved from the original.
+      operationId: asisImage
+      tags:
+        - images
+      parameters:
+        - $ref: "#/components/parameters/imgUrl"
+      responses:
+        200:
+          description: The source image loaded from imgUrl
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+  /img/{imgUrl}/optimise:
+    get:
+      summary: Optimises a source image  
+      description: |
+        Optimises an image and returns it in the next-gen format supported 
+        by the browser. The API knows about supported formats through the "Accept"
+        header.
+      operationId: optimiseImage
+      tags:
+        - images
+      parameters:
+        - $ref: "#/components/parameters/imgUrl"
+        - $ref: "#/components/parameters/dppx"
+        - $ref: "#/components/parameters/save-data"
+      responses: 
+        200:
+          description: An optimised image
+          content: 
+            "image/*":
+              schema: 
+                type: string
+                format: binary
+  /img/{imgUrl}/resize:
+    get:
+      summary: Resizes a source image
+      description: |
+        Resizes a source image to the specific size, but will always respect
+        aspect ratio. Will apply similar to /optimise optimisations.
+        
+        Use /fit to resize to the exact given size with ignoring aspect ratio.
+      operationId: resizeImage
+      tags:
+        - images
+      parameters:
+        - $ref: "#/components/parameters/imgUrl"
+        - $ref: "#/components/parameters/dppx"
+        - $ref: "#/components/parameters/save-data"
+        - name: size
+          required: true
+          in: query
+          description: |
+            Size of the result image. Should be in the format 'width'x'height', e.g. 200x300
+            Only width or height could be passed, e.g 200, x300.
+          schema:
+            type: string
+          examples:
+           width-and-height:
+             value: 200x300
+           only-width:
+             value: 200
+           only-height:
+             value: x300
+      responses: 
+        200:
+          description: A resized image
+          content: 
+            "image/*":
+              schema:
+                type: string
+                format: binary
+  /img/{imgUrl}/fit:
+    get:
+      summary: Resizes a source image
+      description: |
+        Resizes a source image to the exact specific size and ignoring aspect ratio.
+        aspect ratio. Will apply similar to /optimise optimisations.
+
+        Use /resize to resize and preserve aspect ratio.
+      operationId: fitImage
+      tags:
+        - images
+      parameters:
+        - $ref: "#/components/parameters/imgUrl"
+        - $ref: "#/components/parameters/dppx"
+        - $ref: "#/components/parameters/save-data"
+        - name: size
+          required: true
+          in: query
+          description: |
+            size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
+          schema:
+            type: string
+            pattern: \d{1,4}x\d{1,4}
+          examples:
+           size:
+             value: 200x300
+      responses:
+        200:
+          description: A resized image
+          content:
+            "image/*":
+              schema:
+                type: string
+                format: binary
