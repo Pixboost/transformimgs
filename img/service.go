@@ -13,15 +13,15 @@ import (
 	"sync"
 )
 
-// Number of seconds that will be written to max-age HTTP header
+// CacheTTL is the number of seconds  that will be written to max-age HTTP header
 var CacheTTL int
 
-// SaveDataEnabled is flag to enable/disable Save-Data client hint.
+// SaveDataEnabled is the flag to enable/disable Save-Data client hint.
 // Sometime CDN doesn't support Save-Data in Vary response header in which
 // case you would need to set this to false
-var SaveDataEnabled bool = true
+var SaveDataEnabled = true
 
-// Log is a logger that could be overridden. Should implement interface glogi.Logger.
+// Log is the logger that could be overridden. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
@@ -29,7 +29,7 @@ var Log glogi.Logger = glogi.NewSimpleLogger()
 type Loader interface {
 	// Load loads an image from the given source.
 	//
-	// ctx is a context of the current transaction. Typically it's a context
+	// ctx is the context of the current transaction. Typically it's a context
 	// of an incoming HTTP request, so we make it possible to pass values through middlewares.
 	//
 	// Returns an image.
@@ -41,6 +41,7 @@ type Quality int
 const (
 	DEFAULT Quality = 1 + iota
 	LOW
+	LOWER
 )
 
 type ResizeConfig struct {
@@ -51,20 +52,20 @@ type ResizeConfig struct {
 // TransformationConfig is a configuration passed to Processor
 // that used during transformations.
 type TransformationConfig struct {
-	// Src is a source image to transform.
+	// Src is the source image to transform.
 	// This field is required for transformations.
 	Src *Image
-	// SupportedFormats is a list of output formats supported by client.
+	// SupportedFormats is the list of output formats supported by client.
 	// Processor will use one of those formats for result image. If list
 	// is empty the format of the source image will be used.
 	SupportedFormats []string
 	// Quality defines quality of output image
 	Quality Quality
-	// Config is a configuration for the specific transformation
+	// Config is the configuration for the specific transformation
 	Config interface{}
 }
 
-// Processor is an interface for transforming/optimising images.
+// Processor is the interface for transforming/optimising images.
 //
 // Each function accepts original image and a list of supported
 // output format by client. Each format should be a MIME type, e.g.
@@ -72,7 +73,7 @@ type TransformationConfig struct {
 // of those formats.
 type Processor interface {
 	// Resize resizes given image preserving aspect ratio.
-	// Format of the the size argument is width'x'height.
+	// Format of the size argument is width'x'height.
 	// Any dimension could be skipped.
 	// For example:
 	//* 300x200
@@ -81,7 +82,7 @@ type Processor interface {
 	Resize(input *TransformationConfig) (*Image, error)
 
 	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
-	// Format of the the size string is width'x'height, e.g. 300x400.
+	// Format of the size string is width'x'height, e.g. 300x400.
 	FitToSize(input *TransformationConfig) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
@@ -141,76 +142,10 @@ func (r *Service) GetRouter() *mux.Router {
 	return router
 }
 
-// swagger:operation GET /img/{imgUrl}/optimise optimiseImage
-//
-// Optimises image from the given url.
-//
-// ---
-// tags:
-// - images
-// produces:
-// - image/png
-// - image/jpeg
-// parameters:
-// - name: imgUrl
-//   required: true
-//   in: path
-//   type: string
-//   description: Url of the original image
-// - name: save-data
-//   required: false
-//   in: query
-//   type: string
-//   enum: ["off", hide]
-//   description: |
-//     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
-//     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
-// responses:
-//   '200':
-//     description: Optimised image in the same format as original.
 func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 	r.transformUrl(resp, req, r.Processor.Optimise, nil)
 }
 
-// swagger:operation GET /img/{imgUrl}/resize resizeImage
-//
-// Resize image with preserving aspect ratio and optimizes it.
-// If you need the exact size then use /fit operation.
-//
-// ---
-// tags:
-// - images
-// produces:
-// - image/png
-// - image/jpeg
-// parameters:
-// - name: imgUrl
-//   required: true
-//   in: path
-//   type: string
-//   description: url of the original image
-// - name: size
-//   required: true
-//   in: query
-//   type: string
-//   description: |
-//    size of the image in the response. Should be in format 'width'x'height', e.g. 200x300
-//    Only width or height could be passed, e.g 200, x300.
-// - name: save-data
-//   required: false
-//   in: query
-//   type: string
-//   enum: ["off", hide]
-//   description: |
-//     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
-//     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
-// responses:
-//   '200':
-//     description: Resized image.
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 
 	size := getQueryParam(req.URL, "size")
@@ -229,45 +164,6 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 	r.transformUrl(resp, req, r.Processor.Resize, &ResizeConfig{Size: size})
 }
 
-// swagger:operation GET /img/{imgUrl}/fit fitImage
-//
-// Resize image to the exact size and optimizes it.
-// Will resize image and crop it to the size.
-// If you need to resize image with preserved aspect ratio then use /img/resize endpoint.
-//
-// ---
-// tags:
-// - images
-// produces:
-// - image/png
-// - image/jpeg
-// parameters:
-// - name: imgUrl
-//   required: true
-//   in: path
-//   type: string
-//   description: url of the original image
-// - name: size
-//   required: true
-//   in: query
-//   type: string
-//   pattern: \d{1,4}x\d{1,4}
-//   description: |
-//    size of the image in the response. Should be in the format 'width'x'height', e.g. 200x300
-// - name: save-data
-//   required: false
-//   in: query
-//   type: string
-//   enum: ["off", hide]
-//   description: |
-//     Sets an optional behaviour when Save-Data header is "on".
-//     When passing "off" value the result image won't use additional
-//     compression when data saver mode is on.
-//     When passing "hide" value the result image will be an empty image.
-//
-// responses:
-//   '200':
-//     description: Resized image
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	size := getQueryParam(req.URL, "size")
 	if len(size) == 0 {
@@ -285,26 +181,6 @@ func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
 	r.transformUrl(resp, req, r.Processor.FitToSize, &ResizeConfig{Size: size})
 }
 
-// swagger:operation GET /img/{imgUrl}/asis asisImage
-//
-// Respond with original image without any modifications
-//
-// ---
-// tags:
-// - images
-// produces:
-// - image/png
-// - image/jpeg
-// parameters:
-// - name: imgUrl
-//   required: true
-//   in: path
-//   type: string
-//   description: url of the image
-//
-// responses:
-//   '200':
-//     description: Requested image.
 func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	imgUrl := getImgUrl(req)
 	if len(imgUrl) == 0 {
@@ -409,7 +285,7 @@ func writeResult(op *Command) {
 	}
 
 	addHeaders(op.Resp, op.Result)
-	op.Resp.Write(op.Result.Data)
+	_, _ = op.Resp.Write(op.Result.Data)
 }
 
 func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, transformation Cmd, config interface{}) {
@@ -419,14 +295,34 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		return
 	}
 
-	Log.Printf("Transforming image %s using config %+v\n", imgUrl, config)
+	var dppx float64 = 0
+	dppxParam := getQueryParam(req.URL, "dppx")
+	if len(dppxParam) != 0 {
+		var err error
+		dppx, err = strconv.ParseFloat(dppxParam, 32)
+		if err != nil {
+			http.Error(resp, "dppx query param must be a number", http.StatusBadRequest)
+			return
+		}
+	}
+
+	var saveDataParam = ""
+	if SaveDataEnabled {
+		saveDataParam = getQueryParam(req.URL, "save-data")
+		if len(saveDataParam) > 0 && saveDataParam != "off" && saveDataParam != "hide" {
+			http.Error(resp, "save-data query param must be one of 'off', 'hide'", http.StatusBadRequest)
+			return
+		}
+	}
+
+	saveDataHeader := req.Header.Get("Save-Data")
+
+	Log.Printf("[%s]: Transforming image %s using config %+v\n", req.URL.String(), imgUrl, config)
 
 	if SaveDataEnabled {
 		resp.Header().Add("Vary", "Accept, Save-Data")
 
-		saveDataHeader := req.Header.Get("Save-Data")
-		saveDataQueryParam := getQueryParam(req.URL, "save-data")
-		if saveDataHeader == "on" && saveDataQueryParam == "hide" {
+		if saveDataHeader == "on" && saveDataParam == "hide" {
 			_, _ = resp.Write(emptyGif[:])
 			return
 		}
@@ -448,24 +344,21 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 		Config: &TransformationConfig{
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
-			Quality:          getQuality(req),
+			Quality:          getQuality(saveDataHeader, saveDataParam, dppx),
 			Config:           config,
 		},
 		Resp: resp,
 	})
 }
 
-func getQuality(req *http.Request) Quality {
-	quality := DEFAULT
-
-	if SaveDataEnabled {
-		saveDataParam := getQueryParam(req.URL, "save-data")
-		saveDataHeader := req.Header.Get("Save-Data")
-
-		if saveDataHeader == "on" && saveDataParam != "off" {
-			quality = LOW
-		}
+func getQuality(saveDataHeader string, saveDataParam string, dppx float64) Quality {
+	if dppx >= 2.0 {
+		return LOWER
 	}
 
-	return quality
+	if SaveDataEnabled && saveDataHeader == "on" && saveDataParam != "off" {
+		return LOW
+	}
+
+	return DEFAULT
 }

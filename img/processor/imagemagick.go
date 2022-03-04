@@ -446,6 +446,8 @@ func getConvertFormatOptions(source *img.Info) []string {
 func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
 	var quality int
 
+	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %s, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
+
 	if source.Quality == 100 {
 		quality = 82
 	} else if outputMimeType == "image/avif" {
@@ -456,15 +458,20 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 		} else {
 			quality = 50
 		}
-	} else if config.Quality == img.LOW {
+	} else if config.Quality != img.DEFAULT {
 		quality = source.Quality
 	}
 
 	if quality == 0 {
 		return []string{}
 	}
-	if quality != 100 && config.Quality == img.LOW {
-		quality -= 10
+	if quality != 100 {
+		switch config.Quality {
+		case img.LOW:
+			quality -= 10
+		case img.LOWER:
+			quality -= 20
+		}
 	}
 
 	return []string{"-quality", strconv.Itoa(quality)}

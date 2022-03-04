@@ -1,0 +1,18 @@
+version: '2'
+services:
+  transformimgs:
+    build:
+      context: ../
+      dockerfile: ./Dockerfile.dev
+    volumes:
+      - ../:/go/src/github.com/Pixboost/transformimgs
+    environment:
+      MAGICK_TIME_LIMIT: "90"
+  webserver:
+    image: caddy:2.4.6
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./site:/site
+    ports:
+      - "80:80"
+      - "443:443"

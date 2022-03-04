@@ -315,25 +315,32 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 }
 
 func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
-	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
-		return proc.Optimise(&img.TransformationConfig{
-			Src: &img.Image{
-				Id:   imgId,
-				Data: orig,
+	qualities := []img.Quality{img.DEFAULT, img.LOW, img.LOWER}
+
+	for _, q := range qualities {
+		t.Run(fmt.Sprintf("Quality_%d", q), func(t *testing.T) {
+			testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+				return proc.Optimise(&img.TransformationConfig{
+					Src: &img.Image{
+						Id:   imgId,
+						Data: orig,
+					},
+					Quality:          q,
+					SupportedFormats: []string{"image/avif", "image/webp"},
+				})
 			},
-			SupportedFormats: []string{"image/avif", "image/webp"},
+				[]*testTransformation{
+					{"big-jpeg.jpg", "image/webp"},
+					{"medium-jpeg.jpg", "image/avif"},
+					{"opaque-png.png", "image/webp"},
+					{"animated.gif", "image/webp"},
+					{"transparent-png.png", "image/webp"},
+					{"small-transparent-png.png", "image/webp"},
+					{"transparent-png-use-original.png", "image/webp"},
+					{"logo.png", "image/webp"},
+				})
 		})
-	},
-		[]*testTransformation{
-			{"big-jpeg.jpg", "image/webp"},
-			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/webp"},
-			{"animated.gif", "image/webp"},
-			{"transparent-png.png", "image/webp"},
-			{"small-transparent-png.png", "image/webp"},
-			{"transparent-png-use-original.png", "image/webp"},
-			{"logo.png", "image/webp"},
-		})
+	}
 }
 
 func TestImageMagickProcessor_Resize_Avif(t *testing.T) {

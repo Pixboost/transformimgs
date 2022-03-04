@@ -9,9 +9,6 @@ set -e
 
 go mod vendor
 
-echo 'Running Tests'
-go test $(go list ./... | grep -v /vendor/) -v -bench . -benchmem
-
 cd cmd/
 echo 'Running Application'
 go run main.go -imConvert=/usr/local/bin/convert -imIdentify=/usr/local/bin/identify $@

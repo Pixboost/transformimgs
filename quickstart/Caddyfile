@@ -1,0 +1,25 @@
+{
+  debug
+  auto_https disable_redirects
+  local_certs
+
+}
+https://localhost, http://localhost, http://webserver {
+  log {
+    level DEBUG
+  }
+
+  handle /cdn/* {
+    uri replace /cdn /img 1
+    reverse_proxy {
+      to http://transformimgs:8080
+    }
+  }
+
+
+  handle {
+    file_server /* {
+      root /site
+    }
+  }
+}

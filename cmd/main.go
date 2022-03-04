@@ -1,23 +1,3 @@
-// Image transformations API
-//
-// The main purpose of this is to help Web Developers to serve
-// images in the best possible way meaning balance between
-// quality and speed.
-//
-// Each endpoint could be used directly in `<img>` and `<picture>` HTML tags
-//
-// Version: 2.1
-// Schemes: https
-// Host: pixboost.com
-// BasePath: /api/2/
-// Security:
-// - api_key:
-// SecurityDefinitions:
-//   api_key:
-//     type: apiKey
-//     name: auth
-//     in: query
-// swagger:meta
 package main
 
 import (

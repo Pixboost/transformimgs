@@ -17,11 +17,12 @@ const (
 	NoContentTypeImgSrc = "111"
 	NoContentTypeImgOut = "222"
 
-	ImgSrc           = "321"
-	ImgAvifOut       = "12345"
-	ImgWebpOut       = "1234"
-	ImgPngOut        = "123"
-	ImgLowQualityOut = "12"
+	ImgSrc             = "321"
+	ImgAvifOut         = "12345"
+	ImgWebpOut         = "1234"
+	ImgPngOut          = "123"
+	ImgLowQualityOut   = "12"
+	ImgLowerQualityOut = "1"
 
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
@@ -82,6 +83,12 @@ func (r *resizerMock) resultImage(config *img.TransformationConfig) *img.Image {
 		}
 	}
 
+	if config.Quality == img.LOWER {
+		return &img.Image{
+			Data: []byte(ImgLowerQualityOut),
+		}
+	}
+
 	if r.supports(config.SupportedFormats, "image/avif") {
 		return &img.Image{
 			Data:     []byte(ImgAvifOut),
@@ -109,12 +116,14 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 		return &img.Image{
 			Data:     []byte(ImgSrc),
 			MimeType: "image/png",
+			Id:       url,
 		}, nil
 	}
 	if url == "http://site.com/img2.png" {
 		return &img.Image{
 			Data:     []byte(NoContentTypeImgSrc),
 			MimeType: "image/png",
+			Id:       url,
 		}, nil
 	}
 	return nil, errors.New("read_error")
@@ -241,6 +250,51 @@ func TestService_Transforms(t *testing.T) {
 							test.Equal(EmptyGifBase64Out, base64.StdEncoding.WithPadding(base64.StdPadding).EncodeToString(w.Body.Bytes()), "Resulted image"),
 						)
 					},
+				},
+				{
+					Description: "Invalid save-data param",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=hello", tt.urlSuffix), t),
+						Header: map[string][]string{
+							"Save-Data": {"on"},
+						},
+					},
+					ExpectedCode: http.StatusBadRequest,
+				},
+				{
+					Description: "DPPX > 2",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=2.625", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("1", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgLowerQualityOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "DPPX < 2",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=1", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "Invalid dppx",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&dppx=abc", tt.urlSuffix), t),
+					},
+					ExpectedCode: http.StatusBadRequest,
 				},
 				{
 					Description: "MIME Sniffing",
