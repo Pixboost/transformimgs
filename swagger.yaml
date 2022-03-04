@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-  title: Image Transformation API for Web
+  title: Image CDN API for Web
   description: |
     The main purpose of the API is to help Web Developers to serve
-    images in the best possible way meaning balance between
+    images in the best possible way to the users meaning balance between
     quality and speed.
     
     The API could be easily integrated with <img> or <picture> tags.
@@ -77,25 +77,6 @@ security:
   - ApiKey: []
 
 paths:
-  /img/{imgUrl}/asis:
-    get:
-      summary: Respond with original image without any modifications
-      description: |
-        This could be useful when your Image API is behind CDN, so any /asis requests
-        will be cached there. The Content-Type preserved from the original.
-      operationId: asisImage
-      tags:
-        - images
-      parameters:
-        - $ref: "#/components/parameters/imgUrl"
-      responses:
-        200:
-          description: The source image loaded from imgUrl
-          content:
-            "*/*":
-              schema:
-                type: string
-                format: binary
   /img/{imgUrl}/optimise:
     get:
       summary: Optimises a source image  
@@ -116,6 +97,14 @@ paths:
           content: 
             "image/*":
               schema: 
+                type: string
+                format: binary
+            "image/avif":
+              schema:
+                type: string
+                format: binary
+            "image/webp":
+              schema:
                 type: string
                 format: binary
   /img/{imgUrl}/resize:
@@ -151,8 +140,16 @@ paths:
       responses: 
         200:
           description: A resized image
-          content: 
+          content:
             "image/*":
+              schema:
+                type: string
+                format: binary
+            "image/avif":
+              schema:
+                type: string
+                format: binary
+            "image/webp":
               schema:
                 type: string
                 format: binary
@@ -187,6 +184,33 @@ paths:
           description: A resized image
           content:
             "image/*":
+              schema:
+                type: string
+                format: binary
+            "image/avif":
+              schema:
+                type: string
+                format: binary
+            "image/webp":
+              schema:
+                type: string
+                format: binary
+  /img/{imgUrl}/asis:
+    get:
+      summary: Respond with original image without any modifications
+      description: |
+        This could be useful when your Image API is behind CDN, so any /asis requests
+        will be cached there. The Content-Type preserved from the original.
+      operationId: asisImage
+      tags:
+        - images
+      parameters:
+        - $ref: "#/components/parameters/imgUrl"
+      responses:
+        200:
+          description: The source image loaded from imgUrl
+          content:
+            "*/*":
               schema:
                 type: string
                 format: binary
