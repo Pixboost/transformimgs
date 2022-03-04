@@ -36,8 +36,10 @@ solve the above problems.
 
 The goal is to have zero-config API that makes decisions based on the input, so you don't need to provide additional parameters like quality, output format, type of compression, etc.
 
-Therefore, this allows you to configure the integration once and new features, like new image formats, will work
-with your front end without any changes.
+Therefore, this allows you to configure the integration once. New features, like new image formats, will work
+with your front end automatically without any changes.
+
+To achieve that goal we should keep API to bare minimum and hide the smartness in the implementation. 
 
 ## Features
 
@@ -68,9 +70,8 @@ The API has 4 HTTP endpoints:
 * /img/{IMG_URL}/asis - returns original image
 
 Docs:
-* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any images from pixabay.com
+* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any image from pixabay.com
 * [OpenAPI spec](swagger.yaml)
-* [Markdown API docs](api.md)
 
 ## Running
 
