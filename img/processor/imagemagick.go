@@ -446,7 +446,7 @@ func getConvertFormatOptions(source *img.Info) []string {
 func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
 	var quality int
 
-	img.Log.Printf("[%s] Getting quality for image, source quality: %d, quality: %s, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
+	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %s, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
 
 	if source.Quality == 100 {
 		quality = 82

@@ -13,15 +13,15 @@ import (
 	"sync"
 )
 
-// CacheTTL is number of seconds that will be written to max-age HTTP header
+// CacheTTL is the number of seconds  that will be written to max-age HTTP header
 var CacheTTL int
 
-// SaveDataEnabled is flag to enable/disable Save-Data client hint.
+// SaveDataEnabled is the flag to enable/disable Save-Data client hint.
 // Sometime CDN doesn't support Save-Data in Vary response header in which
 // case you would need to set this to false
 var SaveDataEnabled = true
 
-// Log is a logger that could be overridden. Should implement interface glogi.Logger.
+// Log is the logger that could be overridden. Should implement interface glogi.Logger.
 // By default is using glogi.SimpleLogger.
 var Log glogi.Logger = glogi.NewSimpleLogger()
 
@@ -29,7 +29,7 @@ var Log glogi.Logger = glogi.NewSimpleLogger()
 type Loader interface {
 	// Load loads an image from the given source.
 	//
-	// ctx is a context of the current transaction. Typically it's a context
+	// ctx is the context of the current transaction. Typically it's a context
 	// of an incoming HTTP request, so we make it possible to pass values through middlewares.
 	//
 	// Returns an image.
@@ -52,20 +52,20 @@ type ResizeConfig struct {
 // TransformationConfig is a configuration passed to Processor
 // that used during transformations.
 type TransformationConfig struct {
-	// Src is a source image to transform.
+	// Src is the source image to transform.
 	// This field is required for transformations.
 	Src *Image
-	// SupportedFormats is a list of output formats supported by client.
+	// SupportedFormats is the list of output formats supported by client.
 	// Processor will use one of those formats for result image. If list
 	// is empty the format of the source image will be used.
 	SupportedFormats []string
 	// Quality defines quality of output image
 	Quality Quality
-	// Config is a configuration for the specific transformation
+	// Config is the configuration for the specific transformation
 	Config interface{}
 }
 
-// Processor is an interface for transforming/optimising images.
+// Processor is the interface for transforming/optimising images.
 //
 // Each function accepts original image and a list of supported
 // output format by client. Each format should be a MIME type, e.g.
@@ -82,7 +82,7 @@ type Processor interface {
 	Resize(input *TransformationConfig) (*Image, error)
 
 	// FitToSize resizes given image cropping it to the given size and does not respect aspect ratio.
-	// Format of the the size string is width'x'height, e.g. 300x400.
+	// Format of the size string is width'x'height, e.g. 300x400.
 	FitToSize(input *TransformationConfig) (*Image, error)
 
 	// Optimise optimises given image to reduce size of the served image.
