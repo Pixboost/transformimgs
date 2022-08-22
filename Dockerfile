@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.0-46-bullseye AS builder
+FROM dpokidov/imagemagick:7.1.0-46-bullseye AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		wget \
