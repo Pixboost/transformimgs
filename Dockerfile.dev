@@ -14,21 +14,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 	&& rm -rf /var/lib/apt/lists/*
 
 #Installing golang
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-		wget \
-		openssh-client \
-		git \
-    g++ \
-    make \
-    libc6-dev \
-		gcc \
-		curl \
-		gpg \
-		dirmngr \
-		gpg-agent \
-	&& rm -rf /var/lib/apt/lists/*
-
-#Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
 ENV GOLANG_VERSION 1.18.5

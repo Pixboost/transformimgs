@@ -1,17 +1,16 @@
 FROM dpokidov/imagemagick:7.1.0-46-bullseye AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-		wget \
-		openssh-client \
-		git \
-    g++ \
-    make \
-    libc6-dev \
+		g++ \
 		gcc \
-		curl \
-		gpg \
+		libc6-dev \
+		make \
+		pkg-config \
 		dirmngr \
+		gpg \
 		gpg-agent \
+		wget \
+		git \
 	&& rm -rf /var/lib/apt/lists/*
 
 #Installing golang
