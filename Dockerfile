@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.0-46-bullseye AS build
+FROM dpokidov/imagemagick:7.1.0-51-bullseye AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -16,41 +16,41 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 #Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.18.5
+ENV GOLANG_VERSION 1.18.7
 
 RUN set -eux; \
 	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.18.5.linux-amd64.tar.gz'; \
-			sha256='9e5de37f9c49942c601b191ac5fba404b868bfc21d446d6960acc12283d6e5f2'; \
+			url='https://dl.google.com/go/go1.18.7.linux-amd64.tar.gz'; \
+			sha256='6c967efc22152ce3124fc35cdf50fc686870120c5fd2107234d05d450a6105d8'; \
 			;; \
 		'armel') \
 			export GOARCH='arm' GOARM='5' GOOS='linux'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.18.5.linux-armv6l.tar.gz'; \
-			sha256='d5ac34ac5f060a5274319aa04b7b11e41b123bd7887d64efb5f44ead236957af'; \
+			url='https://dl.google.com/go/go1.18.7.linux-armv6l.tar.gz'; \
+			sha256='2238c2a4fef887f14ecf37d4c4cd5e1da7c392f4faca3c029a972acf1343bd5e'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.18.5.linux-arm64.tar.gz'; \
-			sha256='006f6622718212363fa1ff004a6ab4d87bbbe772ec5631bab7cac10be346e4f1'; \
+			url='https://dl.google.com/go/go1.18.7.linux-arm64.tar.gz'; \
+			sha256='dceea023a9f87dc7c3bf638874e34ff1b42b76e3f1e489510a0c5ffde0cad438'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.18.5.linux-386.tar.gz'; \
-			sha256='0c44f85d146c6f98c34e8ff436a42af22e90e36fe232d3d9d3101f23fd61362b'; \
+			url='https://dl.google.com/go/go1.18.7.linux-386.tar.gz'; \
+			sha256='34d14312a599fc8f8956ad93a6f0545e28e31ba4e67845961b818228677d3e9a'; \
 			;; \
 		'mips64el') \
 			export GOARCH='mips64le' GOOS='linux'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.18.5.linux-ppc64le.tar.gz'; \
-			sha256='2e37fb9c7cbaedd4e729492d658aa4cde821fc94117391a8105c13b25ca1c84b'; \
+			url='https://dl.google.com/go/go1.18.7.linux-ppc64le.tar.gz'; \
+			sha256='57aa7293bf085fbf5eb50e162fa1d9314a53f025961992744051f14289d65870'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.18.5.linux-s390x.tar.gz'; \
-			sha256='e3d536e7873639f85353e892444f83b14cb6670603961f215986ae8e28e8e07a'; \
+			url='https://dl.google.com/go/go1.18.7.linux-s390x.tar.gz'; \
+			sha256='e03938284758d59cd32251760631a4ecfecc24a91a97cdc4e682c804770739fe'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
@@ -58,8 +58,8 @@ RUN set -eux; \
 	if [ -z "$url" ]; then \
 # https://github.com/golang/go/issues/38536#issuecomment-616897960
 		build=1; \
-		url='https://dl.google.com/go/go1.18.5.src.tar.gz'; \
-		sha256='9920d3306a1ac536cdd2c796d6cb3c54bc559c226fc3cc39c32f1e0bd7f50d2a'; \
+		url='https://dl.google.com/go/go1.18.7.src.tar.gz'; \
+		sha256='9467e33b819f71bebb21fb0ee1dd6794fd2244ae94907a984286712f9839a944'; \
 		echo >&2; \
 		echo >&2 "warning: current architecture ($arch) does not have a compatible Go binary release; will be building from source"; \
 		echo >&2; \
@@ -131,11 +131,11 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.0-46-bullseye
+FROM dpokidov/imagemagick:7.1.0-51-bullseye
 
 ENV IM_HOME /usr/local/bin
 
-USER nobody
+USER 65534
 COPY --from=build --chown=nobody:nogroup /transformimgs /transformimgs
 
 ENTRYPOINT ["/transformimgs", "-imConvert=/usr/local/bin/convert", "-imIdentify=/usr/local/bin/identify"]

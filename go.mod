@@ -1,6 +1,6 @@
 module github.com/Pixboost/transformimgs/v8
 
-go 1.15
+go 1.18
 
 require (
 	github.com/dooman87/glogi v0.0.0-20180107233622-68f3443d07f1

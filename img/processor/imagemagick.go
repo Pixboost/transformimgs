@@ -33,6 +33,7 @@ var convertOpts = []string{
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
 	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
+	"-define", "heic:speed=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -57,7 +58,7 @@ const (
 	// There are two aspects to this:
 	// * Encoding to AVIF consumes a lot of memory
 	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
-	MaxAVIFTargetSize = 1000 * 1000
+	MaxAVIFTargetSize = 2000 * 2000
 )
 
 func init() {
@@ -416,7 +417,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && src.Format != "PNG" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == "image/avif" && src.Format != "GIF" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
 	}
@@ -446,11 +447,9 @@ func getConvertFormatOptions(source *img.Info) []string {
 func getQualityOptions(source *img.Info, config *img.TransformationConfig, outputMimeType string) []string {
 	var quality int
 
-	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %s, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
+	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %d, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
 
-	if source.Quality == 100 {
-		quality = 82
-	} else if outputMimeType == "image/avif" {
+	if outputMimeType == "image/avif" {
 		if source.Quality > 85 {
 			quality = 70
 		} else if source.Quality > 75 {
@@ -458,6 +457,8 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 		} else {
 			quality = 50
 		}
+	} else if source.Quality == 100 {
+		quality = 82
 	} else if config.Quality != img.DEFAULT {
 		quality = source.Quality
 	}
