@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
+	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"time"
 )
 
 type Http struct {
@@ -13,7 +16,24 @@ type Http struct {
 	Headers http.Header
 }
 
-func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
+var dialer = &net.Dialer{
+	Timeout:   5 * time.Second,
+	KeepAlive: 30 * time.Second,
+}
+
+var client = &http.Client{
+	Transport: &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
+}
+
+func (r *Http) Load(url string, _ context.Context) (*img.Image, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -24,11 +44,13 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Expected %d but got code %d.\n Error '%s'",
