@@ -33,7 +33,7 @@ var convertOpts = []string{
 	"-define", "png:compression-level=9",
 	"-define", "png:compression-strategy=0",
 	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
-	"-define", "heic:speed=6",
+	//"-define", "heic:speed=6",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
