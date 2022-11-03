@@ -4,5 +4,5 @@ github.com/dooman87/kolibri v0.0.0-20170117194222-c194ff118b67 h1:5zx4LUSP0iPn0K
 github.com/dooman87/kolibri v0.0.0-20170117194222-c194ff118b67/go.mod h1:IGXOwI2+tWhVzcLeKONI0eXxxFVC4+A5ZFCup6fuQqE=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
-gopkg.in/gographics/imagick.v3 v3.4.1 h1:CClNBnd1UGxH9KAl4Vuwx+jgNRkyKN+cHlbuFPyt+KU=
-gopkg.in/gographics/imagick.v3 v3.4.1/go.mod h1:+Q9nyA2xRZXrDyTtJ/eko+8V/5E7bWYs08ndkZp8UmA=
+gopkg.in/gographics/imagick.v3 v3.4.2 h1:vk6oildvhRBVSBfQ4X3raJstApYSeK6CZsyzoSOZk58=
+gopkg.in/gographics/imagick.v3 v3.4.2/go.mod h1:+Q9nyA2xRZXrDyTtJ/eko+8V/5E7bWYs08ndkZp8UmA=
