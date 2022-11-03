@@ -16,9 +16,10 @@ the latest image formats, such as WebP, AVIF and network client hints.
 - [Quickstart](#quickstart)
 - [API](#api)
 - [Running](#running)
+  * [Docker](#docker)
   * [Options](#options)
+  * [Running Locally From Source Code](#running-from-source-code)
 - [SaaS](#saas)
-- [Building from sources ](#building-from-sources)
 - [Performance tests](#performance-tests)
 - [Opened tickets for images related features](#opened-tickets-for-images-related-features)
 - [Contribute](#contribute)
@@ -74,17 +75,19 @@ Docs:
 * [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any image from pixabay.com
 * [OpenAPI spec](swagger.yaml)
 
-## Running
+## Running Locally
+
+### Docker
 
 The latest docker image published on [Docker hub](https://hub.docker.com/r/pixboost/transformimgs)
 
-Running the server:
+Starting the server:
 
 ```
 $ docker run -p 8080:8080 pixboost/transformimgs [OPTIONS]
 ```
 
-To test:
+To verify:
 
 * Health check: `curl http://localhost:8080/health`
 * Transformation: `open http://localhost:8080/img/https://images.unsplash.com/photo-1591769225440-811ad7d6eab3/resize?size=600`
@@ -99,6 +102,18 @@ Everything below is optional and have sensible defaults.
 | proc   | Number of images processors to run. | Number of CPUs (cores) |
 | disableSaveData | If set to true then will disable Save-Data client hint. Should be disabled on CDNs that don't support Save-Data header in Vary. | false |
 
+### Running from source code
+
+Prerequisites:
+
+* Go 1.18+ with [modules support](https://golang.org/ref/mod)
+* Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
+
+```
+$ git clone git@github.com:Pixboost/transformimgs.git
+$ cd transformimgs
+$ ./run.sh 
+```
 
 ## SaaS
 
@@ -111,19 +126,6 @@ Perks of SaaS version:
 * AWS S3 integration
 * API workflows for cache busting and warmup
 * Version upgrades
-
-## Building from sources 
-
-Prerequisites:
-
-* Go 1.15+ with [modules support](https://golang.org/ref/mod)
-* Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
-
-```
-$ git clone git@github.com:Pixboost/transformimgs.git
-$ cd transformimgs
-$ ./run.sh 
-```
 
 Go modules have been introduced in v6.
 
