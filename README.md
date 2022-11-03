@@ -1,7 +1,7 @@
 # TransformImgs
 
 [![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
-[![codecov](https://codecov.io/gh/Pixboost/transformimgs/branch/master/graph/badge.svg)](https://codecov.io/gh/Pixboost/transformimgs)
+[![codecov](https://codecov.io/gh/Pixboost/transformimgs/branch/main/graph/badge.svg)](https://codecov.io/gh/Pixboost/transformimgs)
 [![Docker Pulls](https://img.shields.io/docker/pulls/pixboost/transformimgs)](https://hub.docker.com/r/pixboost/transformimgs/)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
 
