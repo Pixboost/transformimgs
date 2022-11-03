@@ -134,6 +134,14 @@ type transformTest struct {
 	urlSuffix string
 }
 
+func TestNewService(t *testing.T) {
+	_, err := img.NewService(nil, nil, 0)
+
+	if err == nil || err.Error() != "procNum must be positive, but got [0]" {
+		t.Errorf("expected error but got %s", err)
+	}
+}
+
 func TestService_Transforms(t *testing.T) {
 	tests := []*transformTest{
 		{
@@ -426,9 +434,9 @@ func TestService_ResizeUrl(t *testing.T) {
 
 	testCases := []test.TestCase{
 		{
-			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/resize",
+			Url:          "http://localhost/img//resize?size=30x30",
 			ExpectedCode: http.StatusBadRequest,
-			Description:  "Param size is required",
+			Description:  "Source image URL is required",
 		},
 		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=BADSIZE",
@@ -460,6 +468,11 @@ func TestService_FitToSizeUrl(t *testing.T) {
 	test.T = t
 
 	testCases := []test.TestCase{
+		{
+			Url:          "http://localhost/img//fit?size=30x30",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Source image URL is required",
+		},
 		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit",
 			ExpectedCode: http.StatusBadRequest,
@@ -517,6 +530,11 @@ func TestService_AsIs(t *testing.T) {
 			Url:          "http://localhost/img/NO_SUCH_IMAGE/asis",
 			ExpectedCode: http.StatusInternalServerError,
 			Description:  "Read error",
+		},
+		{
+			Url:          "http://localhost/img//asis",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Source image URL is required",
 		},
 	}
 
