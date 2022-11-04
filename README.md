@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="logo"/>
+</p>
+
 # TransformImgs
 
 [![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
@@ -7,6 +11,7 @@
 
 Open Source [Image CDN](https://web.dev/image-cdns/) that provides image transformation API and supports 
 the latest image formats, such as WebP, AVIF and network client hints. 
+
 
 ## Table of Contents
 
