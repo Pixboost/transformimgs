@@ -12,7 +12,7 @@ import (
 )
 
 type Http struct {
-	// Headers will set headers on each request
+	// Headers that will be sent with each request
 	Headers http.Header
 }
 

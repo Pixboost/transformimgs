@@ -99,3 +99,40 @@ func TestHttp_LoadCustomHeaders(t *testing.T) {
 		test.Equal("123", string(image.Data), "resulted image"),
 	)
 }
+
+func FuzzHttp_LoadCustomHeaders(f *testing.F) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "cool/stuff")
+		w.Write([]byte("123"))
+	}))
+	defer server.Close()
+
+	f.Add("custom-header", "value", uint(1))
+	f.Add("custom-header-many-times", "value", uint(3))
+	f.Fuzz(func(t *testing.T, name string, value string, count uint) {
+		values := make([]string, count)
+		for i := uint(0); i < count; i++ {
+			values[i] = value
+		}
+
+		httpLoader := &loader.Http{
+			Headers: http.Header{
+				name: values,
+			},
+		}
+
+		image, err := httpLoader.Load(server.URL, context.Background())
+
+		if err != nil {
+			if image != nil {
+				t.Errorf("image must be nil when error is not nil")
+			}
+		} else {
+			test.Error(t,
+				test.Nil(err, "error"),
+				test.Equal("cool/stuff", image.MimeType, "content type"),
+				test.Equal("123", string(image.Data), "resulted image"),
+			)
+		}
+	})
+}
