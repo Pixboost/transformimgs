@@ -44,6 +44,28 @@ func TestCalculateTargetSizeForFit(t *testing.T) {
 	}
 }
 
+func FuzzCalculateTargetSizeForFit(f *testing.F) {
+	tests := []*fitTest{
+		{"400x300", 400, 300, ""},
+		{"400", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [400]"},
+		{"400x", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [400x]"},
+		{"x300", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [x300]"},
+		{"400ab300", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [400ab300]"},
+		{"abc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abc]"},
+		{"abx400", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abx400]"},
+		{"300xabc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [300xabc]"},
+		{"xabc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [xabc]"},
+	}
+	for _, tt := range tests {
+		f.Add(tt.targetSize)
+	}
+
+	f.Fuzz(func(t *testing.T, s string) {
+		target := &img.Info{}
+		_ = CalculateTargetSizeForFit(target, s)
+	})
+}
+
 type resizeTest struct {
 	sourceWidth    int
 	sourceHeight   int
@@ -86,4 +108,30 @@ func TestCalculateTargetSizeForResize(t *testing.T) {
 			t.Errorf("Test %d failed: mismatched errors. Expected [%s], but got [%s]", idx, tt.error, err.Error())
 		}
 	}
+}
+
+func FuzzCalculateTargetSizeForResize(f *testing.F) {
+	tests := []*resizeTest{
+		{800, 600, "400", 400, 300, ""},
+		{800, 600, "400x", 400, 300, ""},
+		{800, 600, "x300", 400, 300, ""},
+		{800, 600, "400x300", 400, 300, ""},
+		{800, 600, "400ab300", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [400ab300]"},
+		{0, 0, "400x300", 0, 0, ""},
+		{800, 600, "abc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abc]"},
+		{800, 600, "abx400", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [abx400]"},
+		{800, 600, "300xabc", 0, 0, "expected target size in format [WIDTH]x[HEIGHT], but got [300xabc]"},
+	}
+
+	for _, tt := range tests {
+		f.Add(tt.sourceWidth, tt.sourceHeight, tt.targetSize)
+	}
+
+	f.Fuzz(func(t *testing.T, sourceWidth int, sourceHeight int, targetSize string) {
+		target := &img.Info{}
+		_ = CalculateTargetSizeForResize(&img.Info{
+			Width:  sourceWidth,
+			Height: sourceHeight,
+		}, target, targetSize)
+	})
 }
