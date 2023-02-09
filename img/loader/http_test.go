@@ -123,6 +123,7 @@ func FuzzHttp_LoadCustomHeaders(f *testing.F) {
 
 		image, err := httpLoader.Load(server.URL, context.Background())
 
+		// The errors could happen because of the invalid header names or values
 		if err != nil {
 			if image != nil {
 				t.Errorf("image must be nil when error is not nil")
