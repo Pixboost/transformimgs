@@ -124,9 +124,6 @@ RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/
 RUN git clone https://github.com/Pixboost/transformimgs.git
 
-WORKDIR /go/src/github.com/Pixboost/transformimgs/
-RUN go mod vendor
-
 WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
