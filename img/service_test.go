@@ -27,14 +27,18 @@ const (
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
 
-type resizerMock struct{}
+type resizerMock struct {
+	fuzzTests bool
+}
 
 func (r *resizerMock) Resize(config *img.TransformationConfig) (*img.Image, error) {
-	//data := config.Src.Data
-	//size := config.Config.(*img.ResizeConfig).Size
-	//if (string(data) != ImgSrc && string(data) != NoContentTypeImgSrc) || size != "300x200" {
-	//	return nil, errors.New("resize_error")
-	//}
+	if !r.fuzzTests {
+		data := config.Src.Data
+		size := config.Config.(*img.ResizeConfig).Size
+		if (string(data) != ImgSrc && string(data) != NoContentTypeImgSrc) || size != "300x200" {
+			return nil, errors.New("resize_error")
+		}
+	}
 
 	return r.resultImage(config), nil
 }
@@ -546,7 +550,9 @@ func FuzzService_ResizeUrl(f *testing.F) {
 	f.Add("300", "image/png, image/webp", 4.2, false, "off")
 	f.Add("x200", "image/png", 4.2, false, "hide")
 
-	s := createService(nil).GetRouter().ServeHTTP
+	img.CacheTTL = 86400
+	srv, _ := img.NewService(&loaderMock{}, &resizerMock{fuzzTests: true}, 1)
+	s := srv.GetRouter().ServeHTTP
 
 	f.Fuzz(func(t *testing.T, size string, acceptFormats string, dppx float64, saveDataHeaderEnabled bool, saveDataParam string) {
 		test.T = t
