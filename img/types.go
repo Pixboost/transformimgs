@@ -2,7 +2,7 @@ package img
 
 type Image struct {
 	// Id of the image mainly used for debugging purposes.
-	// Could be a URL of the image of a filename.
+	// Could be a URL of the image or a filename.
 	Id       string
 	Data     []byte
 	MimeType string
