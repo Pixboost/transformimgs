@@ -6,6 +6,7 @@ import (
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"math"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -320,6 +321,17 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	return imageInfo, nil
 }
 
+type color struct {
+	pixel *imagick.PixelWand
+	cnt   uint
+}
+
+type colorSlice []*imagick.PixelWand
+
+func (c colorSlice) Len() int           { return len(c) }
+func (c colorSlice) Less(i, j int) bool { return c[i].GetColorCount() < c[j].GetColorCount() }
+func (c colorSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+
 // isIllustration returns true if image is cartoon like, including
 // icons, logos, illustrations.
 //
@@ -343,7 +355,7 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 	}
 
 	var (
-		colors    []*imagick.PixelWand
+		colors    colorSlice
 		colorsCnt uint
 	)
 
@@ -367,43 +379,68 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 		return false, nil
 	}
 
-	colorsCounts := make([]int, colorsCnt)
-	for i, c := range colors {
-		colorsCounts[i] = int(c.GetColorCount())
-	}
-
-	sort.Sort(sort.Reverse(sort.IntSlice(colorsCounts)))
+	sort.Sort(sort.Reverse(colors))
 
 	var (
-		colorIdx         int
-		count            int
-		imageWidth       = mw.GetImageWidth()
-		imageHeight      = mw.GetImageHeight()
-		pixelsCount      = 0
-		totalPixelsCount = float32(imageHeight * imageWidth)
-		tenPercent       = int(totalPixelsCount * 0.1)
-		fiftyPercent     = int(totalPixelsCount * 0.5)
-		hasBackground    = false
+		colorIdx            int
+		count               uint
+		currColor           *imagick.PixelWand
+		pixelsCount         = uint(0)
+		totalPixelsCount    = float32(mw.GetImageHeight() * mw.GetImageWidth())
+		tenPercent          = uint(totalPixelsCount * 0.1)
+		fiftyPercent        = uint(totalPixelsCount * 0.5)
+		isBackground        = false
+		lastBackgroundColor *imagick.PixelWand
+		colorsInBackground  = uint(0)
+		pixelsInBackground  = uint(0)
 	)
 
-	for colorIdx, count = range colorsCounts {
-		if colorIdx == 0 && count >= tenPercent {
-			hasBackground = true
-			fiftyPercent = int((totalPixelsCount - float32(count)) * 0.5)
-			continue
-		}
-
+	for colorIdx, currColor = range colors {
 		if pixelsCount > fiftyPercent {
 			break
 		}
 
-		pixelsCount += count
+		count = currColor.GetColorCount()
+
+		switch {
+		case colorIdx == 0:
+			isBackground = true
+			lastBackgroundColor = currColor
+			pixelsInBackground += count
+			colorsInBackground++
+		case isBackground:
+			// Comparing colors to find out if it's still background or not.
+			// This logic addresses backgrounds with more than one similar color.
+			alphaDiff := currColor.GetAlpha() - lastBackgroundColor.GetAlpha()
+			redDiff := currColor.GetRed() - lastBackgroundColor.GetRed()
+			greenDiff := currColor.GetGreen() - lastBackgroundColor.GetGreen()
+			blueDiff := currColor.GetBlue() - lastBackgroundColor.GetBlue()
+			distance :=
+				math.Max(math.Pow(redDiff, 2), math.Pow(redDiff-alphaDiff, 2)) +
+					math.Max(math.Pow(greenDiff, 2), math.Pow(greenDiff-alphaDiff, 2)) +
+					math.Max(math.Pow(blueDiff, 2), math.Pow(blueDiff-alphaDiff, 2))
+			if distance < 0.1 {
+				lastBackgroundColor = currColor
+				pixelsInBackground += count
+				colorsInBackground++
+			} else {
+				isBackground = false
+				if pixelsInBackground < tenPercent {
+					pixelsCount = pixelsInBackground
+					colorsInBackground = 0
+					pixelsInBackground = 0
+				} else {
+					pixelsCount += count
+					fiftyPercent = uint((totalPixelsCount - float32(pixelsInBackground)) * 0.5)
+				}
+			}
+		default:
+			pixelsCount += count
+		}
 	}
 
-	colorsCntIn50Pct := colorIdx + 1
-	if hasBackground {
-		colorsCntIn50Pct--
-	}
+	colorsCntIn50Pct := uint(colorIdx + 1)
+	colorsCntIn50Pct -= colorsInBackground
 
 	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
 }
