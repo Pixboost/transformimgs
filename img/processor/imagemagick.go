@@ -321,11 +321,6 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	return imageInfo, nil
 }
 
-type color struct {
-	pixel *imagick.PixelWand
-	cnt   uint
-}
-
 type colorSlice []*imagick.PixelWand
 
 func (c colorSlice) Len() int           { return len(c) }
