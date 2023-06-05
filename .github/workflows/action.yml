@@ -72,6 +72,7 @@ jobs:
         name: Run the service
         run: |
           docker run -p 8080:8080 -d transformimgs
+          sleep 5
       -
         name: Smoketest
         run: |
