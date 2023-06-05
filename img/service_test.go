@@ -27,13 +27,17 @@ const (
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
 
-type resizerMock struct{}
+type resizerMock struct {
+	fuzzTests bool
+}
 
 func (r *resizerMock) Resize(config *img.TransformationConfig) (*img.Image, error) {
-	data := config.Src.Data
-	size := config.Config.(*img.ResizeConfig).Size
-	if (string(data) != ImgSrc && string(data) != NoContentTypeImgSrc) || size != "300x200" {
-		return nil, errors.New("resize_error")
+	if !r.fuzzTests {
+		data := config.Src.Data
+		size := config.Config.(*img.ResizeConfig).Size
+		if (string(data) != ImgSrc && string(data) != NoContentTypeImgSrc) || size != "300x200" {
+			return nil, errors.New("resize_error")
+		}
 	}
 
 	return r.resultImage(config), nil
@@ -228,7 +232,7 @@ func TestService_Transforms(t *testing.T) {
 					},
 				},
 				{
-					Description: "Save-Data: off",
+					Description: "?save-data=off",
 					Request: &http.Request{
 						Method: "GET",
 						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=off", tt.urlSuffix), t),
@@ -244,7 +248,7 @@ func TestService_Transforms(t *testing.T) {
 					},
 				},
 				{
-					Description: "Save-Data: hide",
+					Description: "?save-data=hide",
 					Request: &http.Request{
 						Method: "GET",
 						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&save-data=hide", tt.urlSuffix), t),
@@ -541,10 +545,58 @@ func TestService_AsIs(t *testing.T) {
 	test.RunRequests(testCases)
 }
 
+func FuzzService_ResizeUrl(f *testing.F) {
+	f.Add("300x200", "image/png, image/webp, image/avif", 3.0, true, "")
+	f.Add("300", "image/png, image/webp", 4.2, false, "off")
+	f.Add("x200", "image/png", 4.2, false, "hide")
+
+	img.CacheTTL = 86400
+	srv, _ := img.NewService(&loaderMock{}, &resizerMock{fuzzTests: true}, 1)
+	s := srv.GetRouter().ServeHTTP
+
+	f.Fuzz(func(t *testing.T, size string, acceptFormats string, dppx float64, saveDataHeaderEnabled bool, saveDataParam string) {
+		test.T = t
+		headers := make(map[string][]string, 0)
+		if saveDataHeaderEnabled {
+			headers["Save-Data"] = []string{"On"}
+		}
+		headers["Accept"] = []string{acceptFormats}
+
+		urlStr := fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png/resize?size=%s&dppx=%f&save-data=%s", size, dppx, saveDataParam)
+		u, _ := url.Parse(urlStr)
+
+		if u != nil {
+			req := &http.Request{
+				Method: "GET",
+				URL:    u,
+				Header: headers,
+			}
+
+			resp := httptest.NewRecorder()
+			s(resp, req)
+
+			statusCode := resp.Result().StatusCode
+			switch {
+			case statusCode >= http.StatusInternalServerError:
+				t.Errorf("should not respond with 5xx errors, url: [%s] [%v]", urlStr, saveDataHeaderEnabled)
+			case statusCode == http.StatusOK:
+				contentType := resp.Header().Get("content-type")
+				if contentType != "image/png" && contentType != "image/webp" && contentType != "image/avif" && contentType != "text/plain; charset=utf-8" {
+					t.Errorf("unexpected Content-Type [%s] for URL [%s]", contentType, urlStr)
+				}
+			case statusCode == http.StatusBadRequest:
+				t.Logf("Bad request for url: [%s]", urlStr)
+			default:
+				t.Errorf("unexpected response status [%d]", statusCode)
+			}
+		}
+	})
+}
+
 func createService(t *testing.T) *img.Service {
 	img.CacheTTL = 86400
 	s, err := img.NewService(&loaderMock{}, &resizerMock{}, 1)
-	if err != nil {
+	if err != nil && t != nil {
 		t.Fatalf("Error while creating service: %+v", err)
 		return nil
 	}

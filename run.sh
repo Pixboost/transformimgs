@@ -7,8 +7,6 @@ set -e
 # script to run the application inside docker
 # container.
 
-go mod vendor
-
 cd cmd/
 echo 'Running Application'
 go run main.go -imConvert=/usr/local/bin/convert -imIdentify=/usr/local/bin/identify $@
