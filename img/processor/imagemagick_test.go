@@ -398,6 +398,8 @@ var isIllustrationTests = []*testIsIllustration{
 	{"photo-3.png", false},
 	{"product-1.png", false},
 	{"product-2.png", false},
+	{"product-2-no-background.png", false},
+	{"product-3.png", false},
 }
 
 func TestImageMagick_IsIllustration(t *testing.T) {
