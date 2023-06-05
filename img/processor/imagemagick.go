@@ -337,15 +337,13 @@ func (c colorSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
 func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, error) {
-	if len(src.Data) < 20*1024 {
+	imageSize := info.Width * info.Height
+
+	if imageSize < 20*1024 {
 		return true, nil
 	}
 
-	if len(src.Data) > 1024*1024 {
-		return false, nil
-	}
-
-	if float32(len(src.Data))/float32(info.Width*info.Height) > 1.0 {
+	if imageSize > 1024*1024 {
 		return false, nil
 	}
 
@@ -361,7 +359,7 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 		return false, err
 	}
 
-	if info.Width*info.Height > 500*500 {
+	if imageSize > 500*500 {
 		aspectRatio := float32(info.Width) / float32(info.Height)
 		err = mw.ScaleImage(500, uint(500/aspectRatio))
 		if err != nil {
@@ -381,7 +379,7 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 		count               uint
 		currColor           *imagick.PixelWand
 		pixelsCount         = uint(0)
-		totalPixelsCount    = float32(mw.GetImageHeight() * mw.GetImageWidth())
+		totalPixelsCount    = float32(imageSize)
 		tenPercent          = uint(totalPixelsCount * 0.1)
 		fiftyPercent        = uint(totalPixelsCount * 0.5)
 		isBackground        = false
