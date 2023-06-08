@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.0-51-bullseye AS build
+FROM dpokidov/imagemagick:7.1.1-10-bullseye AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -16,41 +16,41 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 #Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.19.5
+ENV GOLANG_VERSION 1.20.5
 
 RUN set -eux; \
 	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.19.5.linux-amd64.tar.gz'; \
-			sha256='36519702ae2fd573c9869461990ae550c8c0d955cd28d2827a6b159fda81ff95'; \
+			url='https://dl.google.com/go/go1.20.5.linux-amd64.tar.gz'; \
+			sha256='d7ec48cde0d3d2be2c69203bc3e0a44de8660b9c09a6e85c4732a3f7dc442612'; \
 			;; \
 		'armel') \
 			export GOARCH='arm' GOARM='5' GOOS='linux'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.19.5.linux-armv6l.tar.gz'; \
-			sha256='ec14f04bdaf4a62bdcf8b55b9b6434cc27c2df7d214d0bb7076a7597283b026a'; \
+			url='https://dl.google.com/go/go1.20.5.linux-armv6l.tar.gz'; \
+			sha256='79d8210efd4390569912274a98dffc16eb85993cccdeef4d704e9b0dfd50743a'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.19.5.linux-arm64.tar.gz'; \
-			sha256='fc0aa29c933cec8d76f5435d859aaf42249aa08c74eb2d154689ae44c08d23b3'; \
+			url='https://dl.google.com/go/go1.20.5.linux-arm64.tar.gz'; \
+			sha256='aa2fab0a7da20213ff975fa7876a66d47b48351558d98851b87d1cfef4360d09'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.19.5.linux-386.tar.gz'; \
-			sha256='f68331aa7458a3598060595f5601d5731fd452bb2c62ff23095ddad68854e510'; \
+			url='https://dl.google.com/go/go1.20.5.linux-386.tar.gz'; \
+			sha256='d394ac8fecf66812c78ffba7fb9a265bb1b9917564c7fd77f0edb0df6d5777a1'; \
 			;; \
 		'mips64el') \
 			export GOARCH='mips64le' GOOS='linux'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.19.5.linux-ppc64le.tar.gz'; \
-			sha256='e4032e7c52ebc48bad5c58ba8de0759b6091d9b1e59581a8a521c8c9d88dbe93'; \
+			url='https://dl.google.com/go/go1.20.5.linux-ppc64le.tar.gz'; \
+			sha256='049b8ab07d34077b90c0642138e10207f6db14bdd1743ea994a21e228f8ca53d'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.19.5.linux-s390x.tar.gz'; \
-			sha256='764871cbca841a99a24e239b63c68a4aaff4104658e3165e9ca450cac1fcbea3'; \
+			url='https://dl.google.com/go/go1.20.5.linux-s390x.tar.gz'; \
+			sha256='bac14667f1217ccce1d2ef4e204687fe6191e6dc19a8870cfb81a41f78b04e48'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
@@ -58,8 +58,8 @@ RUN set -eux; \
 	if [ -z "$url" ]; then \
 # https://github.com/golang/go/issues/38536#issuecomment-616897960
 		build=1; \
-		url='https://dl.google.com/go/go1.19.5.src.tar.gz'; \
-		sha256='8e486e8e85a281fc5ce3f0bedc5b9d2dbf6276d7db0b25d3ec034f313da0375f'; \
+		url='https://dl.google.com/go/go1.20.5.src.tar.gz'; \
+		sha256='9a15c133ba2cfafe79652f4815b62e7cfc267f68df1b9454c6ab2a3ca8b96a88'; \
 		echo >&2; \
 		echo >&2 "warning: current architecture ($arch) does not have a compatible Go binary release; will be building from source"; \
 		echo >&2; \
@@ -84,8 +84,14 @@ RUN set -eux; \
 	\
 	if [ -n "$build" ]; then \
 		savedAptMark="$(apt-mark showmanual)"; \
-		apt-get update; \
-		apt-get install -y --no-install-recommends golang-go; \
+# add backports for newer go version for bootstrap build: https://github.com/golang/go/issues/44505
+		( \
+			. /etc/os-release; \
+			echo "deb https://deb.debian.org/debian $VERSION_CODENAME-backports main" > /etc/apt/sources.list.d/backports.list; \
+			\
+			apt-get update; \
+			apt-get install -y --no-install-recommends -t "$VERSION_CODENAME-backports" golang-go; \
+		); \
 		\
 		export GOCACHE='/tmp/gocache'; \
 		\
@@ -117,7 +123,7 @@ RUN set -eux; \
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:$PATH
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 WORKDIR $GOPATH
 
 RUN mkdir -p /go/src/github.com/Pixboost/
@@ -128,7 +134,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.0-51-bullseye
+FROM dpokidov/imagemagick:7.1.1-10-bullseye
 
 ENV IM_HOME /usr/local/bin
 

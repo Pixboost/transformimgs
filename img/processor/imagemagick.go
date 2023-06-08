@@ -27,6 +27,10 @@ type ImageMagick struct {
 	GetAdditionalArgs func(op string, image []byte, source *img.Info, target *img.Info) []string
 }
 
+var beforeResizeConvertOpts = []string{
+	"-auto-orient", // changing orientation before resize, so result width and height is correct
+}
+
 var convertOpts = []string{
 	"-dither", "None",
 	"-define", "jpeg:fancy-upsampling=off",
@@ -140,6 +144,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
+	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, "-resize", targetSize)
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
@@ -189,6 +194,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
+	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, "-resize", targetSize+"^")
 
 	args = append(args, getQualityOptions(source, config, mimeType)...)
@@ -229,7 +235,7 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
-
+	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
 	if p.GetAdditionalArgs != nil {
