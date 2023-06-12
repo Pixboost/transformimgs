@@ -4,7 +4,7 @@
 
 # TransformImgs
 
-[![Build Status](https://travis-ci.org/Pixboost/transformimgs.svg?branch=master)](https://travis-ci.org/Pixboost/transformimgs)
+![Build Status](https://github.com/Pixboost/transformimgs/actions/workflows/action.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Pixboost/transformimgs/branch/main/graph/badge.svg)](https://codecov.io/gh/Pixboost/transformimgs)
 [![Docker Pulls](https://img.shields.io/docker/pulls/pixboost/transformimgs)](https://hub.docker.com/r/pixboost/transformimgs/)
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
@@ -20,7 +20,7 @@ the latest image formats, such as WebP, AVIF and network client hints.
 - [Features](#features)
 - [Quickstart](#quickstart)
 - [API](#api)
-- [Running](#running)
+- [Running](#running-locally)
   * [Docker](#docker)
   * [Options](#options)
   * [Running Locally From Source Code](#running-from-source-code)
@@ -184,4 +184,5 @@ Shout out with any ideas. PRs are more than welcome.
 * ~~[Save-Data header](https://github.com/Pixboost/transformimgs/issues/27)~~ (Added in version 7.0.0)
 * [SVG support](https://github.com/Pixboost/transformimgs/issues/12)
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
+* JpegXL Support since supported by Safari 17
 * ~~GIF support~~ (Added in version 6.1.0)
