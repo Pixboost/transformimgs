@@ -446,6 +446,7 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
 	webP := false
 	avif := false
+	jxl := false
 	for _, f := range supportedFormats {
 		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
@@ -455,8 +456,15 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 		if f == "image/avif" && src.Format != "GIF" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
 		}
+
+		if f == "image/jxl" && src.Format != "GIF" {
+			jxl = true
+		}
 	}
 
+	if jxl {
+		return "jxl:-", "image/jxl"
+	}
 	if avif {
 		return "avif:-", "image/avif"
 	}
@@ -484,7 +492,7 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 
 	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %d, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
 
-	if outputMimeType == "image/avif" {
+	if outputMimeType == "image/avif" || outputMimeType == "image/jxl" {
 		if source.Quality > 85 {
 			quality = 70
 		} else if source.Quality > 75 {

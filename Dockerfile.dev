@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-10-bullseye
+FROM dpokidov/imagemagick:7.1.1-13-bullseye
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \

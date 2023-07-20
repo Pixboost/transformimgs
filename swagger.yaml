@@ -99,6 +99,10 @@ paths:
               schema: 
                 type: string
                 format: binary
+            "image/jxl":
+              schema:
+                type: string
+                format: binary
             "image/avif":
               schema:
                 type: string
@@ -145,6 +149,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            "image/jxl":
+              schema:
+                type: string
+                format: binary
             "image/avif":
               schema:
                 type: string
@@ -184,6 +192,10 @@ paths:
           description: A resized image
           content:
             "image/*":
+              schema:
+                type: string
+                format: binary
+            "image/jxl":
               schema:
                 type: string
                 format: binary
