@@ -157,6 +157,11 @@ $ jmeter -n -t perf-test-webp.jmx -l ./results-webp.jmx -e -o ./results-webp
 $ jmeter -n -t perf-test-avif.jmx -l ./results-avif.jmx -e -o ./results-avif
 ```
 
+* Run JMeter JPEG XL test:
+```
+$ jmeter -n -t perf-test-jxl.jmx -l ./results-jxl.jmx -e -o ./results-jxl
+```
+
 
 ## Opened tickets for images related features
 

@@ -60,7 +60,7 @@
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Accept</stringProp>
-                <stringProp name="Header.value">image/webp</stringProp>
+                <stringProp name="Header.value">image/jxl</stringProp>
               </elementProp>
             </collectionProp>
           </HeaderManager>
