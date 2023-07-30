@@ -9,7 +9,7 @@ info:
     The API could be easily integrated with <img> or <picture> tags.
 
     Use API key "MjUyMTM3OTQyNw__" to try out API with any images from pixabay.com.
-  version: 2.2.0
+  version: 2.3.0
 servers:
   - url: https://pixboost.com/api/2
 components:
