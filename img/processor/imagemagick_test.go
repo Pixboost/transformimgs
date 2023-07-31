@@ -66,6 +66,10 @@ func BenchmarkImageMagickProcessor_Optimise_Avif(b *testing.B) {
 	benchmarkWithFormats(b, []string{"image/avif"})
 }
 
+func BenchmarkImageMagickProcessor_Optimise_Jxl(b *testing.B) {
+	benchmarkWithFormats(b, []string{"image/jxl"})
+}
+
 func benchmarkWithFormats(b *testing.B, formats []string) {
 	f := fmt.Sprintf("%s/%s", "./test_files/transformations", "medium-jpeg.jpg")
 
@@ -314,6 +318,28 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 		})
 }
 
+func TestImageMagickProcessor_Optimise_Jxl(t *testing.T) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/jxl"},
+		})
+	},
+		[]*testTransformation{
+			{"big-jpeg.jpg", "image/jxl"},
+			{"medium-jpeg.jpg", "image/jxl"},
+			{"opaque-png.png", "image/jxl"},
+			{"animated.gif", ""},
+			{"transparent-png.png", "image/jxl"},
+			{"small-transparent-png.png", "image/jxl"},
+			{"transparent-png-use-original.png", "image/jxl"},
+			{"logo.png", "image/jxl"},
+		})
+}
+
 func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 	qualities := []img.Quality{img.DEFAULT, img.LOW, img.LOWER}
 
@@ -343,6 +369,35 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 	}
 }
 
+func TestImageMagickProcessor_Optimise_Jxl_Webp(t *testing.T) {
+	qualities := []img.Quality{img.DEFAULT, img.LOW, img.LOWER}
+
+	for _, q := range qualities {
+		t.Run(fmt.Sprintf("Quality_%d", q), func(t *testing.T) {
+			testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+				return proc.Optimise(&img.TransformationConfig{
+					Src: &img.Image{
+						Id:   imgId,
+						Data: orig,
+					},
+					Quality:          q,
+					SupportedFormats: []string{"image/jxl", "image/webp"},
+				})
+			},
+				[]*testTransformation{
+					{"big-jpeg.jpg", "image/jxl"},
+					{"medium-jpeg.jpg", "image/jxl"},
+					{"opaque-png.png", "image/jxl"},
+					{"animated.gif", "image/webp"},
+					{"transparent-png.png", "image/jxl"},
+					{"small-transparent-png.png", "image/jxl"},
+					{"transparent-png-use-original.png", "image/jxl"},
+					{"logo.png", "image/jxl"},
+				})
+		})
+	}
+}
+
 func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.Resize(&img.TransformationConfig{
@@ -364,24 +419,45 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 		})
 }
 
-func TestImageMagickProcessor_FitToSize_Avif(t *testing.T) {
+func TestImageMagickProcessor_Resize_Jxl(t *testing.T) {
+	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+		return proc.Resize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   imgId,
+				Data: orig,
+			},
+			SupportedFormats: []string{"image/jxl"},
+			Config:           &img.ResizeConfig{Size: "50"},
+		})
+	},
+		[]*testTransformation{
+			{"big-jpeg.jpg", "image/jxl"},
+			{"medium-jpeg.jpg", "image/jxl"},
+			{"opaque-png.png", "image/jxl"},
+			{"animated.gif", ""},
+			{"transparent-png-use-original.png", "image/jxl"},
+			{"logo.png", "image/jxl"},
+		})
+}
+
+func TestImageMagickProcessor_FitToSize_Jxl(t *testing.T) {
 	testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
 		return proc.FitToSize(&img.TransformationConfig{
 			Src: &img.Image{
 				Id:   imgId,
 				Data: orig,
 			},
-			SupportedFormats: []string{"image/avif"},
+			SupportedFormats: []string{"image/jxl"},
 			Config:           &img.ResizeConfig{Size: "50x50"},
 		})
 	},
 		[]*testTransformation{
-			{"big-jpeg.jpg", "image/avif"},
-			{"medium-jpeg.jpg", "image/avif"},
-			{"opaque-png.png", "image/avif"},
+			{"big-jpeg.jpg", "image/jxl"},
+			{"medium-jpeg.jpg", "image/jxl"},
+			{"opaque-png.png", "image/jxl"},
 			{"animated.gif", ""},
-			{"transparent-png-use-original.png", ""},
-			{"logo.png", ""},
+			{"transparent-png-use-original.png", "image/jxl"},
+			{"logo.png", "image/jxl"},
 		})
 }
 
