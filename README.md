@@ -10,7 +10,7 @@
 [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/pixboost/transformimgs/)
 
 Open Source [Image CDN](https://web.dev/image-cdns/) that provides image transformation API and supports 
-the latest image formats, such as WebP, AVIF and network client hints. 
+the latest image formats, such as WebP, AVIF, Jpeg XL, and network client hints. 
 
 
 ## Table of Contents
