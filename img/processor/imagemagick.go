@@ -478,7 +478,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
 	if source.Illustration {
-		opts = append(opts, "-define", "webp:lossless=true")
+		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100")
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
@@ -492,7 +492,7 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 
 	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %d, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
 
-	if outputMimeType == "image/avif" || outputMimeType == "image/jxl" {
+	if outputMimeType == "image/avif" {
 		if source.Quality > 85 {
 			quality = 70
 		} else if source.Quality > 75 {
