@@ -39,6 +39,7 @@ var convertOpts = []string{
 	"-define", "png:compression-strategy=0",
 	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
 	"-define", "heic:speed=6",
+	"-define", "jxl:effort=9",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -499,6 +500,14 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 			quality = 60
 		} else {
 			quality = 50
+		}
+	} else if outputMimeType == "image/jxl" {
+		if source.Quality > 85 {
+			quality = 80
+		} else if source.Quality > 75 {
+			quality = 70
+		} else {
+			quality = 60
 		}
 	} else if source.Quality == 100 {
 		quality = 82
