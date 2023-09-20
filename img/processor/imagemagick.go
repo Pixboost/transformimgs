@@ -39,7 +39,6 @@ var convertOpts = []string{
 	"-define", "png:compression-strategy=0",
 	"-define", "png:exclude-chunk=bKGD,cHRM,EXIF,gAMA,iCCP,iTXt,sRGB,tEXt,zCCP,zTXt,date",
 	"-define", "heic:speed=6",
-	"-define", "jxl:effort=7",
 	"-interlace", "None",
 	"-colorspace", "sRGB",
 	"-sampling-factor", "4:2:0",
@@ -479,7 +478,10 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
 	if source.Illustration {
-		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100")
+		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100", "-define", "jxl:effort=9")
+	}
+	if !source.Illustration {
+		opts = append(opts, "-define", "jxl:effort=7")
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
