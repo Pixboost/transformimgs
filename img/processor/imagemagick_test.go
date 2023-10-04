@@ -329,7 +329,7 @@ func TestImageMagickProcessor_Optimise_Jxl(t *testing.T) {
 		})
 	},
 		[]*testTransformation{
-			{"big-jpeg.jpg", "image/jxl"},
+			{"big-jpeg.jpg", ""},
 			{"medium-jpeg.jpg", "image/jxl"},
 			{"opaque-png.png", "image/jxl"},
 			{"animated.gif", ""},
@@ -369,6 +369,35 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 	}
 }
 
+func TestImageMagickProcessor_Optimise_Jxl_Avif_Webp(t *testing.T) {
+	qualities := []img.Quality{img.DEFAULT, img.LOW, img.LOWER}
+
+	for _, q := range qualities {
+		t.Run(fmt.Sprintf("Quality_%d", q), func(t *testing.T) {
+			testImages(t, func(orig []byte, imgId string) (*img.Image, error) {
+				return proc.Optimise(&img.TransformationConfig{
+					Src: &img.Image{
+						Id:   imgId,
+						Data: orig,
+					},
+					Quality:          q,
+					SupportedFormats: []string{"image/jxl", "image/avif", "image/webp"},
+				})
+			},
+				[]*testTransformation{
+					{"big-jpeg.jpg", "image/webp"},
+					{"medium-jpeg.jpg", "image/avif"},
+					{"opaque-png.png", "image/avif"},
+					{"animated.gif", "image/webp"},
+					{"transparent-png.png", "image/avif"},
+					{"small-transparent-png.png", "image/jxl"},
+					{"transparent-png-use-original.png", "image/jxl"},
+					{"logo.png", "image/jxl"},
+				})
+		})
+	}
+}
+
 func TestImageMagickProcessor_Optimise_Jxl_Webp(t *testing.T) {
 	qualities := []img.Quality{img.DEFAULT, img.LOW, img.LOWER}
 
@@ -385,7 +414,7 @@ func TestImageMagickProcessor_Optimise_Jxl_Webp(t *testing.T) {
 				})
 			},
 				[]*testTransformation{
-					{"big-jpeg.jpg", "image/jxl"},
+					{"big-jpeg.jpg", "image/webp"},
 					{"medium-jpeg.jpg", "image/jxl"},
 					{"opaque-png.png", "image/jxl"},
 					{"animated.gif", "image/webp"},
