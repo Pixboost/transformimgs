@@ -481,7 +481,7 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
 	if source.Illustration {
-		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100", "-define", "jxl:effort=9")
+		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100", "-define", "jxl:effort=8")
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
