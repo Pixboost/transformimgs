@@ -148,6 +148,7 @@ func (p *ImageMagick) Resize(config *img.TransformationConfig) (*img.Image, erro
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
+	args = append(args, getBeforeTransformConvertFormatOptions(source, mimeType)...)
 	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, "-resize", targetSize)
 	args = append(args, getQualityOptions(source, config, mimeType)...)
@@ -198,6 +199,7 @@ func (p *ImageMagick) FitToSize(config *img.TransformationConfig) (*img.Image, e
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
+	args = append(args, getBeforeTransformConvertFormatOptions(source, mimeType)...)
 	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, "-resize", targetSize+"^")
 
@@ -239,6 +241,7 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 
 	args := make([]string, 0)
 	args = append(args, "-") //Input
+	args = append(args, getBeforeTransformConvertFormatOptions(source, mimeType)...)
 	args = append(args, beforeResizeConvertOpts...)
 	args = append(args, getQualityOptions(source, config, mimeType)...)
 	args = append(args, p.AdditionalArgs...)
@@ -485,6 +488,16 @@ func getConvertFormatOptions(source *img.Info) []string {
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
+	}
+
+	return opts
+}
+
+func getBeforeTransformConvertFormatOptions(source *img.Info, outputMimeType string) []string {
+	var opts []string
+
+	if outputMimeType == "image/webp" && source.Format == "GIF" {
+		opts = append(opts, "-coalesce")
 	}
 
 	return opts

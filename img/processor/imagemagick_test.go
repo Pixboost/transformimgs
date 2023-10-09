@@ -160,6 +160,7 @@ func TestImageMagickProcessor_NoAccept(t *testing.T) {
 		{"transparent-png-use-original.png", ""},
 		{"small-transparent-png.png", ""},
 		{"animated.gif", ""},
+		{"animated-coalesce.gif", ""},
 		{"logo.png", ""},
 	}
 
@@ -249,6 +250,7 @@ func TestImageMagickProcessor_Optimise_Webp(t *testing.T) {
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
+			{"animated-coalesce.gif", ""},
 			{"webp-invalid-height.jpg", ""},
 			{"logo.png", "image/webp"},
 		})
@@ -270,6 +272,7 @@ func TestImageMagickProcessor_Resize_Webp(t *testing.T) {
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
+			{"animated-coalesce.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
 			{"logo.png", "image/webp"},
 		})
@@ -291,6 +294,7 @@ func TestImageMagickProcessor_FitToSize_Webp(t *testing.T) {
 			{"opaque-png.png", "image/webp"},
 			{"transparent-png-use-original.png", "image/webp"},
 			{"animated.gif", "image/webp"},
+			{"animated-coalesce.gif", "image/webp"},
 			{"webp-invalid-height.jpg", ""},
 			{"logo.png", "image/webp"},
 		})
@@ -311,6 +315,7 @@ func TestImageMagickProcessor_Optimise_Avif(t *testing.T) {
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
+			{"animated-coalesce.gif", ""},
 			{"transparent-png.png", "image/avif"},
 			{"small-transparent-png.png", ""},
 			{"transparent-png-use-original.png", ""},
@@ -333,6 +338,7 @@ func TestImageMagickProcessor_Optimise_Jxl(t *testing.T) {
 			{"medium-jpeg.jpg", "image/jxl"},
 			{"opaque-png.png", "image/jxl"},
 			{"animated.gif", ""},
+			{"animated-coalesce.gif", ""},
 			{"transparent-png.png", "image/jxl"},
 			{"small-transparent-png.png", "image/jxl"},
 			{"transparent-png-use-original.png", ""},
@@ -360,6 +366,7 @@ func TestImageMagickProcessor_Optimise_Avif_Webp(t *testing.T) {
 					{"medium-jpeg.jpg", "image/avif"},
 					{"opaque-png.png", "image/avif"},
 					{"animated.gif", "image/webp"},
+					{"animated-coalesce.gif", "image/webp"},
 					{"transparent-png.png", "image/avif"},
 					{"small-transparent-png.png", "image/webp"},
 					{"transparent-png-use-original.png", "image/webp"},
@@ -389,6 +396,7 @@ func TestImageMagickProcessor_Optimise_Jxl_Avif_Webp(t *testing.T) {
 					{"medium-jpeg.jpg", "image/avif"},
 					{"opaque-png.png", "image/avif"},
 					{"animated.gif", "image/webp"},
+					{"animated-coalesce.gif", "image/webp"},
 					{"transparent-png.png", "image/avif"},
 					{"small-transparent-png.png", "image/jxl"},
 					{"transparent-png-use-original.png", ""},
@@ -418,6 +426,7 @@ func TestImageMagickProcessor_Optimise_Jxl_Webp(t *testing.T) {
 					{"medium-jpeg.jpg", "image/jxl"},
 					{"opaque-png.png", "image/jxl"},
 					{"animated.gif", "image/webp"},
+					{"animated-coalesce.gif", "image/webp"},
 					{"transparent-png.png", "image/jxl"},
 					{"small-transparent-png.png", "image/jxl"},
 					{"transparent-png-use-original.png", ""},
@@ -443,6 +452,7 @@ func TestImageMagickProcessor_Resize_Avif(t *testing.T) {
 			{"medium-jpeg.jpg", "image/avif"},
 			{"opaque-png.png", "image/avif"},
 			{"animated.gif", ""},
+			{"animated-coalesce.gif", ""},
 			{"transparent-png-use-original.png", ""},
 			{"logo.png", ""},
 		})
@@ -485,6 +495,7 @@ func TestImageMagickProcessor_FitToSize_Jxl(t *testing.T) {
 			{"medium-jpeg.jpg", "image/jxl"},
 			{"opaque-png.png", "image/jxl"},
 			{"animated.gif", ""},
+			{"animated-coalesce.gif", ""},
 			{"transparent-png-use-original.png", "image/jxl"},
 			{"logo.png", "image/jxl"},
 		})
