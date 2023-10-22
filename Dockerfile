@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-13-bullseye AS build
+FROM dpokidov/imagemagick:7.1.1-17-bullseye AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -134,7 +134,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.1-13-bullseye
+FROM dpokidov/imagemagick:7.1.1-17-bullseye
 
 ENV IM_HOME /usr/local/bin
 
