@@ -9,7 +9,7 @@ info:
     The API could be easily integrated with <img> or <picture> tags.
 
     Use API key "MjUyMTM3OTQyNw__" to try out API with any images from pixabay.com.
-  version: 2.2.0
+  version: 2.3.0
 servers:
   - url: https://pixboost.com/api/2
 components:
@@ -99,6 +99,10 @@ paths:
               schema: 
                 type: string
                 format: binary
+            "image/jxl":
+              schema:
+                type: string
+                format: binary
             "image/avif":
               schema:
                 type: string
@@ -145,6 +149,10 @@ paths:
               schema:
                 type: string
                 format: binary
+            "image/jxl":
+              schema:
+                type: string
+                format: binary
             "image/avif":
               schema:
                 type: string
@@ -184,6 +192,10 @@ paths:
           description: A resized image
           content:
             "image/*":
+              schema:
+                type: string
+                format: binary
+            "image/jxl":
               schema:
                 type: string
                 format: binary

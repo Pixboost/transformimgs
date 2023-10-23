@@ -55,14 +55,14 @@
     <pre class="language-html">
       <code>
 &lt;img
-  src=&quot;/cdn/http://webserver/img/parrot.jpg/optimise&quot;
+  src=&quot;/cdn/http://webserver/img/parrot-lossy.jpg/optimise&quot;
   alt=&quot;red parrot&quot; width=&quot;2072&quot; height=&quot;2590&quot;/&gt;
       </code>
     </pre>
 
     <div style="display: flex; flex-direction: row; max-width: 100%">
       <figure style="max-width: 40vw;">
-        <img src="/img/parrot.jpg" alt="red parrot" width="2072" height="2590"/>
+        <img src="/img/parrot-lossy.jpg" alt="red parrot" width="2072" height="2590"/>
         <figcaption>
           Original Image.
           Photo by <a href="https://unsplash.com/@kriztheman?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Christopher Alvarenga</a> on <a href="https://unsplash.com/s/photos/parrot?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
@@ -70,7 +70,7 @@
       </figure>
 
       <figure style="max-width: 40vw;">
-        <img src="/cdn/http://webserver/img/parrot.jpg/optimise" alt="red parrot" width="2072" height="2590"/>
+        <img src="/cdn/http://webserver/img/parrot-lossy.jpg/optimise" alt="red parrot" width="2072" height="2590"/>
         <figcaption>
           Optimised image.
           Photo by <a href="https://unsplash.com/@kriztheman?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Christopher Alvarenga</a> on <a href="https://unsplash.com/s/photos/parrot?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
@@ -89,37 +89,37 @@
       &lt;source
           media=&quot;(-webkit-min-device-pixel-ratio: 2) and (-webkit-max-device-pixel-ratio: 2.9999)&quot;
           srcset=&quot;
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&amp;dppx=2 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&amp;dppx=2 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&amp;dppx=2 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&amp;dppx=2 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&amp;dppx=2 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&amp;dppx=2 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=2 2400w&quot;
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300&amp;dppx=2 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400&amp;dppx=2 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500&amp;dppx=2 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600&amp;dppx=2 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200&amp;dppx=2 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800&amp;dppx=2 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise?dppx=2 2400w&quot;
           sizes=&quot;(min-width: 768px) 600px, 100vw&quot;
       &gt;
       &lt;source
           media=&quot;(-webkit-min-device-pixel-ratio: 3)&quot;
           srcset=&quot;
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&amp;dppx=3 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&amp;dppx=3 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&amp;dppx=3 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&amp;dppx=3 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&amp;dppx=3 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&amp;dppx=3 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=3 2400w&quot;
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300&amp;dppx=3 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400&amp;dppx=3 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500&amp;dppx=3 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600&amp;dppx=3 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200&amp;dppx=3 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800&amp;dppx=3 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise?dppx=3 2400w&quot;
           sizes=&quot;(min-width: 768px) 600px, 100vw&quot;
       &gt;
       &lt;img
-          src=&quot;/cdn/http://webserver/img/parrot.jpg/optimise&quot;
+          src=&quot;/cdn/http://webserver/img/parrot-lossy.jpg/optimise&quot;
           srcset=&quot;
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise 2400w&quot;
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise 2400w&quot;
           alt=&quot;image&quot;
           sizes=&quot;(min-width: 768px) 600px, 100vw&quot;
           class=&quot;mobile-100&quot;
@@ -132,42 +132,94 @@
       <source
           media="(-webkit-min-device-pixel-ratio: 2) and (-webkit-max-device-pixel-ratio: 2.9999)"
           srcset="
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dppx=2 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dppx=2 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dppx=2 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dppx=2 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dppx=2 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dppx=2 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=2 2400w"
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300&dppx=2 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400&dppx=2 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500&dppx=2 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600&dppx=2 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200&dppx=2 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800&dppx=2 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise?dppx=2 2400w"
           sizes="(min-width: 768px) 600px, 100vw"
       >
       <source
           media="(-webkit-min-device-pixel-ratio: 3)"
           srcset="
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300&dppx=3 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400&dppx=3 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500&dppx=3 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600&dppx=3 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200&dppx=3 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800&dppx=3 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise?dppx=3 2400w"
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300&dppx=3 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400&dppx=3 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500&dppx=3 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600&dppx=3 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200&dppx=3 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800&dppx=3 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise?dppx=3 2400w"
           sizes="(min-width: 768px) 600px, 100vw"
       >
       <img
-          src="/cdn/http://webserver/img/parrot.jpg/optimise"
+          src="/cdn/http://webserver/img/parrot-lossy.jpg/optimise"
           srcset="
-                /cdn/http://webserver/img/parrot.jpg/resize?size=300 300w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=400 400w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=500 500w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=600 600w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1200 1200w,
-                /cdn/http://webserver/img/parrot.jpg/resize?size=1800 1800w,
-                /cdn/http://webserver/img/parrot.jpg/optimise 2400w"
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=300 300w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=400 400w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=500 500w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=600 600w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1200 1200w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/resize?size=1800 1800w,
+                /cdn/http://webserver/img/parrot-lossy.jpg/optimise 2400w"
           alt="image"
           sizes="(min-width: 768px) 600px, 100vw"
           class="mobile-100"
       >
     </picture>
+    
+    <h2>Lossless PNG</h2>
+    
+    <p>
+      If our algorithm find that the image is logo or illustration then we use lossless encoding to 
+      preserve quality
+    </p>
+
+    <picture>
+      <source
+          media="(-webkit-min-device-pixel-ratio: 2) and (-webkit-max-device-pixel-ratio: 2.9999)"
+          srcset="
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=300&dppx=2 300w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=400&dppx=2 400w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=500&dppx=2 500w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=600&dppx=2 600w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1200&dppx=2 1200w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1800&dppx=2 1800w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=2000&dppx=2 2000w,
+                /cdn/http://webserver/img/meeting-lossless.png/optimise?dppx=2 3200w"
+          sizes="(min-width: 768px) 2000px, 100vw"
+      >
+      <source
+          media="(-webkit-min-device-pixel-ratio: 3)"
+          srcset="
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=300&dppx=3 300w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=400&dppx=3 400w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=500&dppx=3 500w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=600&dppx=3 600w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1200&dppx=3 1200w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1800&dppx=3 1800w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=2000&dppx=3 2000w,
+                /cdn/http://webserver/img/meeting-lossless.png/optimise?dppx=3 3200w"
+          sizes="(min-width: 768px) 2000px, 100vw"
+      >
+      <img
+          src="/cdn/http://webserver/img/meeting-lossless.png/optimise"
+          srcset="
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=300 300w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=400 400w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=500 500w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=600 600w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1200 1200w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=1800 1800w,
+                /cdn/http://webserver/img/meeting-lossless.png/resize?size=2000 2000w,
+                /cdn/http://webserver/img/meeting-lossless.png/optimise 3200w"
+          alt="image"
+          sizes="(min-width: 768px) 2000px, 100vw"
+          class="mobile-100"
+      >
+    </picture>
+
 
     <script type="text/javascript">
       /* PrismJS 1.27.0
