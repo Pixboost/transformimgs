@@ -50,7 +50,7 @@ To achieve that goal we should keep API to bare minimum and hide the smartness i
 ## Features
 
 * Resize/optimises/crops raster (PNG and JPEG) images.
-* [AVIF](https://en.wikipedia.org/wiki/AV1) / [WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
+* [JpegXL](https://jpegxl.info/) / [AVIF](https://en.wikipedia.org/wiki/AV1) / [WebP](https://developers.google.com/speed/webp/) support based on "Accept" header.
 * [Vary](www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44) header support - ready to deploy behind any CDN.
 * Responsive images support including high DPI (retina) displays 
 * [Save-Data](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Save-Data) support
