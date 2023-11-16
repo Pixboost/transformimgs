@@ -60,10 +60,14 @@ const (
 	// MaxAVIFTargetSize is a maximum size in pixels of the result image
 	// that could be converted to AVIF.
 	//
-	// There are two aspects to this:
-	// * Encoding to AVIF consumes a lot of memory
-	// * On big sizes quality of Webp is better (could be a codec thing rather than a format)
+	// This is mainly done because encoding to AVIF consumes a lot of memory, and CPU time
 	MaxAVIFTargetSize = 2000 * 2000
+
+	MaxJxlLossyTargetSize = 1000 * 1000
+
+	JxlMime  = "image/jxl"
+	WebpMime = "image/webp"
+	AvifMime = "image/avif"
 )
 
 func init() {
@@ -449,22 +453,29 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
 	webP := false
 	avif := false
+	jxl := false
 	for _, f := range supportedFormats {
-		if f == "image/webp" && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
+		if f == WebpMime && src.Height < MaxWebpHeight && src.Width < MaxWebpWidth {
 			webP = true
 		}
 
 		targetSize := target.Width * target.Height
-		if f == "image/avif" && src.Format != "GIF" && !src.Illustration && targetSize < MaxAVIFTargetSize && targetSize != 0 {
+		if f == AvifMime && src.Format != "GIF" && targetSize < MaxAVIFTargetSize && targetSize != 0 {
 			avif = true
+		}
+
+		if f == JxlMime && src.Format != "GIF" && (src.Illustration || targetSize < MaxJxlLossyTargetSize) {
+			jxl = true
 		}
 	}
 
-	if avif {
-		return "avif:-", "image/avif"
-	}
-	if webP {
-		return "webp:-", "image/webp"
+	switch {
+	case (src.Illustration && jxl) || (jxl && !avif):
+		return "jxl:-", JxlMime
+	case avif && !src.Illustration:
+		return "avif:-", AvifMime
+	case webP:
+		return "webp:-", WebpMime
 	}
 
 	return "-", ""
@@ -473,7 +484,9 @@ func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string)
 func getConvertFormatOptions(source *img.Info) []string {
 	var opts []string
 	if source.Illustration {
-		opts = append(opts, "-define", "webp:lossless=true")
+		opts = append(opts, "-define", "webp:lossless=true", "-quality", "100", "-define", "jxl:effort=9")
+	} else {
+		opts = append(opts, "-define", "jxl:effort=7")
 	}
 	if source.Format != "GIF" {
 		opts = append(opts, "-define", "webp:method=6")
@@ -497,23 +510,40 @@ func getQualityOptions(source *img.Info, config *img.TransformationConfig, outpu
 
 	img.Log.Printf("[%s] Getting quality for the image, source quality: %d, quality: %d, output type: %s", config.Src.Id, source.Quality, config.Quality, outputMimeType)
 
-	if outputMimeType == "image/avif" {
-		if source.Quality > 85 {
+	if source.Illustration {
+		return []string{}
+	}
+
+	switch {
+	case outputMimeType == AvifMime:
+		switch {
+		case source.Quality > 85:
 			quality = 70
-		} else if source.Quality > 75 {
+		case source.Quality > 75:
 			quality = 60
-		} else {
+		default:
 			quality = 50
 		}
-	} else if source.Quality == 100 {
+	case outputMimeType == JxlMime:
+		switch {
+		case source.Quality > 85:
+			quality = 82
+		case source.Quality > 75:
+			quality = 72
+		default:
+			quality = 62
+		}
+	case source.Quality == 100:
 		quality = 82
-	} else if config.Quality != img.DEFAULT {
+	case config.Quality != img.DEFAULT:
 		quality = source.Quality
 	}
 
 	if quality == 0 {
 		return []string{}
 	}
+
+	// If using lossy compression, then we can go lower
 	if quality != 100 {
 		switch config.Quality {
 		case img.LOW:
