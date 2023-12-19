@@ -548,6 +548,33 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 	}
 }
 
+var trimBorderTestFiles = []string{"logo-1.png", "logo-2.png", "no-border.jpg"}
+
+func TestImageMagick_Resize_TrimBorder(t *testing.T) {
+	for _, tt := range trimBorderTestFiles {
+		f := fmt.Sprintf("%s/%s", "./test_files/trim-border", tt)
+
+		orig, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Errorf("can't read file %s: %+v", f, err)
+		}
+
+		resultImage, err := proc.Optimise(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   "img",
+				Data: orig,
+			},
+			TrimBorder: true,
+		})
+
+		if err != nil {
+			t.Errorf("couldn't optimise image %s", tt)
+		}
+
+		ioutil.WriteFile(fmt.Sprintf("./test_files/trim-border/expected_optimise_%s", tt), resultImage.Data, 0777)
+	}
+}
+
 func testImages(t *testing.T, fn transform, files []*testTransformation) {
 	results := make([]*result, 0)
 	for _, tt := range files {

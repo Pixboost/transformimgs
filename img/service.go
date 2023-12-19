@@ -44,13 +44,7 @@ const (
 	LOWER
 )
 
-type OptimiseConfig struct {
-	// TrimBorder is a flag whether we need to remove border or not
-	TrimBorder bool
-}
-
 type ResizeConfig struct {
-	OptimiseConfig
 	// Size is a size of output images in the format WxH.
 	Size string
 }
@@ -67,6 +61,8 @@ type TransformationConfig struct {
 	SupportedFormats []string
 	// Quality defines quality of output image
 	Quality Quality
+	// TrimBorder is a flag whether we need to remove border or not
+	TrimBorder bool
 	// Config is the configuration for the specific transformation
 	Config interface{}
 }
@@ -333,9 +329,6 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 			}
 		}
 	}
-	if c, ok := config.(*OptimiseConfig); ok {
-		c.TrimBorder = trimBorder
-	}
 
 	saveDataHeader := req.Header.Get("Save-Data")
 
@@ -367,6 +360,7 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
 			Quality:          getQuality(saveDataHeader, saveDataParam, dppx),
+			TrimBorder:       trimBorder,
 			Config:           config,
 		},
 		Resp: resp,
