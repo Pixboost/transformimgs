@@ -72,6 +72,15 @@ components:
        galaxy8:
          value: 4
          summary: Samsung Galaxy S8
+    trim-border:
+       description: >
+         Trims a border of the image if it exists.
+       required: false
+       in: query
+       name: trim-border
+       schema:
+         type: boolean
+       allowEmptyValue: true
 
 security:
   - ApiKey: []
@@ -91,6 +100,7 @@ paths:
         - $ref: "#/components/parameters/imgUrl"
         - $ref: "#/components/parameters/dppx"
         - $ref: "#/components/parameters/save-data"
+        - $ref: "#/components/parameters/trim-border"
       responses: 
         200:
           description: An optimised image
@@ -126,6 +136,7 @@ paths:
         - $ref: "#/components/parameters/imgUrl"
         - $ref: "#/components/parameters/dppx"
         - $ref: "#/components/parameters/save-data"
+        - $ref: "#/components/parameters/trim-border"
         - name: size
           required: true
           in: query
@@ -176,6 +187,7 @@ paths:
         - $ref: "#/components/parameters/imgUrl"
         - $ref: "#/components/parameters/dppx"
         - $ref: "#/components/parameters/save-data"
+        - $ref: "#/components/parameters/trim-border"
         - name: size
           required: true
           in: query
