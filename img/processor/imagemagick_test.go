@@ -1,12 +1,16 @@
 package processor_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -550,7 +554,9 @@ func TestImageMagick_IsIllustration(t *testing.T) {
 
 var trimBorderTestFiles = []string{"logo-1.png", "logo-2.png", "no-border.jpg"}
 
-func TestImageMagick_Resize_TrimBorder(t *testing.T) {
+func TestImageMagick_TrimBorder(t *testing.T) {
+	var overrideExpected = false
+
 	for _, tt := range trimBorderTestFiles {
 		f := fmt.Sprintf("%s/%s", "./test_files/trim-border", tt)
 
@@ -571,7 +577,79 @@ func TestImageMagick_Resize_TrimBorder(t *testing.T) {
 			t.Errorf("couldn't optimise image %s", tt)
 		}
 
-		ioutil.WriteFile(fmt.Sprintf("./test_files/trim-border/expected_optimise_%s", tt), resultImage.Data, 0777)
+		expectedFile := fmt.Sprintf("./test_files/trim-border/expected/optimise/%s", tt)
+		compareImage(resultImage, expectedFile, t, overrideExpected)
+
+		resultImage, err = proc.Resize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   "img",
+				Data: orig,
+			},
+			TrimBorder: true,
+			Config:     &img.ResizeConfig{Size: "300"},
+		})
+
+		if err != nil {
+			t.Errorf("couldn't resize image %s", tt)
+		}
+
+		expectedFile = fmt.Sprintf("./test_files/trim-border/expected/resize/%s", tt)
+		compareImage(resultImage, expectedFile, t, overrideExpected)
+
+		resultImage, err = proc.FitToSize(&img.TransformationConfig{
+			Src: &img.Image{
+				Id:   "img",
+				Data: orig,
+			},
+			TrimBorder: true,
+			Config:     &img.ResizeConfig{Size: "200x80"},
+		})
+
+		if err != nil {
+			t.Errorf("couldn't fit image %s", tt)
+		}
+
+		expectedFile = fmt.Sprintf("./test_files/trim-border/expected/fit/%s", tt)
+		compareImage(resultImage, expectedFile, t, overrideExpected)
+	}
+}
+
+func compareImage(img *img.Image, expectedFile string, t *testing.T, overrideExpected bool) {
+	if overrideExpected {
+		ioutil.WriteFile(expectedFile, img.Data, 0777)
+	} else {
+		ext := filepath.Ext(expectedFile)
+		actualFile, err := os.CreateTemp("", fmt.Sprintf("image*%s", ext))
+		if err != nil {
+			t.Errorf("could not create temp file %s", err)
+		}
+		_, err = actualFile.Write(img.Data)
+		if err != nil {
+			t.Errorf("could not write to temp file %s", err)
+		}
+		_ = actualFile.Close()
+
+		var out, cmderr bytes.Buffer
+		cmd := exec.Command(os.ExpandEnv("${IM_HOME}/magick"))
+		cmd.Args = append(cmd.Args, "compare", "-metric", "AE", actualFile.Name(), expectedFile, "null:")
+		cmd.Stdout = &out
+		cmd.Stderr = &cmderr
+
+		fmt.Println(cmd.Args)
+
+		err = cmd.Run()
+		errStr := cmderr.String()
+		outStr := out.String()
+		if err != nil {
+			t.Errorf("error executing compare command: %s, %s", err.Error(), errStr)
+		}
+		pixelsDiffCnt, err := strconv.Atoi(errStr)
+		if err != nil {
+			t.Errorf("could not parse output of compare [%s]", outStr)
+		}
+		if pixelsDiffCnt > 0 {
+			t.Errorf("expected 0 different pixels but found %d when comparing %s", pixelsDiffCnt, expectedFile)
+		}
 	}
 }
 
