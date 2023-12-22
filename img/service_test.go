@@ -536,9 +536,9 @@ func TestService_TrimBorder(t *testing.T) {
 
 	testCases := []test.TestCase{
 		{
-			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?trim-border=abc",
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=50x50&trim-border=abc",
 			ExpectedCode: http.StatusBadRequest,
-			Description:  "Source image URL is required",
+			Description:  "trim-border param value is invalid",
 		},
 	}
 
