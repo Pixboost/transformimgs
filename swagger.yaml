@@ -74,7 +74,7 @@ components:
          summary: Samsung Galaxy S8
     trim-border:
        description: >
-         Trims a border of the image if it exists.
+         Removes the edges of the image that have exactly the same color.
        required: false
        in: query
        name: trim-border
