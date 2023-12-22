@@ -23,6 +23,7 @@ const (
 	ImgPngOut          = "123"
 	ImgLowQualityOut   = "12"
 	ImgLowerQualityOut = "1"
+	ImgBorderTrimmed   = "777"
 
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
@@ -75,6 +76,12 @@ func (r *resizerMock) supports(supportedFormats []string, format string) bool {
 }
 
 func (r *resizerMock) resultImage(config *img.TransformationConfig) *img.Image {
+	if config.TrimBorder {
+		return &img.Image{
+			Data: []byte(ImgBorderTrimmed),
+		}
+	}
+
 	if string(config.Src.Data) == NoContentTypeImgSrc {
 		return &img.Image{
 			Data: []byte(NoContentTypeImgOut),
@@ -337,6 +344,32 @@ func TestService_Transforms(t *testing.T) {
 					},
 				},
 				{
+					Description: "Trim Border",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&trim-border", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgBorderTrimmed, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
+					Description: "Trim Border False",
+					Request: &http.Request{
+						Method: "GET",
+						URL:    parseUrl(fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/img.png%s&trim-border=0", tt.urlSuffix), t),
+					},
+					Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+						test.Error(t,
+							test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+							test.Equal(ImgPngOut, w.Body.String(), "Resulted image"),
+						)
+					},
+				},
+				{
 					Url:          fmt.Sprintf("http://localhost/img/NO_SUCH_IMAGE%s", tt.urlSuffix),
 					ExpectedCode: http.StatusInternalServerError,
 					Description:  "Read error",
@@ -491,6 +524,21 @@ func TestService_FitToSizeUrl(t *testing.T) {
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=300",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "2 - Size param should be in format WxH",
+		},
+	}
+
+	test.RunRequests(testCases)
+}
+
+func TestService_TrimBorder(t *testing.T) {
+	test.Service = createService(t).GetRouter().ServeHTTP
+	test.T = t
+
+	testCases := []test.TestCase{
+		{
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/fit?size=50x50&trim-border=abc",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "trim-border param value is invalid",
 		},
 	}
 

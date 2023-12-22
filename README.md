@@ -166,13 +166,8 @@ $ jmeter -n -t perf-test-jxl.jmx -l ./results-jxl.jmx -e -o ./results-jxl
 ## Opened tickets for images related features
 
 * [Safari to support Save-Data](https://bugs.webkit.org/show_bug.cgi?id=199101)
-* [Safari to support AVIF](https://bugs.webkit.org/show_bug.cgi?id=207750)
-* [Firefox to support JPEG XL](https://bugzilla.mozilla.org/show_bug.cgi?id=1539075)
-* [Chrome to support JPEG XL](https://bugs.chromium.org/p/chromium/issues/detail?id=1178058)
-* [Safari to support JPEG XL](https://bugs.webkit.org/show_bug.cgi?id=208235)
-* Safari to support native lazy loading
-  * [Implementation](https://bugs.webkit.org/show_bug.cgi?id=196698)
-  * [Enabled by default](https://bugs.webkit.org/show_bug.cgi?id=208094)
+* [Auto sizes for lazy loaded img in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=1816615)
+* [Auto sizes for lazy loaded img in Safari](https://bugs.webkit.org/show_bug.cgi?id=253143)
 
 ## Contribute
 

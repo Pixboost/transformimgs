@@ -61,6 +61,8 @@ type TransformationConfig struct {
 	SupportedFormats []string
 	// Quality defines quality of output image
 	Quality Quality
+	// TrimBorder is a flag whether we need to remove border or not
+	TrimBorder bool
 	// Config is the configuration for the specific transformation
 	Config interface{}
 }
@@ -147,8 +149,7 @@ func (r *Service) OptimiseUrl(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
-
-	size := getQueryParam(req.URL, "size")
+	size, _ := getQueryParam(req.URL, "size")
 	if len(size) == 0 {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
@@ -165,7 +166,7 @@ func (r *Service) ResizeUrl(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Service) FitToSizeUrl(resp http.ResponseWriter, req *http.Request) {
-	size := getQueryParam(req.URL, "size")
+	size, _ := getQueryParam(req.URL, "size")
 	if len(size) == 0 {
 		http.Error(resp, "size param is required", http.StatusBadRequest)
 		return
@@ -244,11 +245,11 @@ func addHeaders(resp http.ResponseWriter, image *Image) {
 	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
 }
 
-func getQueryParam(url *url.URL, name string) string {
+func getQueryParam(url *url.URL, name string) (string, bool) {
 	if len(url.Query()[name]) == 1 {
-		return url.Query()[name][0]
+		return url.Query()[name][0], true
 	}
-	return ""
+	return "", url.Query().Has(name)
 }
 
 func getImgUrl(req *http.Request) string {
@@ -296,7 +297,7 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 	}
 
 	var dppx float64 = 0
-	dppxParam := getQueryParam(req.URL, "dppx")
+	dppxParam, _ := getQueryParam(req.URL, "dppx")
 	if len(dppxParam) != 0 {
 		var err error
 		dppx, err = strconv.ParseFloat(dppxParam, 32)
@@ -308,10 +309,24 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 
 	var saveDataParam = ""
 	if SaveDataEnabled {
-		saveDataParam = getQueryParam(req.URL, "save-data")
+		saveDataParam, _ = getQueryParam(req.URL, "save-data")
 		if len(saveDataParam) > 0 && saveDataParam != "off" && saveDataParam != "hide" {
 			http.Error(resp, "save-data query param must be one of 'off', 'hide'", http.StatusBadRequest)
 			return
+		}
+	}
+
+	var trimBorder = false
+	trimBorderParamValue, trimBorderParamExist := getQueryParam(req.URL, "trim-border")
+	if trimBorderParamExist {
+		if len(trimBorderParamValue) == 0 {
+			trimBorder = true
+		} else {
+			var err error
+			trimBorder, err = strconv.ParseBool(trimBorderParamValue)
+			if err != nil {
+				http.Error(resp, "can't parse trim-border param", http.StatusBadRequest)
+			}
 		}
 	}
 
@@ -345,6 +360,7 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 			Src:              srcImage,
 			SupportedFormats: supportedFormats,
 			Quality:          getQuality(saveDataHeader, saveDataParam, dppx),
+			TrimBorder:       trimBorder,
 			Config:           config,
 		},
 		Resp: resp,
