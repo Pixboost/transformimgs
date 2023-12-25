@@ -4,6 +4,8 @@
 
 # TransformImgs
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Pixboost/transformimgs/v8.svg)](https://pkg.go.dev/github.com/Pixboost/transformimgs/v8)
+![Go Report Card](https://goreportcard.com/badge/github.com/Pixboost/transformimgs/v8)
 ![Build Status](https://github.com/Pixboost/transformimgs/actions/workflows/action.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Pixboost/transformimgs/branch/main/graph/badge.svg)](https://codecov.io/gh/Pixboost/transformimgs)
 [![Docker Pulls](https://img.shields.io/docker/pulls/pixboost/transformimgs)](https://hub.docker.com/r/pixboost/transformimgs/)
@@ -24,6 +26,7 @@ the latest image formats, such as WebP, AVIF, Jpeg XL, and network client hints.
   * [Docker](#docker)
   * [Options](#options)
   * [Running Locally From Source Code](#running-from-source-code)
+  * [Using from Go Web Application](#using-from-go-web-application)
 - [SaaS](#saas)
 - [Performance tests](#performance-tests)
 - [Opened tickets for images related features](#opened-tickets-for-images-related-features)
@@ -119,6 +122,11 @@ $ git clone git@github.com:Pixboost/transformimgs.git
 $ cd transformimgs
 $ ./run.sh 
 ```
+
+### Using from Go Web Application
+
+You could also easily plugin HTTP route into your existing web application 
+using service.GetRouter method. Here is a quick [example of how to do that](./example_test.go). 
 
 ## SaaS
 
