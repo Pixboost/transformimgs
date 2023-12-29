@@ -41,7 +41,7 @@ components:
          compression when data saver mode is on.
          When passing "hide" value the result image will be an empty 1x1 image.
          When absent the API will use reduced quality for result images.
-      required: true
+      required: false
       in: query
       name: save-data
       schema:
@@ -52,7 +52,7 @@ components:
         Number of dots per pixel defines the ratio between device and CSS pixels.
         The query parameter is a hint that enables extra optimisations for high
         density screens. The format is a float number that's the same format as window.devicePixelRatio.
-      required: true
+      required: false
       in: query
       name: dppx
       schema:
