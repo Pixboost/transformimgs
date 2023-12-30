@@ -80,7 +80,7 @@ The API has 4 HTTP endpoints:
 * /img/{IMG_URL}/asis - returns original image
 
 Docs:
-* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any image from pixabay.com
+* [Swagger-UI](https://pixboost.com/docs/api/) - use API key `MjUyMTM3OTQyNw__` which allows to transform any image from unsplash.com
 * [OpenAPI spec](swagger.yaml)
 
 ## Running Locally
