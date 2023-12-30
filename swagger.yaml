@@ -8,8 +8,8 @@ info:
     
     The API could be easily integrated with <img> or <picture> tags.
 
-    Use API key "MjUyMTM3OTQyNw__" to try out API with any images from pixabay.com.
-  version: 2.3.0
+    Use API key "MjUyMTM3OTQyNw__" to try out API with any images from unsplash.com.
+  version: 2.4.0
 servers:
   - url: https://pixboost.com/api/2
 components:
@@ -30,10 +30,10 @@ components:
         type: string
       examples:
         simple:
-          value: https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg
+          value: https://images.unsplash.com/photo-1703860274966-40a784387389
         with-query-param:
-          value: https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg%3Fv%3D123
-          description: will fetch https://cdn.pixabay.com/photo/2014/11/16/23/39/superhero-534120_960_720.jpg?v=123
+          value: https://images.unsplash.com/photo-1703860274966-40a784387389%3Fv%3D123
+          description: will fetch https://images.unsplash.com/photo-1703860274966-40a784387389?v=123
     save-data:
       description: >
          Sets an optional behaviour when Save-Data header is "on".
