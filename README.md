@@ -194,5 +194,3 @@ Shout out with any ideas. PRs are more than welcome.
 * Consider using [Zopfli](https://github.com/google/zopfli) or [Brotli](https://en.wikipedia.org/wiki/Brotli) for PNGs
 * JpegXL Support since supported by Safari 17
 * ~~GIF support~~ (Added in version 6.1.0)
-
-Testing commit signing
