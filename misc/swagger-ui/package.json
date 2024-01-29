@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/Pixboost/transformimgs#readme",
   "dependencies": {
-    "swagger-ui": "5.10.5"
+    "swagger-ui": "5.11.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",
