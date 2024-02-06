@@ -137,8 +137,6 @@ RUN set -eux; \
 	epoch="$(stat -c '%Y' /usr/local/go)"; \
 	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]
 
-FROM buildpack-deps:bookworm-scm
-
 # install cgo-related dependencies
 RUN set -eux; \
 	apt-get update; \
@@ -150,8 +148,6 @@ RUN set -eux; \
 		pkg-config \
 	; \
 	rm -rf /var/lib/apt/lists/*
-
-ENV GOLANG_VERSION 1.20.13
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
