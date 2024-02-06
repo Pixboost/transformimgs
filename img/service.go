@@ -29,7 +29,7 @@ var Log glogi.Logger = glogi.NewSimpleLogger()
 type Loader interface {
 	// Load loads an image from the given source.
 	//
-	// ctx is the context of the current transaction. Typically it's a context
+	// ctx is the context of the current transaction. Typically, it's a context
 	// of an incoming HTTP request, so we make it possible to pass values through middlewares.
 	//
 	// Returns an image.

@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-22-bullseye
+FROM dpokidov/imagemagick:7.1.1-27-bookworm
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -16,44 +16,44 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 #Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.20.12
+ENV GOLANG_VERSION 1.20.13
 
 RUN set -eux; \
 	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.20.12.linux-amd64.tar.gz'; \
-			sha256='9c5d48c54dd8b0a3b2ef91b0f92a1190aa01f11d26e98033efa64c46a30bba7b'; \
+			url='https://dl.google.com/go/go1.20.13.linux-amd64.tar.gz'; \
+			sha256='9a9d3dcae2b6a638b1f2e9bd4db08ffb39c10e55d9696914002742d90f0047b5'; \
 			;; \
 		'armel') \
 			export GOARCH='arm' GOARM='5' GOOS='linux'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.20.12.linux-armv6l.tar.gz'; \
-			sha256='bf4687cbbf0c44a82311d52e2dcccb263f3d9c3b512007e1fae569e03dc0a189'; \
+			url='https://dl.google.com/go/go1.20.13.linux-armv6l.tar.gz'; \
+			sha256='d4c6c671423ce6eef3f240bf014115b2673ad6a89e12429b5a331b95952c7279'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.20.12.linux-arm64.tar.gz'; \
-			sha256='8afe8e3fb6972eaa2179ef0a71678c67f26509fab4f0f67c4b00f4cdfa92dc87'; \
+			url='https://dl.google.com/go/go1.20.13.linux-arm64.tar.gz'; \
+			sha256='a2d811cef3c4fc77c01195622e637af0c2cf8b3814a95a0920cf2f83b6061d38'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.20.12.linux-386.tar.gz'; \
-			sha256='77db17c6350448b0c3afa5c4248426d8a445b5e8ac2411fff57463b47f8d7f80'; \
+			url='https://dl.google.com/go/go1.20.13.linux-386.tar.gz'; \
+			sha256='4da6f08510a21b829a065d3f99914bfbe1d8b212664cea230485a64e7e6d00d8'; \
 			;; \
 		'mips64el') \
 			export GOARCH='mips64le' GOOS='linux'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.20.12.linux-ppc64le.tar.gz'; \
-			sha256='2ae0ec3736216dfbd7b01ff679842dc1bed365e53a024d522645bcffd01c7328'; \
+			url='https://dl.google.com/go/go1.20.13.linux-ppc64le.tar.gz'; \
+			sha256='5f632b83323e16f8c6ceb676cd570b3f13f1826e06a81d92985d1301b643a7d3'; \
 			;; \
 		'riscv64') \
 			export GOARCH='riscv64' GOOS='linux'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.20.12.linux-s390x.tar.gz'; \
-			sha256='ee48b23e1978a866cb60a8e8ddf0bd61cbbaf86bcfcdbf4f9509f34e9159ce45'; \
+			url='https://dl.google.com/go/go1.20.13.linux-s390x.tar.gz'; \
+			sha256='ae6c8f75df9b15c92374cfeae86e97d2744d4d4cdafcb999fea5b63e20c22651'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
@@ -61,8 +61,8 @@ RUN set -eux; \
 	if [ -z "$url" ]; then \
 # https://github.com/golang/go/issues/38536#issuecomment-616897960
 		build=1; \
-		url='https://dl.google.com/go/go1.20.12.src.tar.gz'; \
-		sha256='c5bf934751d31c315c1d0bb5fb02296545fa6d08923566f7a5afec81f2ed27d6'; \
+		url='https://dl.google.com/go/go1.20.13.src.tar.gz'; \
+		sha256='0fe745c530f2f1d67193af3c5ea25246be077989ec5178df266e975f3532449e'; \
 		echo >&2; \
 		echo >&2 "warning: current architecture ($arch) does not have a compatible Go binary release; will be building from source"; \
 		echo >&2; \
@@ -85,16 +85,18 @@ RUN set -eux; \
 	tar -C /usr/local -xzf go.tgz; \
 	rm go.tgz; \
 	\
+# save the timestamp from the tarball so we can restore it for reproducibility, if necessary (see below)
+	SOURCE_DATE_EPOCH="$(stat -c '%Y' /usr/local/go)"; \
+	export SOURCE_DATE_EPOCH; \
+# for logging validation/edification
+	date --date "@$SOURCE_DATE_EPOCH" --rfc-2822; \
+	\
 	if [ -n "$build" ]; then \
 		savedAptMark="$(apt-mark showmanual)"; \
-# add backports for newer go version for bootstrap build: https://github.com/golang/go/issues/44505
-		( \
-			. /etc/os-release; \
-			echo "deb https://deb.debian.org/debian $VERSION_CODENAME-backports main" > /etc/apt/sources.list.d/backports.list; \
-			\
-			apt-get update; \
-			apt-get install -y --no-install-recommends -t "$VERSION_CODENAME-backports" golang-go; \
-		); \
+		apt-get update; \
+		apt-get install -y --no-install-recommends golang-go; \
+# cgo-related deps (for 1.21+, we should instead use CGO_ENABLED=0; https://github.com/golang/go/blob/b44f6378233ada888f0dc79e0ac56def4673d9ed/src/cmd/dist/build.go#L1312 / https://github.com/golang/go/commit/da0c375c571037ec5ea6f8ef2be8f07593b40eb6)
+		apt-get install -y --no-install-recommends gcc libc6-dev; \
 		\
 		export GOCACHE='/tmp/gocache'; \
 		\
@@ -120,12 +122,39 @@ RUN set -eux; \
 			/usr/local/go/src/cmd/dist/dist \
 			"$GOCACHE" \
 		; \
+		\
+# clamp timestamps for reproducibility (allows "COPY --link" to be more clever/useful)
+		date="$(date -d "@$SOURCE_DATE_EPOCH" '+%Y%m%d%H%M.%S')"; \
+		touch -t "$date" /usr/local/.go-date-stamp; \
+		find /usr/local/go -depth -newer /usr/local/.go-date-stamp -exec touch -ht "$date" '{}' +; \
+		rm /usr/local/.go-date-stamp; \
+		touch -t "$date" /usr/local; \
 	fi; \
 	\
-	go version
+# smoke test
+	go version; \
+# make sure our reproducibile timestamp is probably still correct (best-effort inline reproducibility test)
+	epoch="$(stat -c '%Y' /usr/local/go)"; \
+	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]
+
+FROM buildpack-deps:bookworm-scm
+
+# install cgo-related dependencies
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+		pkg-config \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+ENV GOLANG_VERSION 1.20.13
 
 ENV GOPATH /go
-ENV PATH $GOPATH/bin:$PATH
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 WORKDIR $GOPATH
 
