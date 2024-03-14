@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-27-bookworm AS build
+FROM dpokidov/imagemagick:7.1.1-29-bookworm AS build
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -162,7 +162,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.1-27-bookworm
+FROM dpokidov/imagemagick:7.1.1-29-bookworm
 
 ENV IM_HOME /usr/local/bin
 
