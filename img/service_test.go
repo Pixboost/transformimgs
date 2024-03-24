@@ -476,6 +476,11 @@ func TestService_ResizeUrl(t *testing.T) {
 			Description:  "Source image URL is required",
 		},
 		{
+			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/resize",
+			ExpectedCode: http.StatusBadRequest,
+			Description:  "Size param is required",
+		},
+		{
 			Url:          "http://localhost/img/http%3A%2F%2Fsite.com/img.png/resize?size=BADSIZE",
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Resize error",
