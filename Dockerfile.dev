@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-29-bookworm
+FROM dpokidov/imagemagick:7.1.1-31-2-bookworm
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
@@ -16,57 +16,46 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 #Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.20.13
+ENV GOLANG_VERSION 1.21.9
 
 RUN set -eux; \
 	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.20.13.linux-amd64.tar.gz'; \
-			sha256='9a9d3dcae2b6a638b1f2e9bd4db08ffb39c10e55d9696914002742d90f0047b5'; \
-			;; \
-		'armel') \
-			export GOARCH='arm' GOARM='5' GOOS='linux'; \
+			url='https://dl.google.com/go/go1.21.9.linux-amd64.tar.gz'; \
+			sha256='f76194c2dc607e0df4ed2e7b825b5847cb37e34fc70d780e2f6c7e805634a7ea'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.20.13.linux-armv6l.tar.gz'; \
-			sha256='d4c6c671423ce6eef3f240bf014115b2673ad6a89e12429b5a331b95952c7279'; \
+			url='https://dl.google.com/go/go1.21.9.linux-armv6l.tar.gz'; \
+			sha256='3d53e0fc659a983bbca3ffa373fab26093d8b1d94198a503be19003a1d73ffb3'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.20.13.linux-arm64.tar.gz'; \
-			sha256='a2d811cef3c4fc77c01195622e637af0c2cf8b3814a95a0920cf2f83b6061d38'; \
+			url='https://dl.google.com/go/go1.21.9.linux-arm64.tar.gz'; \
+			sha256='4d169d9cf3dde1692b81c0fd9484fa28d8bc98f672d06bf9db9c75ada73c5fbc'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.20.13.linux-386.tar.gz'; \
-			sha256='4da6f08510a21b829a065d3f99914bfbe1d8b212664cea230485a64e7e6d00d8'; \
+			url='https://dl.google.com/go/go1.21.9.linux-386.tar.gz'; \
+			sha256='a8ba72a03dd7e6e5b8827754153b0dc335361343535b733d666c458e30996b4a'; \
 			;; \
 		'mips64el') \
-			export GOARCH='mips64le' GOOS='linux'; \
+			url='https://dl.google.com/go/go1.21.9.linux-mips64le.tar.gz'; \
+			sha256='10e99c0928698a01231df9a8c57b73376380f253005d95cffb932a47f2052bd9'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.20.13.linux-ppc64le.tar.gz'; \
-			sha256='5f632b83323e16f8c6ceb676cd570b3f13f1826e06a81d92985d1301b643a7d3'; \
+			url='https://dl.google.com/go/go1.21.9.linux-ppc64le.tar.gz'; \
+			sha256='6eadde4149c36dae7d9a9bd9385285db1d0e2988350822f4c72a5eb11ffbfffc'; \
 			;; \
 		'riscv64') \
-			export GOARCH='riscv64' GOOS='linux'; \
+			url='https://dl.google.com/go/go1.21.9.linux-riscv64.tar.gz'; \
+			sha256='b92dcc990298d68652e28f3bec57824de99a328b8e584a31490b96fe4bd973c5'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.20.13.linux-s390x.tar.gz'; \
-			sha256='ae6c8f75df9b15c92374cfeae86e97d2744d4d4cdafcb999fea5b63e20c22651'; \
+			url='https://dl.google.com/go/go1.21.9.linux-s390x.tar.gz'; \
+			sha256='05daee44fc4771b2a2471b678a812de2488f05110976faeb8bbbae740e01e7ae'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
-	build=; \
-	if [ -z "$url" ]; then \
-# https://github.com/golang/go/issues/38536#issuecomment-616897960
-		build=1; \
-		url='https://dl.google.com/go/go1.20.13.src.tar.gz'; \
-		sha256='0fe745c530f2f1d67193af3c5ea25246be077989ec5178df266e975f3532449e'; \
-		echo >&2; \
-		echo >&2 "warning: current architecture ($arch) does not have a compatible Go binary release; will be building from source"; \
-		echo >&2; \
-	fi; \
 	\
 	wget -O go.tgz.asc "$url.asc"; \
 	wget -O go.tgz "$url" --progress=dot:giga; \
@@ -91,44 +80,18 @@ RUN set -eux; \
 # for logging validation/edification
 	date --date "@$SOURCE_DATE_EPOCH" --rfc-2822; \
 	\
-	if [ -n "$build" ]; then \
-		savedAptMark="$(apt-mark showmanual)"; \
-		apt-get update; \
-		apt-get install -y --no-install-recommends golang-go; \
-# cgo-related deps (for 1.21+, we should instead use CGO_ENABLED=0; https://github.com/golang/go/blob/b44f6378233ada888f0dc79e0ac56def4673d9ed/src/cmd/dist/build.go#L1312 / https://github.com/golang/go/commit/da0c375c571037ec5ea6f8ef2be8f07593b40eb6)
-		apt-get install -y --no-install-recommends gcc libc6-dev; \
-		\
-		export GOCACHE='/tmp/gocache'; \
-		\
-		( \
-			cd /usr/local/go/src; \
-# set GOROOT_BOOTSTRAP + GOHOST* such that we can build Go successfully
-			export GOROOT_BOOTSTRAP="$(go env GOROOT)" GOHOSTOS="$GOOS" GOHOSTARCH="$GOARCH"; \
-			./make.bash; \
-		); \
-		\
-		apt-mark auto '.*' > /dev/null; \
-		apt-mark manual $savedAptMark > /dev/null; \
-		apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-		rm -rf /var/lib/apt/lists/*; \
-		\
-# remove a few intermediate / bootstrapping files the official binary release tarballs do not contain
-		rm -rf \
-			/usr/local/go/pkg/*/cmd \
-			/usr/local/go/pkg/bootstrap \
-			/usr/local/go/pkg/obj \
-			/usr/local/go/pkg/tool/*/api \
-			/usr/local/go/pkg/tool/*/go_bootstrap \
-			/usr/local/go/src/cmd/dist/dist \
-			"$GOCACHE" \
-		; \
-		\
-# clamp timestamps for reproducibility (allows "COPY --link" to be more clever/useful)
+	if [ "$arch" = 'armhf' ]; then \
+		[ -s /usr/local/go/go.env ]; \
+		before="$(go env GOARM)"; [ "$before" != '7' ]; \
+		{ \
+			echo; \
+			echo '# https://github.com/docker-library/golang/issues/494'; \
+			echo 'GOARM=7'; \
+		} >> /usr/local/go/go.env; \
+		after="$(go env GOARM)"; [ "$after" = '7' ]; \
+# (re-)clamp timestamp for reproducibility (allows "COPY --link" to be more clever/useful)
 		date="$(date -d "@$SOURCE_DATE_EPOCH" '+%Y%m%d%H%M.%S')"; \
-		touch -t "$date" /usr/local/.go-date-stamp; \
-		find /usr/local/go -depth -newer /usr/local/.go-date-stamp -exec touch -ht "$date" '{}' +; \
-		rm /usr/local/.go-date-stamp; \
-		touch -t "$date" /usr/local; \
+		touch -t "$date" /usr/local/go/go.env /usr/local/go; \
 	fi; \
 	\
 # smoke test
@@ -137,20 +100,8 @@ RUN set -eux; \
 	epoch="$(stat -c '%Y' /usr/local/go)"; \
 	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]
 
-# install cgo-related dependencies
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		g++ \
-		gcc \
-		libc6-dev \
-		make \
-		pkg-config \
-	; \
-	rm -rf /var/lib/apt/lists/*
-
 ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+ENV PATH $GOPATH/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 WORKDIR $GOPATH
 
