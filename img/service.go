@@ -2,6 +2,7 @@ package img
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
@@ -351,7 +352,13 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 
 	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		var httpErr *HttpError
+		if errors.As(err, &httpErr) {
+			http.Error(resp, httpErr.Error(), httpErr.Code())
+		} else {
+			http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		}
+
 		return
 	}
 	Log.Printf("Source image [%s] loaded successfully, adding to the queue\n", imgUrl)

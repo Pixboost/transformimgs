@@ -9,8 +9,6 @@ type Image struct {
 }
 
 // Info holds basic information about an image.
-// Fixme: It is really an internal structure for
-// Fixme: a processor, but currently used in GetAdditionalArgs() call.
 type Info struct {
 	Format  string
 	Quality int
@@ -25,4 +23,23 @@ type Info struct {
 	Illustration bool
 	// Size is the size of the image in bytes
 	Size int64
+}
+
+// HttpError is user defined error that could be used for
+// customising responses of the service
+type HttpError struct {
+	code int
+	msg  string
+}
+
+func NewHttpError(code int, msg string) *HttpError {
+	return &HttpError{code: code, msg: msg}
+}
+
+func (e *HttpError) Code() int {
+	return e.code
+}
+
+func (e *HttpError) Error() string {
+	return e.msg
 }
