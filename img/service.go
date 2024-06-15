@@ -353,7 +353,9 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
 		sendError(resp, err)
+		return
 	}
+
 	Log.Printf("Source image [%s] loaded successfully, adding to the queue\n", imgUrl)
 
 	r.execOp(&Command{
