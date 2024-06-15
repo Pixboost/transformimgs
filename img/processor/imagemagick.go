@@ -73,14 +73,8 @@ const (
 func init() {
 	imagick.Initialize()
 
-	mw := imagick.NewMagickWand()
 	// time resource limit is static and doesn't work with long-running processes, hence disabling it
-	err := mw.SetResourceLimit(imagick.RESOURCE_TIME, -1)
-	if err != nil {
-		img.Log.Errorf("failed to init ImageMagick, could not set resource limit: %s, exiting...", err)
-		os.Exit(1)
-	}
-	mw.Destroy()
+	imagick.SetResourceLimit(imagick.RESOURCE_TIME, 0)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

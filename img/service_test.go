@@ -600,6 +600,11 @@ func TestService_AsIs(t *testing.T) {
 			ExpectedCode: http.StatusBadRequest,
 			Description:  "Source image URL is required",
 		},
+		{
+			Url:          fmt.Sprintf("http://localhost/img/http%%3A%%2F%%2Fsite.com/custom_error.png/asis"),
+			ExpectedCode: http.StatusTeapot,
+			Description:  "Uh oh :(",
+		},
 	}
 
 	test.RunRequests(testCases)

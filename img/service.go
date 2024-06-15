@@ -196,23 +196,23 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	result, err := r.Loader.Load(imgUrl, req.Context())
 
 	if err != nil {
-		http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		sendError(resp, err)
 		return
-	} else {
-		if len(result.MimeType) > 0 {
-			resp.Header().Add("Content-Type", result.MimeType)
-		}
-
-		r.execOp(&Command{
-			Config: &TransformationConfig{
-				Src: &Image{
-					Id: imgUrl,
-				},
-			},
-			Result: result,
-			Resp:   resp,
-		})
 	}
+
+	if len(result.MimeType) > 0 {
+		resp.Header().Add("Content-Type", result.MimeType)
+	}
+
+	r.execOp(&Command{
+		Config: &TransformationConfig{
+			Src: &Image{
+				Id: imgUrl,
+			},
+		},
+		Result: result,
+		Resp:   resp,
+	})
 }
 
 func (r *Service) execOp(op *Command) {
@@ -352,14 +352,7 @@ func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, tran
 
 	srcImage, err := r.Loader.Load(imgUrl, req.Context())
 	if err != nil {
-		var httpErr *HttpError
-		if errors.As(err, &httpErr) {
-			http.Error(resp, httpErr.Error(), httpErr.Code())
-		} else {
-			http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
-		}
-
-		return
+		sendError(resp, err)
 	}
 	Log.Printf("Source image [%s] loaded successfully, adding to the queue\n", imgUrl)
 
@@ -386,4 +379,15 @@ func getQuality(saveDataHeader string, saveDataParam string, dppx float64) Quali
 	}
 
 	return DEFAULT
+}
+
+func sendError(resp http.ResponseWriter, err error) {
+	if err != nil {
+		var httpErr *HttpError
+		if errors.As(err, &httpErr) {
+			http.Error(resp, httpErr.Error(), httpErr.Code())
+		} else {
+			http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
+		}
+	}
 }
