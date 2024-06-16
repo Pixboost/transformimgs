@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 // CacheTTL is the number of seconds  that will be written to max-age HTTP header
@@ -292,7 +291,6 @@ func writeResult(op *Command) {
 }
 
 func (r *Service) transformUrl(resp http.ResponseWriter, req *http.Request, transformation Cmd, config interface{}) {
-	time.Sleep(5 * time.Second)
 	imgUrl := getImgUrl(req)
 	if len(imgUrl) == 0 {
 		http.Error(resp, "url param is required", http.StatusBadRequest)
