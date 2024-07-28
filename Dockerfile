@@ -111,7 +111,7 @@ RUN git clone https://github.com/Pixboost/transformimgs.git
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/illustration
 
-RUN go install
+RUN go build -o /illustration
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
@@ -122,6 +122,7 @@ FROM dpokidov/imagemagick:7.1.1-31-2-bookworm
 ENV IM_HOME /usr/local/bin
 
 USER 65534
+COPY --from=build --chown=nobody:nogroup /illustration /usr/local/bin/illustration
 COPY --from=build --chown=nobody:nogroup /transformimgs /transformimgs
 
 ENTRYPOINT ["/transformimgs", "-imConvert=/usr/local/bin/convert", "-imIdentify=/usr/local/bin/identify"]
