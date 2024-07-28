@@ -110,10 +110,11 @@ WORKDIR $GOPATH
 ENV IM_HOME /usr/local/bin
 
 VOLUME /go/src/github.com/Pixboost/transformimgs/
-WORKDIR /go/src/github.com/Pixboost/transformimgs/
 
-RUN cd illustration && \
-    go install && \
-    cd ../
+WORKDIR /go/src/github.com/Pixboost/transformimgs/illustration
+
+RUN go install
+
+WORKDIR /go/src/github.com/Pixboost/transformimgs/
 
 ENTRYPOINT ["sh", "/go/src/github.com/Pixboost/transformimgs/run.sh"]
