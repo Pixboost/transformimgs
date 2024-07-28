@@ -64,7 +64,7 @@ jobs:
           load: true
           tags: transformimgs
           build-args: |
-            "BRANCH=${{ GITHUB_HEAD_REF }}"
+            "BRANCH=${{ GITHUB_REF_NAME }}"
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       -
