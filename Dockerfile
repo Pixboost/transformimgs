@@ -1,5 +1,7 @@
 FROM dpokidov/imagemagick:7.1.1-31-2-bookworm AS build
 
+ARG BRANCH=main
+
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
 		gcc \
@@ -107,7 +109,8 @@ WORKDIR $GOPATH
 
 RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/
-RUN git clone https://github.com/Pixboost/transformimgs.git
+
+RUN git clone --branch $BRANCH --single-branch https://github.com/Pixboost/transformimgs.git
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/illustration
 
