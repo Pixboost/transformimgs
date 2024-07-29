@@ -117,10 +117,17 @@ Prerequisites:
 * Go 1.18+ with [modules support](https://golang.org/ref/mod)
 * Installed [imagemagick v7.0.25+](http://imagemagick.org) with AVIF support in `/usr/local/bin`
 
+Install illustration command:
+
+```bash
+cd illustration/
+go install
 ```
-$ git clone git@github.com:Pixboost/transformimgs.git
-$ cd transformimgs
-$ ./run.sh 
+
+Run the application:
+
+```bash
+./run.sh 
 ```
 
 ### Using from Go Web Application

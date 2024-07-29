@@ -89,6 +89,10 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 	if err != nil {
 		return nil, err
 	}
+	_, err = exec.LookPath("illustration")
+	if err != nil {
+		return nil, err
+	}
 
 	return &ImageMagick{
 		convertCmd:     im,
@@ -276,9 +280,6 @@ func (p *ImageMagick) execIllustration(in io.Reader) bool {
 	cmd.Stdout = &out
 	cmd.Stderr = &cmderr
 
-	if Debug {
-		img.Log.Printf("Running resize command, args '%v'\n", cmd.Args)
-	}
 	err := cmd.Run()
 	if err != nil {
 		img.Log.Printf("Error executing illustration command: %s\n", err.Error())
@@ -322,7 +323,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	if imageInfo.Format == "PNG" {
 		// IM outputs quality as 92 if no quality specified
 		imageInfo.Quality = 100
-		imageInfo.Illustration, err = p.isIllustration(src, imageInfo)
+		imageInfo.Illustration, err = p.isIllustration(src)
 		if err != nil {
 			return nil, err
 		}
@@ -340,7 +341,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 // to the next generation format.
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
-func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, error) {
+func (p *ImageMagick) isIllustration(src *img.Image) (bool, error) {
 	// Assume everything less than 20Kb is a logo
 	if len(src.Data) < 20*1024 {
 		return true, nil

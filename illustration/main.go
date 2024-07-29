@@ -1,3 +1,11 @@
+/*
+illustration command takes an image in stdin and prints true if image is cartoon like, including
+icons, logos, illustrations.
+
+It prints "false" for banners, product images, photos.
+
+The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
+*/
 package main
 
 import (
