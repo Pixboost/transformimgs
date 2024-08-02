@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-31-2-bookworm AS build
+FROM dpokidov/imagemagick:7.1.1-36-bookworm AS build
 
 ARG BRANCH=main
 
@@ -120,7 +120,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.1-31-2-bookworm
+FROM dpokidov/imagemagick:7.1.1-36-bookworm
 
 ENV IM_HOME /usr/local/bin
 
