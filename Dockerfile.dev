@@ -105,8 +105,15 @@ ENV PATH $GOPATH/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 WORKDIR $GOPATH
 
+
+
 ENV IM_HOME /usr/local/bin
+
+COPY ./illustration /illustration
+WORKDIR /illustration
+RUN go install
 
 VOLUME /go/src/github.com/Pixboost/transformimgs/
 WORKDIR /go/src/github.com/Pixboost/transformimgs/
+
 ENTRYPOINT ["sh", "/go/src/github.com/Pixboost/transformimgs/run.sh"]

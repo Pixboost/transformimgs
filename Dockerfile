@@ -1,5 +1,7 @@
 FROM dpokidov/imagemagick:7.1.1-31-2-bookworm AS build
 
+ARG BRANCH=main
+
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
 		g++ \
 		gcc \
@@ -107,7 +109,12 @@ WORKDIR $GOPATH
 
 RUN mkdir -p /go/src/github.com/Pixboost/
 WORKDIR /go/src/github.com/Pixboost/
-RUN git clone https://github.com/Pixboost/transformimgs.git
+
+RUN git clone --branch $BRANCH --single-branch https://github.com/Pixboost/transformimgs.git
+
+WORKDIR /go/src/github.com/Pixboost/transformimgs/illustration
+
+RUN go build -o /illustration
 
 WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
@@ -118,6 +125,7 @@ FROM dpokidov/imagemagick:7.1.1-31-2-bookworm
 ENV IM_HOME /usr/local/bin
 
 USER 65534
+COPY --from=build --chown=nobody:nogroup /illustration /usr/local/bin/illustration
 COPY --from=build --chown=nobody:nogroup /transformimgs /transformimgs
 
 ENTRYPOINT ["/transformimgs", "-imConvert=/usr/local/bin/convert", "-imIdentify=/usr/local/bin/identify"]

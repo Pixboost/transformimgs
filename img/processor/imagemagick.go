@@ -5,12 +5,8 @@ import (
 	"fmt"
 	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/processor/internal"
-	"gopkg.in/gographics/imagick.v3/imagick"
-	"math"
-	"os"
+	"io"
 	"os/exec"
-	"os/signal"
-	"sort"
 	"strconv"
 )
 
@@ -70,20 +66,6 @@ const (
 	AvifMime = "image/avif"
 )
 
-func init() {
-	imagick.Initialize()
-
-	// time resource limit is static and doesn't work with long-running processes, hence disabling it
-	imagick.SetResourceLimit(imagick.RESOURCE_TIME, 0)
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		imagick.Terminate()
-	}()
-}
-
 // NewImageMagick creates a new ImageMagick processor. It does require
 // ImageMagick binaries to be installed on the local machine.
 //
@@ -104,6 +86,10 @@ func NewImageMagick(im string, idi string) (*ImageMagick, error) {
 		return nil, err
 	}
 	_, err = exec.LookPath(idi)
+	if err != nil {
+		return nil, err
+	}
+	_, err = exec.LookPath("illustration")
 	if err != nil {
 		return nil, err
 	}
@@ -286,6 +272,24 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	return out.Bytes(), nil
 }
 
+func (p *ImageMagick) execIllustration(in io.Reader) bool {
+	var out, cmderr bytes.Buffer
+	cmd := exec.Command("illustration")
+
+	cmd.Stdin = in
+	cmd.Stdout = &out
+	cmd.Stderr = &cmderr
+
+	err := cmd.Run()
+	if err != nil {
+		img.Log.Printf("Error executing illustration command: %s\n", err.Error())
+		img.Log.Printf("ERROR: %s\n", cmderr.String())
+		return false
+	}
+
+	return string(out.Bytes()) == "true"
+}
+
 func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
 	imgId := src.Id
@@ -319,7 +323,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	if imageInfo.Format == "PNG" {
 		// IM outputs quality as 92 if no quality specified
 		imageInfo.Quality = 100
-		imageInfo.Illustration, err = p.isIllustration(src, imageInfo)
+		imageInfo.Illustration, err = p.isIllustration(src)
 		if err != nil {
 			return nil, err
 		}
@@ -327,12 +331,6 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 
 	return imageInfo, nil
 }
-
-type colorSlice []*imagick.PixelWand
-
-func (c colorSlice) Len() int           { return len(c) }
-func (c colorSlice) Less(i, j int) bool { return c[i].GetColorCount() < c[j].GetColorCount() }
-func (c colorSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 
 // isIllustration returns true if image is cartoon like, including
 // icons, logos, illustrations.
@@ -343,7 +341,7 @@ func (c colorSlice) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 // to the next generation format.
 //
 // The initial idea is from here: https://legacy.imagemagick.org/Usage/compare/#type_reallife
-func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, error) {
+func (p *ImageMagick) isIllustration(src *img.Image) (bool, error) {
 	// Assume everything less than 20Kb is a logo
 	if len(src.Data) < 20*1024 {
 		return true, nil
@@ -354,94 +352,7 @@ func (p *ImageMagick) isIllustration(src *img.Image, info *img.Info) (bool, erro
 		return false, nil
 	}
 
-	var (
-		colors    colorSlice
-		colorsCnt uint
-	)
-
-	mw := imagick.NewMagickWand()
-
-	err := mw.ReadImageBlob(src.Data)
-	if err != nil {
-		return false, err
-	}
-
-	if (info.Width * info.Height) > 500*500 {
-		aspectRatio := float32(info.Width) / float32(info.Height)
-		err = mw.ScaleImage(500, uint(500/aspectRatio))
-		if err != nil {
-			return false, err
-		}
-	}
-
-	colorsCnt, colors = mw.GetImageHistogram()
-	if colorsCnt > 30000 {
-		return false, nil
-	}
-
-	sort.Sort(sort.Reverse(colors))
-
-	var (
-		colorIdx            int
-		count               uint
-		currColor           *imagick.PixelWand
-		pixelsCount         = uint(0)
-		totalPixelsCount    = float32(mw.GetImageHeight() * mw.GetImageWidth())
-		tenPercent          = uint(totalPixelsCount * 0.1)
-		fiftyPercent        = uint(totalPixelsCount * 0.5)
-		isBackground        = false
-		lastBackgroundColor *imagick.PixelWand
-		colorsInBackground  = uint(0)
-		pixelsInBackground  = uint(0)
-	)
-
-	for colorIdx, currColor = range colors {
-		if pixelsCount > fiftyPercent {
-			break
-		}
-
-		count = currColor.GetColorCount()
-
-		switch {
-		case colorIdx == 0:
-			isBackground = true
-			lastBackgroundColor = currColor
-			pixelsInBackground += count
-			colorsInBackground++
-		case isBackground:
-			// Comparing colors to find out if it's still background or not.
-			// This logic addresses backgrounds with more than one similar color.
-			alphaDiff := currColor.GetAlpha() - lastBackgroundColor.GetAlpha()
-			redDiff := currColor.GetRed() - lastBackgroundColor.GetRed()
-			greenDiff := currColor.GetGreen() - lastBackgroundColor.GetGreen()
-			blueDiff := currColor.GetBlue() - lastBackgroundColor.GetBlue()
-			distance :=
-				math.Max(math.Pow(redDiff, 2), math.Pow(redDiff-alphaDiff, 2)) +
-					math.Max(math.Pow(greenDiff, 2), math.Pow(greenDiff-alphaDiff, 2)) +
-					math.Max(math.Pow(blueDiff, 2), math.Pow(blueDiff-alphaDiff, 2))
-			if distance < 0.1 {
-				lastBackgroundColor = currColor
-				pixelsInBackground += count
-				colorsInBackground++
-			} else {
-				isBackground = false
-				if pixelsInBackground < tenPercent {
-					pixelsCount = pixelsInBackground
-					colorsInBackground = 0
-					pixelsInBackground = 0
-				} else {
-					pixelsCount += count
-					fiftyPercent = uint((totalPixelsCount - float32(pixelsInBackground)) * 0.5)
-				}
-			}
-		default:
-			pixelsCount += count
-		}
-	}
-
-	colorsCntIn50Pct := uint(colorIdx) - colorsInBackground
-
-	return colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02, nil
+	return p.execIllustration(bytes.NewBuffer(src.Data)), nil
 }
 
 func getOutputFormat(src *img.Info, target *img.Info, supportedFormats []string) (string, string) {
