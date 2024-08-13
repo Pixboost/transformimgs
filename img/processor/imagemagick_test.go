@@ -692,3 +692,57 @@ func testImages(t *testing.T, fn transform, files []*testTransformation) {
 		fmt.Printf("%60s | %10d | %10d | %.2f\n", r.file, r.optSize, r.origSize, 1.0-(float32(r.optSize)/float32(r.origSize)))
 	}
 }
+
+func TestOptimise_ErrorIdentify(t *testing.T) {
+	_, err := proc.Optimise(&img.TransformationConfig{
+		Src: &img.Image{
+			Id:       "",
+			Data:     []byte("This is not an image!"),
+			MimeType: "image/jpeg",
+		},
+	})
+
+	if err == nil {
+		t.Error("expected error but got none")
+	}
+
+	expectedError := "Error executing identify command: exit status 1\nStderr: [identify: no decode delegate for this image format `' @ error/constitute.c/ReadImage/746.]"
+	if err.Error() != expectedError {
+		t.Errorf("expected error %s, but got %s", expectedError, err.Error())
+	}
+}
+
+func TestOptimise_ErrorConvert(t *testing.T) {
+	f := fmt.Sprintf("%s/%s", "./test_files/transformations", "medium-jpeg.jpg")
+
+	orig, err := ioutil.ReadFile(f)
+	if err != nil {
+		t.Errorf("Can't read file %s: %+v", f, err)
+	}
+
+	proc.GetAdditionalArgs = func(op string, image []byte, source *img.Info, target *img.Info) []string {
+		return []string{"-i_dont_know", "this"}
+	}
+
+	_, err = proc.Resize(&img.TransformationConfig{
+		Src: &img.Image{
+			Id:       "",
+			Data:     orig,
+			MimeType: "image/jpeg",
+		},
+		Config: &img.ResizeConfig{
+			Size: "300x300",
+		},
+	})
+
+	proc.GetAdditionalArgs = nil
+
+	if err == nil {
+		t.Error("expected error but got none")
+	}
+
+	expectedError := "Error executing convert command: exit status 1\nStderr: [convert: unrecognized option `-i_dont_know' @ error/convert.c/ConvertImageCommand/1965.]"
+	if err.Error() != expectedError {
+		t.Errorf("expected error %s, but got %s", expectedError, err.Error())
+	}
+}

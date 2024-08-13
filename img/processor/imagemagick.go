@@ -8,6 +8,7 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 type ImageMagick struct {
@@ -266,7 +267,7 @@ func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId str
 	if err != nil {
 		img.Log.Printf("[%s] Error executing convert command: %s\n", imgId, err.Error())
 		img.Log.Printf("[%s] ERROR: %s\n", imgId, cmderr.String())
-		return nil, err
+		return nil, fmt.Errorf("Error executing convert command: %w\nStderr: [%s]", err, strings.TrimSpace(cmderr.String()))
 	}
 
 	return out.Bytes(), nil
@@ -308,7 +309,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	if err != nil {
 		img.Log.Printf("[%s] Error executing identify command: %s\n", err.Error(), imgId)
 		img.Log.Printf("[%s] ERROR: %s\n", cmderr.String(), imgId)
-		return nil, err
+		return nil, fmt.Errorf("Error executing identify command: %w\nStderr: [%s]", err, strings.TrimSpace(cmderr.String()))
 	}
 
 	imageInfo := &img.Info{
