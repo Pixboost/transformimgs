@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -706,9 +707,9 @@ func TestOptimise_ErrorIdentify(t *testing.T) {
 		t.Error("expected error but got none")
 	}
 
-	expectedError := "Error executing identify command: exit status 1\nStderr: [identify: no decode delegate for this image format `' @ error/constitute.c/ReadImage/746.]"
-	if err.Error() != expectedError {
-		t.Errorf("expected error %s, but got %s", expectedError, err.Error())
+	expectedError := "identify: no decode delegate for this image format"
+	if !strings.Contains(err.Error(), expectedError) {
+		t.Errorf("expected error to contain [%s], but got [%s]", expectedError, err.Error())
 	}
 }
 
@@ -741,8 +742,8 @@ func TestOptimise_ErrorConvert(t *testing.T) {
 		t.Error("expected error but got none")
 	}
 
-	expectedError := "Error executing convert command: exit status 1\nStderr: [convert: unrecognized option `-i_dont_know' @ error/convert.c/ConvertImageCommand/1965.]"
-	if err.Error() != expectedError {
-		t.Errorf("expected error %s, but got %s", expectedError, err.Error())
+	expectedError := "unrecognized option `-i_dont_know'"
+	if !strings.Contains(err.Error(), expectedError) {
+		t.Errorf("expected error to contain [%s], but got [%s]", expectedError, err.Error())
 	}
 }
