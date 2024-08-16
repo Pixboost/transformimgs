@@ -1,4 +1,4 @@
-FROM dpokidov/imagemagick:7.1.1-36-bookworm AS build
+FROM dpokidov/imagemagick:7.1.1-36-2-bookworm AS build
 
 ARG BRANCH=main
 
@@ -18,43 +18,44 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 #Installing golang
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.21.9
+ENV GOLANG_VERSION 1.22.6
 
 RUN set -eux; \
+	now="$(date '+%s')"; \
 	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.21.9.linux-amd64.tar.gz'; \
-			sha256='f76194c2dc607e0df4ed2e7b825b5847cb37e34fc70d780e2f6c7e805634a7ea'; \
+			url='https://dl.google.com/go/go1.22.6.linux-amd64.tar.gz'; \
+			sha256='999805bed7d9039ec3da1a53bfbcafc13e367da52aa823cb60b68ba22d44c616'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.21.9.linux-armv6l.tar.gz'; \
-			sha256='3d53e0fc659a983bbca3ffa373fab26093d8b1d94198a503be19003a1d73ffb3'; \
+			url='https://dl.google.com/go/go1.22.6.linux-armv6l.tar.gz'; \
+			sha256='b566484fe89a54c525dd1a4cbfec903c1f6e8f0b7b3dbaf94c79bc9145391083'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.21.9.linux-arm64.tar.gz'; \
-			sha256='4d169d9cf3dde1692b81c0fd9484fa28d8bc98f672d06bf9db9c75ada73c5fbc'; \
+			url='https://dl.google.com/go/go1.22.6.linux-arm64.tar.gz'; \
+			sha256='c15fa895341b8eaf7f219fada25c36a610eb042985dc1a912410c1c90098eaf2'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.21.9.linux-386.tar.gz'; \
-			sha256='a8ba72a03dd7e6e5b8827754153b0dc335361343535b733d666c458e30996b4a'; \
+			url='https://dl.google.com/go/go1.22.6.linux-386.tar.gz'; \
+			sha256='9e680027b058beab10ce5938607660964b6d2c564bf50bdb01aa090dc5beda98'; \
 			;; \
 		'mips64el') \
-			url='https://dl.google.com/go/go1.21.9.linux-mips64le.tar.gz'; \
-			sha256='10e99c0928698a01231df9a8c57b73376380f253005d95cffb932a47f2052bd9'; \
+			url='https://dl.google.com/go/go1.22.6.linux-mips64le.tar.gz'; \
+			sha256='01547606c5b5c1b0e5587b3afd65172860d2f4755e523785832905759ecce2d7'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.21.9.linux-ppc64le.tar.gz'; \
-			sha256='6eadde4149c36dae7d9a9bd9385285db1d0e2988350822f4c72a5eb11ffbfffc'; \
+			url='https://dl.google.com/go/go1.22.6.linux-ppc64le.tar.gz'; \
+			sha256='9d99fce3f6f72a76630fe91ec0884dfe3db828def4713368424900fa98bb2bd6'; \
 			;; \
 		'riscv64') \
-			url='https://dl.google.com/go/go1.21.9.linux-riscv64.tar.gz'; \
-			sha256='b92dcc990298d68652e28f3bec57824de99a328b8e584a31490b96fe4bd973c5'; \
+			url='https://dl.google.com/go/go1.22.6.linux-riscv64.tar.gz'; \
+			sha256='30be9c9b9cc4f044d4da9a33ee601ab7b3aff4246107d323a79e08888710754e'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.21.9.linux-s390x.tar.gz'; \
-			sha256='05daee44fc4771b2a2471b678a812de2488f05110976faeb8bbbae740e01e7ae'; \
+			url='https://dl.google.com/go/go1.22.6.linux-s390x.tar.gz'; \
+			sha256='82f3bae3ddb4ede45b848db48c5486fadb58551e74507bda45484257e7194a95'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
@@ -79,8 +80,11 @@ RUN set -eux; \
 # save the timestamp from the tarball so we can restore it for reproducibility, if necessary (see below)
 	SOURCE_DATE_EPOCH="$(stat -c '%Y' /usr/local/go)"; \
 	export SOURCE_DATE_EPOCH; \
+	touchy="$(date -d "@$SOURCE_DATE_EPOCH" '+%Y%m%d%H%M.%S')"; \
 # for logging validation/edification
 	date --date "@$SOURCE_DATE_EPOCH" --rfc-2822; \
+# sanity check (detected value should be older than our wall clock)
+	[ "$SOURCE_DATE_EPOCH" -lt "$now" ]; \
 	\
 	if [ "$arch" = 'armhf' ]; then \
 		[ -s /usr/local/go/go.env ]; \
@@ -92,9 +96,14 @@ RUN set -eux; \
 		} >> /usr/local/go/go.env; \
 		after="$(go env GOARM)"; [ "$after" = '7' ]; \
 # (re-)clamp timestamp for reproducibility (allows "COPY --link" to be more clever/useful)
-		date="$(date -d "@$SOURCE_DATE_EPOCH" '+%Y%m%d%H%M.%S')"; \
-		touch -t "$date" /usr/local/go/go.env /usr/local/go; \
+		touch -t "$touchy" /usr/local/go/go.env /usr/local/go; \
 	fi; \
+	\
+# ideally at this point, we would just "COPY --link ... /usr/local/go/ /usr/local/go/" but BuildKit insists on creating the parent directories (perhaps related to https://github.com/opencontainers/image-spec/pull/970), and does so with unreproducible timestamps, so we instead create a whole new "directory tree" that we can "COPY --link" to accomplish what we want
+	mkdir /target /target/usr /target/usr/local; \
+	mv -vT /usr/local/go /target/usr/local/go; \
+	ln -svfT /target/usr/local/go /usr/local/go; \
+	touch -t "$touchy" /target/usr/local /target/usr /target; \
 	\
 # smoke test
 	go version; \
@@ -120,7 +129,7 @@ WORKDIR /go/src/github.com/Pixboost/transformimgs/cmd
 
 RUN go build -o /transformimgs
 
-FROM dpokidov/imagemagick:7.1.1-36-bookworm
+FROM dpokidov/imagemagick:7.1.1-36-2-bookworm
 
 ENV IM_HOME /usr/local/bin
 
