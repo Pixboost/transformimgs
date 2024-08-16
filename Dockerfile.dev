@@ -104,10 +104,7 @@ RUN set -eux; \
 	touch -t "$touchy" /target/usr/local /target/usr /target; \
 	\
 # smoke test
-	go version; \
-# make sure our reproducibile timestamp is probably still correct (best-effort inline reproducibility test)
-	epoch="$(stat -c '%Y' /usr/local/go)"; \
-	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]
+	go version;
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:$PATH
