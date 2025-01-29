@@ -33,7 +33,7 @@ var client = &http.Client{
 	},
 }
 
-func (r *Http) Load(url string, _ context.Context) (*img.Image, error) {
+func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -41,6 +41,14 @@ func (r *Http) Load(url string, _ context.Context) (*img.Image, error) {
 	for k, v := range r.Headers {
 		for _, headerVal := range v {
 			req.Header.Add(k, headerVal)
+		}
+	}
+
+	if moreHeaders, ok := headerFromContext(ctx); ok {
+		for k, v := range *moreHeaders {
+			for _, headerVal := range v {
+				req.Header.Add(k, headerVal)
+			}
 		}
 	}
 
@@ -69,4 +77,15 @@ func (r *Http) Load(url string, _ context.Context) (*img.Image, error) {
 		Data:     result,
 		MimeType: contentType,
 	}, nil
+}
+
+type headersKey int
+
+func NewContextWithHeaders(ctx context.Context, headers *http.Header) context.Context {
+	return context.WithValue(ctx, headersKey(0), headers)
+}
+
+func headerFromContext(ctx context.Context) (*http.Header, bool) {
+	header, ok := ctx.Value(headersKey(0)).(*http.Header)
+	return header, ok
 }
