@@ -44,7 +44,7 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 		}
 	}
 
-	if moreHeaders, ok := headerFromContext(ctx); ok {
+	if moreHeaders, ok := img.HeaderFromContext(ctx); ok {
 		for k, v := range *moreHeaders {
 			for _, headerVal := range v {
 				req.Header.Add(k, headerVal)
@@ -77,15 +77,4 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 		Data:     result,
 		MimeType: contentType,
 	}, nil
-}
-
-type headersKey int
-
-func NewContextWithHeaders(ctx context.Context, headers *http.Header) context.Context {
-	return context.WithValue(ctx, headersKey(0), headers)
-}
-
-func headerFromContext(ctx context.Context) (*http.Header, bool) {
-	header, ok := ctx.Value(headersKey(0)).(*http.Header)
-	return header, ok
 }

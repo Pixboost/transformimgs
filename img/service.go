@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Pixboost/transformimgs/v8/img/loader"
 	"github.com/dooman87/glogi"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -193,10 +192,17 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
-	var proxyHeaders http.Header
-	proxyHeaders.Add("Accept", req.Header.Get("Accept"))
-	proxyHeaders.Add("Accept-Encoding", req.Header.Get("Accept-Encoding"))
-	result, err := r.Loader.Load(imgUrl, loader.NewContextWithHeaders(req.Context(), &proxyHeaders))
+	var proxyHeaders = make(http.Header)
+
+	accept := req.Header.Get("Accept")
+	if len(accept) > 0 {
+		proxyHeaders.Add("Accept", accept)
+	}
+	acceptEncoding := req.Header.Get("Accept-Encoding")
+	if len(acceptEncoding) > 0 {
+		proxyHeaders.Add("Accept-Encoding", acceptEncoding)
+	}
+	result, err := r.Loader.Load(imgUrl, NewContextWithHeaders(req.Context(), &proxyHeaders))
 
 	if err != nil {
 		sendError(resp, err)
@@ -394,4 +400,15 @@ func sendError(resp http.ResponseWriter, err error) {
 			http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		}
 	}
+}
+
+type headersKey int
+
+func NewContextWithHeaders(ctx context.Context, headers *http.Header) context.Context {
+	return context.WithValue(ctx, headersKey(0), headers)
+}
+
+func HeaderFromContext(ctx context.Context) (*http.Header, bool) {
+	header, ok := ctx.Value(headersKey(0)).(*http.Header)
+	return header, ok
 }

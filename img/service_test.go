@@ -24,6 +24,7 @@ const (
 	ImgLowQualityOut   = "12"
 	ImgLowerQualityOut = "1"
 	ImgBorderTrimmed   = "777"
+	ImgGzipSvg         = "888"
 
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
@@ -122,23 +123,40 @@ func (r *resizerMock) resultImage(config *img.TransformationConfig) *img.Image {
 
 type loaderMock struct{}
 
-func (l *loaderMock) Load(url string, _ context.Context) (*img.Image, error) {
-	if url == "http://site.com/img.png" {
+func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
+	switch url {
+	case "http://site.com/img.png":
 		return &img.Image{
 			Data:     []byte(ImgSrc),
 			MimeType: "image/png",
 			Id:       url,
 		}, nil
-	}
-	if url == "http://site.com/img2.png" {
+	case "http://site.com/img2.png":
 		return &img.Image{
 			Data:     []byte(NoContentTypeImgSrc),
 			MimeType: "image/png",
 			Id:       url,
 		}, nil
-	}
-	if url == "http://site.com/custom_error.png" {
+	case "http://site.com/custom_error.png":
 		return nil, img.NewHttpError(http.StatusTeapot, "Uh oh :(")
+
+	case "http://site.com/img.svg":
+		if acceptEncoding, ok := img.HeaderFromContext(ctx); ok && acceptEncoding.Get("Accept-Encoding") == "gzip" {
+			return &img.Image{
+				Data:     []byte(ImgSrc),
+				MimeType: "svg/gzip",
+				Id:       url,
+			}, nil
+		}
+	}
+
+	if url == "http://site.com/img.png" {
+	}
+
+	if url == "" {
+	}
+	if url == "" {
+
 	}
 	return nil, errors.New("read_error")
 }
@@ -571,6 +589,24 @@ func TestService_AsIs(t *testing.T) {
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
 					test.Equal("image/png", w.Header().Get("Content-Type"), "Content-Type header"),
+					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
+				)
+			},
+		},
+		{
+			Description: "Success with custom accept encoding",
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.svg/asis", t),
+				Header: map[string][]string{
+					"Accept-Encoding": {"gzip"},
+				},
+			},
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("svg/gzip", w.Header().Get("Content-Type"), "Content-Type header"),
 					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
 				)
 			},
