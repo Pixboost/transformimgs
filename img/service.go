@@ -193,7 +193,6 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
 	var proxyHeaders = make(http.Header)
-
 	accept := req.Header.Get("Accept")
 	if len(accept) > 0 {
 		proxyHeaders.Add("Accept", accept)
@@ -202,15 +201,12 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 	if len(acceptEncoding) > 0 {
 		proxyHeaders.Add("Accept-Encoding", acceptEncoding)
 	}
+
 	result, err := r.Loader.Load(imgUrl, NewContextWithHeaders(req.Context(), &proxyHeaders))
 
 	if err != nil {
 		sendError(resp, err)
 		return
-	}
-
-	if len(result.MimeType) > 0 {
-		resp.Header().Add("Content-Type", result.MimeType)
 	}
 
 	r.execOp(&Command{
@@ -249,11 +245,15 @@ func (r *Service) getQueue() *Queue {
 
 // Adds Content-Length and Cache-Control headers
 func addHeaders(resp http.ResponseWriter, image *Image) {
+	headers := resp.Header()
 	if len(image.MimeType) != 0 {
-		resp.Header().Add("Content-Type", image.MimeType)
+		headers.Add("Content-Type", image.MimeType)
 	}
-	resp.Header().Add("Content-Length", strconv.Itoa(len(image.Data)))
-	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
+	if len(image.ContentEncoding) != 0 {
+		headers.Add("Content-Encoding", image.ContentEncoding)
+	}
+	headers.Add("Content-Length", strconv.Itoa(len(image.Data)))
+	headers.Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
 }
 
 func getQueryParam(url *url.URL, name string) (string, bool) {

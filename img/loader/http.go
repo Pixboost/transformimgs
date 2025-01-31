@@ -66,6 +66,7 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 	}
 
 	contentType := resp.Header.Get("Content-Type")
+	contentEncoding := resp.Header.Get("Content-Encoding")
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -73,8 +74,9 @@ func (r *Http) Load(url string, ctx context.Context) (*img.Image, error) {
 	}
 
 	return &img.Image{
-		Id:       url,
-		Data:     result,
-		MimeType: contentType,
+		Id:              url,
+		Data:            result,
+		MimeType:        contentType,
+		ContentEncoding: contentEncoding,
 	}, nil
 }

@@ -143,9 +143,10 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 	case "http://site.com/img.svg":
 		if acceptEncoding, ok := img.HeaderFromContext(ctx); ok && acceptEncoding.Get("Accept-Encoding") == "gzip" {
 			return &img.Image{
-				Data:     []byte(ImgSrc),
-				MimeType: "svg/gzip",
-				Id:       url,
+				Data:            []byte(ImgSrc),
+				MimeType:        "svg/xml",
+				ContentEncoding: "gzip",
+				Id:              url,
 			}, nil
 		}
 	}
@@ -606,7 +607,8 @@ func TestService_AsIs(t *testing.T) {
 				test.Error(t,
 					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
 					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
-					test.Equal("svg/gzip", w.Header().Get("Content-Type"), "Content-Type header"),
+					test.Equal("svg/xml", w.Header().Get("Content-Type"), "Content-Type header"),
+					test.Equal("gzip", w.Header().Get("Content-Encoding"), "Content-Encoding header"),
 					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
 				)
 			},
@@ -693,6 +695,16 @@ func FuzzService_ResizeUrl(f *testing.F) {
 			}
 		}
 	})
+}
+
+func TestHeaderFromContext(t *testing.T) {
+	header, ok := img.HeaderFromContext(context.Background())
+	if header != nil {
+		t.Errorf("expected nil header")
+	}
+	if ok {
+		t.Errorf("expected ok to be false")
+	}
 }
 
 func createService(t *testing.T) *img.Service {
