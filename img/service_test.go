@@ -697,8 +697,18 @@ func FuzzService_ResizeUrl(f *testing.F) {
 	})
 }
 
-func TestHeaderFromContext(t *testing.T) {
+func TestHeaderFromContext_NoHeader(t *testing.T) {
 	header, ok := img.HeaderFromContext(context.Background())
+	if header != nil {
+		t.Errorf("expected nil header")
+	}
+	if ok {
+		t.Errorf("expected ok to be false")
+	}
+}
+
+func TestHeaderFromContext_NoContext(t *testing.T) {
+	header, ok := img.HeaderFromContext(nil)
 	if header != nil {
 		t.Errorf("expected nil header")
 	}

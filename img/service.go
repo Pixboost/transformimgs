@@ -409,6 +409,10 @@ func NewContextWithHeaders(ctx context.Context, headers *http.Header) context.Co
 }
 
 func HeaderFromContext(ctx context.Context) (*http.Header, bool) {
+	if ctx == nil {
+		return nil, false
+	}
+
 	header, ok := ctx.Value(headersKey(0)).(*http.Header)
 	return header, ok
 }
