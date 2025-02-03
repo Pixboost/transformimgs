@@ -46,6 +46,12 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       -
+        name: Gosec
+        id: gosec
+        uses: securego/gosec@master
+        with:
+          args: ./...
+      -
         name: Run tests
         run: |
           docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs-dev

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 )
 
 func main() {
@@ -46,7 +47,13 @@ func main() {
 	router.HandleFunc("/health", health.Health)
 
 	img.Log.Printf("Running the application on port 8080...\n")
-	err = http.ListenAndServe(":8080", router)
+	server := http.Server{
+		Addr:         ":8080",
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	err = server.ListenAndServe()
 
 	if err != nil {
 		img.Log.Errorf("Error while stopping application: %+v", err)
