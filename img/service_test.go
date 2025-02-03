@@ -141,13 +141,17 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 		return nil, img.NewHttpError(http.StatusTeapot, "Uh oh :(")
 
 	case "http://site.com/img.svg":
-		if acceptEncoding, ok := img.HeaderFromContext(ctx); ok && acceptEncoding.Get("Accept-Encoding") == "gzip" {
-			return &img.Image{
-				Data:            []byte(ImgSrc),
-				MimeType:        "svg/xml",
-				ContentEncoding: "gzip",
-				Id:              url,
-			}, nil
+		if headers, ok := img.HeaderFromContext(ctx); ok {
+			accept := headers.Get("Accept")
+			acceptEncoding := headers.Get("Accept-Encoding")
+			if accept == "svg" && acceptEncoding == "gzip" {
+				return &img.Image{
+					Data:            []byte(ImgSrc),
+					MimeType:        "svg/xml",
+					ContentEncoding: "gzip",
+					Id:              url,
+				}, nil
+			}
 		}
 	}
 
@@ -601,6 +605,7 @@ func TestService_AsIs(t *testing.T) {
 				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.svg/asis", t),
 				Header: map[string][]string{
 					"Accept-Encoding": {"gzip"},
+					"Accept":          {"svg"},
 				},
 			},
 			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
