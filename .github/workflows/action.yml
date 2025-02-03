@@ -50,7 +50,17 @@ jobs:
         id: gosec
         uses: securego/gosec@master
         with:
-          args: ./...
+          args:
+            - -exclude-dir illustration
+            - ./...
+      -
+        name: Gosec illustration
+        id: gosecillustration
+        working-directory: ./illustration
+        uses: securego/gosec@master
+        with:
+          args:
+            - ./...
       -
         name: Run tests
         run: |
