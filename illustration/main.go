@@ -63,9 +63,9 @@ func main() {
 		count               uint
 		currColor           *imagick.PixelWand
 		pixelsCount         = uint(0)
-		totalPixelsCount    = float32(mw.GetImageHeight() * mw.GetImageWidth())
-		tenPercent          = uint(totalPixelsCount * 0.1)
-		fiftyPercent        = uint(totalPixelsCount * 0.5)
+		totalPixelsCount    = mw.GetImageHeight() * mw.GetImageWidth()
+		tenPercent          = totalPixelsCount / 10
+		fiftyPercent        = totalPixelsCount / 2
 		isBackground        = false
 		lastBackgroundColor *imagick.PixelWand
 		colorsInBackground  = uint(0)
@@ -108,7 +108,7 @@ func main() {
 					pixelsInBackground = 0
 				} else {
 					pixelsCount += count
-					fiftyPercent = uint((totalPixelsCount - float32(pixelsInBackground)) * 0.5)
+					fiftyPercent = (totalPixelsCount - pixelsInBackground) / 2
 				}
 			}
 		default:
@@ -116,6 +116,9 @@ func main() {
 		}
 	}
 
+	if colorIdx < 0 {
+		log.Fatal("colorIdx < 0")
+	}
 	colorsCntIn50Pct := uint(colorIdx) - colorsInBackground
 
 	fmt.Print(colorsCntIn50Pct < 10 || (float32(colorsCntIn50Pct)/float32(colorsCnt)) <= 0.02)
