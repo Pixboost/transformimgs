@@ -49,10 +49,10 @@ jobs:
         name: Run tests
         run: |
           docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs-dev
-      -
-        name: Code coverage
-        run: |
-          bash <(curl -s https://codecov.io/bash)
+      - id: codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       -
         name: Build a prod image
         id: docker_build_prod
