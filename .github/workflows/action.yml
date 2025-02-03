@@ -44,15 +44,14 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
       - name: Gosec
         id: gosec
-        uses: securego/gosec@master
-        with:
-          args: -exclude-dir illustration ./...
-      - name: Gosec illustration
-        id: gosecillustration
-        working-directory: ./illustration
-        uses: securego/gosec@master
-        with:
-          args: ./...
+        run: |
+          CWD=$(pwd)
+          cd /tmp
+          curl -L https://github.com/securego/gosec/releases/download/v2.22.0/gosec_2.22.0_linux_amd64.tar.gz | tar zx
+          cd $CWD
+          /tmp/gosec -exclude-dir illustration ./...
+          cd illustration
+          /tmp/gosec ./...
       - name: Run tests
         run: |
           docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs-dev
