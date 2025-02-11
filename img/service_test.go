@@ -155,14 +155,6 @@ func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
 		}
 	}
 
-	if url == "http://site.com/img.png" {
-	}
-
-	if url == "" {
-	}
-	if url == "" {
-
-	}
 	return nil, errors.New("read_error")
 }
 
