@@ -10,6 +10,7 @@ go test $(go list -buildvcs=false ./... | grep -v '/vendor/') -v -bench . -bench
 go test -fuzz=FuzzCalculateTargetSizeForResize -fuzztime 30s ./img/processor/internal/
 go test -fuzz=FuzzCalculateTargetSizeForFit -fuzztime 30s ./img/processor/internal/
 go test -fuzz=FuzzHttp_LoadImg -fuzztime 30s ./img/loader/
+go test -fuzz=FuzzHttp_LoadCustomGlobalHeaders -fuzztime 30s ./img/loader/
 go test -fuzz=FuzzService_ResizeUrl -fuzztime 30s ./img/
 
 echo 'Running go vet'

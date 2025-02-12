@@ -6,6 +6,9 @@ type Image struct {
 	Id       string
 	Data     []byte
 	MimeType string
+	// Content encoding is a literally Content-Encoding header from the response
+	// because of the #32 (https://github.com/Pixboost/transformimgs/issues/32)
+	ContentEncoding string
 }
 
 // Info holds basic information about an image.

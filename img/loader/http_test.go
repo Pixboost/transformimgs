@@ -2,6 +2,7 @@ package loader_test
 
 import (
 	"context"
+	"github.com/Pixboost/transformimgs/v8/img"
 	"github.com/Pixboost/transformimgs/v8/img/loader"
 	"github.com/dooman87/kolibri/test"
 	"net/http"
@@ -72,7 +73,7 @@ func TestHttp_LoadImgErrorResponseStatus(t *testing.T) {
 	)
 }
 
-func TestHttp_LoadCustomHeaders(t *testing.T) {
+func TestHttp_LoadCustomGlobalHeaders(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("this-is-header") != "wow" {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -100,7 +101,7 @@ func TestHttp_LoadCustomHeaders(t *testing.T) {
 	)
 }
 
-func FuzzHttp_LoadCustomHeaders(f *testing.F) {
+func FuzzHttp_LoadCustomGlobalHeaders(f *testing.F) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "cool/stuff")
 		w.Write([]byte("123"))
@@ -136,4 +137,28 @@ func FuzzHttp_LoadCustomHeaders(f *testing.F) {
 			)
 		}
 	})
+}
+
+func TestHttp_LoadCustomContextHeaders(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("this-is-header") != "wow" {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.Header().Add("Content-Type", "cool/stuff")
+			w.Write([]byte("123"))
+		}
+	}))
+	defer server.Close()
+
+	httpLoader := &loader.Http{}
+
+	image, err := httpLoader.Load(server.URL, img.NewContextWithHeaders(context.Background(), &http.Header{
+		"This-Is-Header": []string{"wow"},
+	}))
+
+	test.Error(t,
+		test.Nil(err, "error"),
+		test.Equal("cool/stuff", image.MimeType, "content type"),
+		test.Equal("123", string(image.Data), "resulted image"),
+	)
 }

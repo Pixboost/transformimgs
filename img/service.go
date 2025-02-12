@@ -192,15 +192,21 @@ func (r *Service) AsIs(resp http.ResponseWriter, req *http.Request) {
 
 	Log.Printf("Requested image %s as is\n", imgUrl)
 
-	result, err := r.Loader.Load(imgUrl, req.Context())
+	var proxyHeaders = make(http.Header)
+	accept := req.Header.Get("Accept")
+	if len(accept) > 0 {
+		proxyHeaders.Add("Accept", accept)
+	}
+	acceptEncoding := req.Header.Get("Accept-Encoding")
+	if len(acceptEncoding) > 0 {
+		proxyHeaders.Add("Accept-Encoding", acceptEncoding)
+	}
+
+	result, err := r.Loader.Load(imgUrl, NewContextWithHeaders(req.Context(), &proxyHeaders))
 
 	if err != nil {
 		sendError(resp, err)
 		return
-	}
-
-	if len(result.MimeType) > 0 {
-		resp.Header().Add("Content-Type", result.MimeType)
 	}
 
 	r.execOp(&Command{
@@ -239,11 +245,15 @@ func (r *Service) getQueue() *Queue {
 
 // Adds Content-Length and Cache-Control headers
 func addHeaders(resp http.ResponseWriter, image *Image) {
+	headers := resp.Header()
 	if len(image.MimeType) != 0 {
-		resp.Header().Add("Content-Type", image.MimeType)
+		headers.Add("Content-Type", image.MimeType)
 	}
-	resp.Header().Add("Content-Length", strconv.Itoa(len(image.Data)))
-	resp.Header().Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
+	if len(image.ContentEncoding) != 0 {
+		headers.Add("Content-Encoding", image.ContentEncoding)
+	}
+	headers.Add("Content-Length", strconv.Itoa(len(image.Data)))
+	headers.Add("Cache-Control", fmt.Sprintf("public, max-age=%d", CacheTTL))
 }
 
 func getQueryParam(url *url.URL, name string) (string, bool) {
@@ -390,4 +400,19 @@ func sendError(resp http.ResponseWriter, err error) {
 			http.Error(resp, fmt.Sprintf("Error reading image: '%s'", err.Error()), http.StatusInternalServerError)
 		}
 	}
+}
+
+type headersKey int
+
+func NewContextWithHeaders(ctx context.Context, headers *http.Header) context.Context {
+	return context.WithValue(ctx, headersKey(0), headers)
+}
+
+func HeaderFromContext(ctx context.Context) (*http.Header, bool) {
+	if ctx == nil {
+		return nil, false
+	}
+
+	header, ok := ctx.Value(headersKey(0)).(*http.Header)
+	return header, ok
 }

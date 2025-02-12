@@ -252,7 +252,7 @@ func (p *ImageMagick) Optimise(config *img.TransformationConfig) (*img.Image, er
 
 func (p *ImageMagick) execImagemagick(in *bytes.Reader, args []string, imgId string) ([]byte, error) {
 	var out, cmderr bytes.Buffer
-	cmd := exec.Command(p.convertCmd)
+	cmd := exec.Command(p.convertCmd) // #nosec G204 - sanitizing before assigning
 
 	cmd.Args = append(cmd.Args, args...)
 
@@ -295,7 +295,7 @@ func (p *ImageMagick) LoadImageInfo(src *img.Image) (*img.Info, error) {
 	var out, cmderr bytes.Buffer
 	imgId := src.Id
 	in := bytes.NewReader(src.Data)
-	cmd := exec.Command(p.identifyCmd)
+	cmd := exec.Command(p.identifyCmd) // #nosec G204 - sanitizing before assigning
 	cmd.Args = append(cmd.Args, "-format", "%m %Q %[opaque] %w %h", "-")
 
 	cmd.Stdin = in

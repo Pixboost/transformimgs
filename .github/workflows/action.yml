@@ -17,24 +17,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Cache Docker layers
+      - name: Cache Docker layers
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-      -
-        name: Build a dev image
+      - name: Build a dev image
         id: docker_build_dev
         uses: docker/build-push-action@v5
         with:
@@ -45,16 +42,24 @@ jobs:
           tags: transformimgs-dev
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-      -
-        name: Run tests
+      - name: Gosec
+        id: gosec
+        run: |
+          CWD=$(pwd)
+          cd /tmp
+          curl -L https://github.com/securego/gosec/releases/download/v2.22.0/gosec_2.22.0_linux_amd64.tar.gz | tar zx
+          cd $CWD
+          /tmp/gosec -exclude-dir illustration ./...
+          cd illustration
+          /tmp/gosec ./...
+      - name: Run tests
         run: |
           docker run --entrypoint=/go/src/github.com/Pixboost/transformimgs/test.sh -v $(pwd):/go/src/github.com/Pixboost/transformimgs  transformimgs-dev
-      -
-        name: Code coverage
-        run: |
-          bash <(curl -s https://codecov.io/bash)
-      -
-        name: Build a prod image
+      - id: codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Build a prod image
         id: docker_build_prod
         uses: docker/build-push-action@v5
         with:
@@ -67,17 +72,14 @@ jobs:
             "BRANCH=${{ github.ref_name }}"
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-      -
-        name: Run the service
+      - name: Run the service
         run: |
           docker run -p 8080:8080 -d transformimgs
           sleep 5
-      -
-        name: Smoketest
+      - name: Smoketest
         run: |
           curl -o /dev/null -f http://localhost:8080/img/https://pixboost.com/img/homepage/hero.jpg/resize?size=x600
-      -
-        name: Publish image
+      - name: Publish image
         if: ${{ github.event_name == 'release' }}
         uses: docker/build-push-action@v5
         with:

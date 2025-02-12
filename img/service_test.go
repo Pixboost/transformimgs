@@ -24,6 +24,7 @@ const (
 	ImgLowQualityOut   = "12"
 	ImgLowerQualityOut = "1"
 	ImgBorderTrimmed   = "777"
+	ImgGzipSvg         = "888"
 
 	EmptyGifBase64Out = "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 )
@@ -122,24 +123,38 @@ func (r *resizerMock) resultImage(config *img.TransformationConfig) *img.Image {
 
 type loaderMock struct{}
 
-func (l *loaderMock) Load(url string, _ context.Context) (*img.Image, error) {
-	if url == "http://site.com/img.png" {
+func (l *loaderMock) Load(url string, ctx context.Context) (*img.Image, error) {
+	switch url {
+	case "http://site.com/img.png":
 		return &img.Image{
 			Data:     []byte(ImgSrc),
 			MimeType: "image/png",
 			Id:       url,
 		}, nil
-	}
-	if url == "http://site.com/img2.png" {
+	case "http://site.com/img2.png":
 		return &img.Image{
 			Data:     []byte(NoContentTypeImgSrc),
 			MimeType: "image/png",
 			Id:       url,
 		}, nil
-	}
-	if url == "http://site.com/custom_error.png" {
+	case "http://site.com/custom_error.png":
 		return nil, img.NewHttpError(http.StatusTeapot, "Uh oh :(")
+
+	case "http://site.com/img.svg":
+		if headers, ok := img.HeaderFromContext(ctx); ok {
+			accept := headers.Get("Accept")
+			acceptEncoding := headers.Get("Accept-Encoding")
+			if accept == "svg" && acceptEncoding == "gzip" {
+				return &img.Image{
+					Data:            []byte(ImgSrc),
+					MimeType:        "svg/xml",
+					ContentEncoding: "gzip",
+					Id:              url,
+				}, nil
+			}
+		}
 	}
+
 	return nil, errors.New("read_error")
 }
 
@@ -576,6 +591,26 @@ func TestService_AsIs(t *testing.T) {
 			},
 		},
 		{
+			Description: "Success with custom accept encoding",
+			Request: &http.Request{
+				Method: "GET",
+				URL:    parseUrl("http://localhost/img/http%3A%2F%2Fsite.com/img.svg/asis", t),
+				Header: map[string][]string{
+					"Accept-Encoding": {"gzip"},
+					"Accept":          {"svg"},
+				},
+			},
+			Handler: func(w *httptest.ResponseRecorder, t *testing.T) {
+				test.Error(t,
+					test.Equal("public, max-age=86400", w.Header().Get("Cache-Control"), "Cache-Control header"),
+					test.Equal("3", w.Header().Get("Content-Length"), "Content-Length header"),
+					test.Equal("svg/xml", w.Header().Get("Content-Type"), "Content-Type header"),
+					test.Equal("gzip", w.Header().Get("Content-Encoding"), "Content-Encoding header"),
+					test.Equal("", w.Header().Get("Vary"), "No Vary header"),
+				)
+			},
+		},
+		{
 			Request: &http.Request{
 				Method: "GET",
 				URL:    parseUrl("http://localhost/img/%2F%2Fsite.com/img.png/asis", t),
@@ -657,6 +692,26 @@ func FuzzService_ResizeUrl(f *testing.F) {
 			}
 		}
 	})
+}
+
+func TestHeaderFromContext_NoHeader(t *testing.T) {
+	header, ok := img.HeaderFromContext(context.Background())
+	if header != nil {
+		t.Errorf("expected nil header")
+	}
+	if ok {
+		t.Errorf("expected ok to be false")
+	}
+}
+
+func TestHeaderFromContext_NoContext(t *testing.T) {
+	header, ok := img.HeaderFromContext(nil)
+	if header != nil {
+		t.Errorf("expected nil header")
+	}
+	if ok {
+		t.Errorf("expected ok to be false")
+	}
 }
 
 func createService(t *testing.T) *img.Service {
